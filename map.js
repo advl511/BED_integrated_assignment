@@ -13,6 +13,9 @@ window.initMap = async () => {
   });
 
   addMarker(userLocation, "You are here!");
+
+  // ✅ Call this only AFTER map is created and google is loaded
+  searchLocation();
 };
 
 function addMarker(location, title) {
@@ -30,24 +33,45 @@ function clearMarkers() {
 }
 
 function locateMe() {
-  if (navigator.geolocation) {
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        const userLocation = {
-          lat: pos.coords.latitude,
-          lng: pos.coords.longitude,
-        };
-        map.setCenter(userLocation);
-        map.setZoom(16);
-        clearMarkers();
-        addMarker(userLocation, "You are here!");
-        return userLocation
-      },
-      () => alert("Geolocation failed or was denied.")
-    );
-  } else {
-    alert("Geolocation is not supported.");
-  }
+  return new Promise((resolve, reject) => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const userLocation = {
+            lat: pos.coords.latitude,
+            lng: pos.coords.longitude,
+          };
+          resolve(userLocation);
+        },
+        () => {
+          alert("Geolocation failed or was denied.");
+          resolve({ lat: 1.3521, lng: 103.8198 }); // Default: Singapore
+        }
+      );
+    } else {
+      alert("Geolocation is not supported.");
+      resolve({ lat: 1.3521, lng: 103.8198 });
+    }
+  });
 }
 
-initMap()
+function searchLocation() {
+  const input = document.getElementById("search");
+  const autocomplete = new google.maps.places.Autocomplete(input);
+
+  autocomplete.addListener("place_changed", () => {
+    const place = autocomplete.getPlace();
+    if (place.geometry) {
+      const location = {
+        lat: place.geometry.location.lat(),
+        lng: place.geometry.location.lng(),
+      };
+      map.setCenter(location);
+      map.setZoom(16);
+      clearMarkers();
+      addMarker(location, place.name || "Selected Location");
+    } else {
+      alert("No details available for input: '" + place.name + "'");
+    }
+  });
+}

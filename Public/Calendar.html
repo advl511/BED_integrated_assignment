@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enhanced Calendar for Elderly Users</title>
+    <link rel="stylesheet" href="/Public/styles.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div>
+                <h1>My Calendar</h1>
+                <p>Stay organized with cultural events, prayer times, and appointments</p>
+            </div>
+            <div class="settings-panel">
+                <div class="setting-group">
+                    <label>Font Size</label>
+                    <select id="fontSizeSelect">
+                        <option value="font-small">Small</option>
+                        <option value="font-medium" selected>Medium</option>
+                        <option value="font-large">Large</option>
+                        <option value="font-extra-large">Extra Large</option>
+                    </select>
+                </div>
+                <div class="setting-group">
+                    <label>Show Prayer Times</label>
+                    <div class="toggle-switch" id="prayerToggle"></div>
+                </div>
+                <div class="setting-group">
+                    <label>Location</label>
+                    <select id="locationSelect">
+                        <option value="Singapore">Singapore</option>
+                        <option value="Kuala Lumpur">Kuala Lumpur</option>
+                        <option value="Jakarta">Jakarta</option>
+                        <option value="Bangkok">Bangkok</option>
+                        <option value="Manila">Manila</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="calendar-container">
+            <div class="calendar-nav">
+                <button id="prevMonth">← Previous</button>
+                <div class="current-month" id="currentMonth">January 2025</div>
+                <button id="nextMonth">Next →</button>
+            </div>
+
+            <div class="calendar-grid" id="calendarGrid">
+                <div class="calendar-header">Sunday</div>
+                <div class="calendar-header">Monday</div>
+                <div class="calendar-header">Tuesday</div>
+                <div class="calendar-header">Wednesday</div>
+                <div class="calendar-header">Thursday</div>
+                <div class="calendar-header">Friday</div>
+                <div class="calendar-header">Saturday</div>
+            </div>
+
+            <div class="legend">
+                <div class="legend-item">
+                    <div class="legend-color cultural-event"></div>
+                    <span>Cultural Events</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color prayer-time"></div>
+                    <span>Prayer Times</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color appointment"></div>
+                    <span>Medical Appointments</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Day Details Modal -->
+    <div id="dayModal" class="modal">
+        <div class="modal-content">
+            <span class="close" id="closeModal">&times;</span>
+            <h2 id="modalTitle">January 1, 2025</h2>
+            <div id="modalContent"></div>
+        </div>
+    </div>
+
+    <div id="apiStatus" class="api-status" style="display: none;"></div>
+
+    <!-- Include JavaScript files -->
+    <script src="../Model/CalendarModel.js"></script>
+    <script src="../Middleware/CalendarMiddleware.js"></script>
+    <script src="../Controller/CalendarController.js"></script>
+    <script src="../Public/app.js"></script>
+</body>
+</html>

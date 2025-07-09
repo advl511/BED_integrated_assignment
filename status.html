@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Status</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="status.css">
+</head>
+<body>
+  <div class="container">
+    <h2>What’s on your mind</h2>
+    <textarea id="statusText" placeholder="Type something..."></textarea>
+
+    <div class="buttons">
+      <label>
+        <input type="file" id="photoInput" style="display: none;">
+        <button onclick="document.getElementById('photoInput').click()">Add photos</button>
+      </label>
+      <button onclick="postStatus()">Post</button>
+    </div>
+
+    <div class="updates">
+      <h2>Recent Updates</h2>
+      <div id="feed"></div>
+    </div>
+  </div>
+  <script src="status.js"></script>
+</body>
+</html>

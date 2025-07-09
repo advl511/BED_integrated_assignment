@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Profile Page</title>
+  <link rel="stylesheet" href="profile.css">
+</head>
+<body>
+  <div class="profile-container">
+    <img id="profile-pic" src="" alt="Profile Picture" />
+    <label for="upload" class="upload-label">Click to upload photo</label>
+    <input type="file" id="upload" accept="image/*" />
+
+    <div class="name">Name</div>
+    <input type="email" class="email" value="email@gmail.com" />
+
+    <div class="bio-label">Bio</div>
+    <textarea class="bio-box" placeholder="Enter your bio here..."></textarea>
+
+    <br>
+    <button class="edit-button" onclick="saveProfile()">Save Profile</button>
+  </div>
+    <script src="profile.js"></script>
+</body>
+</html>

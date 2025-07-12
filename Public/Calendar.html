@@ -25,7 +25,7 @@
                 </div>
                 <div class="setting-group">
                     <label>Show Prayer Times</label>
-                    <div class="toggle-switch" id="prayerToggle"></div>
+                    <button class="toggle-switch" id="prayerToggle" type="button"> </button>
                 </div>
                 <div class="setting-group">
                     <label>Location</label>
@@ -74,21 +74,37 @@
         </div>
     </div>
 
-    <!-- Day Details Modal -->
     <div id="dayModal" class="modal">
         <div class="modal-content">
             <span class="close" id="closeModal">&times;</span>
-            <h2 id="modalTitle">January 1, 2025</h2>
-            <div id="modalContent"></div>
+            <h2 id="modalDate">January 1, 2025</h2>
+            
+            <div id="culturalEvents">
+                <h3>Cultural Events</h3>
+                <div id="eventsList"></div>
+            </div>
+
+            <div id="prayerTimesSection" style="display: none;">
+                <h3>Prayer Times</h3>
+                <div class="prayer-times" id="prayerTimes"></div>
+            </div>
+
+            <div class="appointment-section">
+                <h3>Medical Appointments</h3>
+                <p>Book your medical appointment through the Ministry of Health portal</p>
+                <button class="appointment-btn" onclick="bookAppointment()">
+                    Book Medical Appointment
+                </button>
+                <div id="appointmentsList"></div>
+            </div>
         </div>
     </div>
 
     <div id="apiStatus" class="api-status" style="display: none;"></div>
 
-    <!-- Include JavaScript files -->
-    <script src="../Model/CalendarModel.js"></script>
-    <script src="../Middleware/CalendarMiddleware.js"></script>
-    <script src="../Controller/CalendarController.js"></script>
-    <script src="../Public/app.js"></script>
+    <script src="/Model/CalendarModel.js"></script>
+    <script src="/Middleware/CalendarMiddleware.js"></script>
+    <script src="/Controller/CalendarController.js"></script>
+    <script src="/Public/app.js"></script>
 </body>
 </html>

@@ -1,0 +1,148 @@
+body{
+  margin: 0;
+  overflow: hidden;
+}
+
+#map {
+  height: 100vh;
+  width: 100%;
+}
+
+button {
+  padding: 6px 10px;
+  cursor: pointer;
+}
+
+#info{
+  position: absolute;
+  top: 0px;
+  background: rgba(255, 255, 255, 0.8);
+  padding: 10px;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  z-index: 999;
+}
+
+#UI-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1000;
+  display: flex;
+  width: 100%;
+  height: 100vh;
+  pointer-events: none; /* Allow map interaction */
+}
+
+sidebar {
+  width: 70px;
+  height: 100vh;
+  padding: 20px 0;
+  background-color: white;
+  border-right: 1px solid #e0e0e0;
+  box-shadow: 2px 0 8px rgba(0,0,0,0.1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  pointer-events: all; /* Enable interactions */
+}
+
+sidebar img {
+  width: 28px;
+  height: 28px;
+  margin-bottom: 0;
+  cursor: pointer;
+  opacity: 0.6;
+  transition: all 0.2s ease;
+  padding: 8px;
+  border-radius: 8px;
+}
+
+sidebar img:hover {
+  opacity: 1;
+  background-color: #f5f5f5;
+}
+
+#locationNav{
+  position: absolute;
+  top: 20px;
+  left: 90px; /* Position it just right of the sidebar */
+  margin-top: 0;
+  display: flex;
+  gap: 0;
+  align-items: center;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+  border-radius: 8px;
+  overflow: hidden;
+  pointer-events: all; /* Enable interactions */
+}
+
+input[type="text"] {
+  height: 48px;
+  width: 400px;
+  padding: 0 16px;
+  border-radius: 8px 0 0 8px;
+  font-size: 16px;
+  border: none;
+  outline: none;
+  box-shadow: none;
+  background-color: white;
+  color: #333;
+}
+
+input[type="text"]:focus {
+  background-color: white;
+}
+
+input[type="text"]::placeholder {
+  color: #9aa0a6;
+}
+
+
+#locateMe{
+  height: 48px;
+  width: 48px;
+  background: white;
+  border: none;
+  border-radius: 0 8px 8px 0;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  position: relative;
+  z-index: 10;
+  box-shadow: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s ease;
+  border-left: 1px solid #e8eaed;
+}
+
+#locateMe:hover {
+  background-color: #f8f9fa;
+}
+
+#locationNav img{
+  width: 20px;
+  height: 20px;
+  background-color: transparent;
+  border-radius: 0;
+  padding: 0;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+  opacity: 0.7;
+}
+
+#locationNav img:hover {
+  opacity: 1;
+}
+
+.pac-container.pac-logo{
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+.pac-item-query{
+  font-size: 1.5em;
+}

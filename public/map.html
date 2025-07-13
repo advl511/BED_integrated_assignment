@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Document</title>
+  <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+
+    <div id="map"></div>
+
+    <div id="UI-container">
+
+      <sidebar>
+        <img src="/images/saved-unselected.svg" alt="Saved Locations">
+        <img src="/images/recent.svg" alt="Recent Locations">         
+      </sidebar>
+
+      <div id="locationNav">
+        <input id="search" type="text" placeholder="Search for places..." title="Search for places...">
+        <button id="locateMe" onclick="locateMe()" title="Find My Location">
+          <img src="/images/mylocation.svg" alt="My Location">
+        </button>
+      </div>
+
+    </div>
+        
+      
+    <script src="config.js"></script>
+    <script src="map.js"></script>
+</body>
+</html>

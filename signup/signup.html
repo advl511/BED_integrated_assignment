@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="signup.css">
     <title>Create Account</title>
 </head>
 <body>
@@ -13,6 +13,11 @@
     <form>
       <label for="email">Email Address</label>
       <input type="email" id="email" name="email" required />
+      <div class="validation-message" id="email-validation"></div>
+
+      <label for="username">Username</label>
+      <input type="text" id="username" name="username" required />
+      <div class="validation-message" id="username-validation"></div>
 
       <label for="password">Password</label>
       <input type="password" id="password" name="password" required />
@@ -23,8 +28,9 @@
       <button type="submit">Sign Up</button>
     </form>
     <div class="login-link">
-      Already have an account? <a href="#">Login</a>
+      Already have an account? <a href="signin.html">Login</a>
     </div>
   </div>
+    <script src="signup.js"></script>
 </body>
 </html>

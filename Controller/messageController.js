@@ -53,7 +53,7 @@ async function detectLanguage(text) {
     console.log(`📡 LibreTranslate detected: ${detectedLang}`);
     return detectedLang;
   } catch (err) {
-    console.error("❌ LibreTranslate detection failed:", err.message);
+    console.error("LibreTranslate detection failed:", err.message);
     
     // Last resort: if text contains non-ASCII characters, assume it's not English
     const hasNonAscii = /[^\x00-\x7F]/.test(text);

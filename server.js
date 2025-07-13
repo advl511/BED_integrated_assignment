@@ -47,4 +47,4 @@ process.on("SIGINT", async () => {
   await sql.close();
   console.log("Database connections closed");
   process.exit(0);
-});
+});    

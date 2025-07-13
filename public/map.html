@@ -13,7 +13,7 @@
     <div id="UI-container">
 
       <sidebar>
-        <img src="/images/saved-unselected.svg" alt="Saved Locations">
+        <img id="savedLocationsBtn" src="/images/saved-unselected.svg" alt="Saved Locations" onclick="toggleSavedLocations()">
         <img src="/images/recent.svg" alt="Recent Locations">         
       </sidebar>
 
@@ -24,8 +24,18 @@
         </button>
       </div>
 
+      <!-- Saved Locations Panel -->
+      <div id="savedLocationsPanel" class="locations-panel">
+        <div class="panel-header">
+          <h3>Saved Locations</h3>
+          <button id="closePanelBtn" onclick="closeSavedLocations()">×</button>
+        </div>
+        <div id="locationsList" class="locations-list">
+          <div class="loading">Loading locations...</div>
+        </div>
+      </div>
+
     </div>
-        
       
     <script src="config.js"></script>
     <script src="map.js"></script>

@@ -23,7 +23,7 @@ router.get('/config', async (req, res) => {
     }
 });
 
-// GET /api/map/locations - Get all locations
+// GET /map/locations - Get all locations
 router.get('/locations', async (req, res) => {
     try {
         const locations = await mapModel.getAllLocations();

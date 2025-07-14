@@ -6,7 +6,7 @@ async function getAllLocations() {
     try {
         connection = await sql.connect(dbConfig);
         const result = await connection.request().query(
-            'SELECT * FROM user_locations');
+            'SELECT * FROM user_saved_locations');
         console.log(result);
         return result.recordset;
     } catch (err) {

@@ -8,22 +8,15 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Import controllers
+// Import controllers and middleware
 const mapController = require('./controller/Mapcontroller');
+const mapMiddleware = require('./middleware/mapmiddleware');
 
-app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', '*');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
-  if (req.method === 'OPTIONS') {
-    res.sendStatus(200);
-  } else {
-    next();
-  }
-});
+// Setup basic middleware stack
+mapMiddleware.setupBasicMiddleware(app);
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// Setup health check endpoint
+mapMiddleware.setupHealthCheck(app);
 
 // Serve static files from public directory
 app.use(express.static(path.join(__dirname, "public")));
@@ -35,6 +28,9 @@ app.use('/map', mapController);
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'map.html'));
 });
+
+// Setup error handling middleware
+mapMiddleware.setupErrorHandling(app);
 
 
 app.listen(PORT, () => {

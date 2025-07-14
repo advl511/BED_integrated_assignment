@@ -76,9 +76,8 @@ function displayLocationsList(locations) {
   }
   
   const locationsHTML = locations.map(location => `
-    <div class="location-item" onclick="goToLocation(${location.latitude}, ${location.longitude}, '${location.username}')">
-      <div class="location-name">${location.username}</div>
-      <div class="location-coords">${location.latitude}, ${location.longitude}</div>
+    <div class="location-item" onclick="goToLocation(${location.latitude}, ${location.longitude}, '${location.location_name}')">
+      <div class="location-name">${location.location_name}</div>
     </div>
   `).join('');
   
@@ -93,7 +92,7 @@ function displayLocationsOnMap(locations) {
     const marker = new google.maps.Marker({
       position: { lat: parseFloat(location.latitude), lng: parseFloat(location.longitude) },
       map: map,
-      title: location.username,
+      title: location.location_name,
       icon: {
         url: 'data:image/svg+xml;charset=UTF-8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="%234285f4"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>',
         scaledSize: new google.maps.Size(24, 24),
@@ -105,9 +104,14 @@ function displayLocationsOnMap(locations) {
     const infoWindow = new google.maps.InfoWindow({
       content: `
         <div style="max-width: 200px;">
-          <h4 style="margin: 0 0 5px 0; color: #333;">${location.username}</h4>
-          <p style="margin: 0; color: #666; font-size: 12px;">Lat: ${location.latitude}<br>Lng: ${location.longitude}</p>
-          <p style="margin: 5px 0 0 0; color: #888; font-size: 11px;">Saved: ${new Date(location.created_at).toLocaleDateString()}</p>
+          <h4 style="margin: 0 0 8px 0; color: #333; font-size: 14px;">${location.location_name}</h4>
+          <p style="margin: 0; color: #666; font-size: 12px;">
+            <strong>Coordinates:</strong><br>
+            ${location.latitude}°, ${location.longitude}°
+          </p>
+          <p style="margin: 8px 0 0 0; color: #888; font-size: 11px;">
+            <strong>Saved:</strong> ${new Date(location.created_at).toLocaleDateString()}
+          </p>
         </div>
       `
     });
@@ -136,32 +140,37 @@ function goToLocation(lat, lng, name) {
   
   if (map) {
     map.panTo(location);
+    
     setTimeout(() => {
       map.setZoom(16);
-    }, 500);
+    }, 800);
     
-    // Close the panel
-    closeSavedLocations();
+    setTimeout(() => {
+      closeSavedLocations();
+    }, 200);
     
-    // Highlight this specific location temporarily
     setTimeout(() => {
       const tempMarker = new google.maps.Marker({
         position: location,
         map: map,
-        title: name,
-        animation: google.maps.Animation.BOUNCE
+        title: name
       });
+      
+      // Add bounce animation
+      setTimeout(() => {
+        tempMarker.setAnimation(google.maps.Animation.BOUNCE);
+      }, 100);
       
       // Stop bouncing after 2 seconds
       setTimeout(() => {
         tempMarker.setAnimation(null);
-      }, 2000);
+      }, 2100);
       
       // Remove temp marker after 5 seconds
       setTimeout(() => {
         tempMarker.setMap(null);
       }, 5000);
-    }, 800);
+    }, 1200); // Increased delay to let zoom complete
   }
 }
 
@@ -188,11 +197,10 @@ async function initializeApp() {
 }
 
 async function initMap() {
-  // Set default location (Singapore) without calling locateMe()
   const defaultLocation = { lat: 1.3521, lng: 103.8198 };
 
   map = new google.maps.Map(document.getElementById("map"), {
-    zoom: 14, // Start with a wider view since we're not at user's location
+    zoom: 14, // Wider zoom level for better initial view
     center: defaultLocation,
     mapTypeControl: false,
     fullscreenControl: false,
@@ -207,7 +215,6 @@ async function initMap() {
     },
   });
 
-  // Optional: Add a default marker
   addMarker(defaultLocation, "Singapore (Default Location)");
 
   searchLocation();
@@ -234,25 +241,44 @@ function locateMe(){
       navigator.geolocation.getCurrentPosition(
         (pos) => {
           const userLocation = {
-            lat: parseFloat(pos.coords.latitude.toFixed(5)),
-            lng: parseFloat(pos.coords.longitude.toFixed(5)),
+            lat: parseFloat(pos.coords.latitude.toFixed(4)),
+            lng: parseFloat(pos.coords.longitude.toFixed(4)),
           };
 
           if (map) {
             map.panTo(userLocation);
-            setTimeout(() => {
-              map.setZoom(16);
-            }, 500);
+            
             clearMarkers();
+            
+            // Smooth zoom transition
             setTimeout(() => {
-              addMarker(userLocation, "You are here!");
+              map.setZoom(18); // Closer zoom for user location
             }, 800);
+            
+            setTimeout(() => {
+              const userMarker = new google.maps.Marker({
+                position: userLocation,
+                map: map,
+                title: "You are here!"
+              });
+              
+              markers.push(userMarker);
+              
+              setTimeout(() => {
+                userMarker.setAnimation(google.maps.Animation.BOUNCE);
+                setTimeout(() => {
+                  userMarker.setAnimation(null);
+                }, 1000);
+              }, 100);
+              
+            }, 1200);
           }
 
           resolve(userLocation);
         },
         () => {
           alert("Geolocation failed or was denied.");
+          const defaultLocation = { lat: 1.3521, lng: 103.8198 };
           resolve(defaultLocation);
         },
         {
@@ -262,6 +288,7 @@ function locateMe(){
         }
       );
     } else {
+      const defaultLocation = { lat: 1.3521, lng: 103.8198 };
       resolve(defaultLocation);
     }
   });
@@ -279,14 +306,33 @@ function searchLocation() {
         lat: place.geometry.location.lat(),
         lng: place.geometry.location.lng(),
       };
+      
       map.panTo(location);
+      
+      clearMarkers();
+      
       setTimeout(() => {
         map.setZoom(16);
-      }, 500);
-      clearMarkers();
-      setTimeout(() => {
-        addMarker(location, place.name || "Selected Location");
       }, 800);
+      
+      setTimeout(() => {
+        const searchMarker = new google.maps.Marker({
+          position: location,
+          map: map,
+          title: place.name || "Selected Location"
+        });
+        
+        markers.push(searchMarker);
+        
+        setTimeout(() => {
+          searchMarker.setAnimation(google.maps.Animation.BOUNCE);
+          setTimeout(() => {
+            searchMarker.setAnimation(null);
+          }, 1000);
+        }, 100);
+        
+      }, 1200);
+      
     } else {
       alert("No details available for input: '" + place.name + "'");
     }

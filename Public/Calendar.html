@@ -104,19 +104,33 @@
             <span class="close" id="closeAppointmentModal">&times;</span>
             <h3 id="appointmentModalTitle">Book Appointment</h3>
             <form id="appointmentForm">
+                <label for="appointmentType">Type:</label>
+                <select id="appointmentType" name="type" required>
+                    <option value="Consultation">Consultation</option>
+                    <option value="Check-up">Check-up</option>
+                    <option value="Follow-up">Follow-up</option>
+                </select>
+
                 <label for="appointmentTime">Time:</label>
                 <input type="time" id="appointmentTime" name="time" required>
-                <label for="appointmentDesc">Description:</label>
-                <input type="text" id="appointmentDesc" name="description" required>
+                
+                <label for="appointmentDoctor">Doctor:</label>
+                <select id="appointmentDoctor" name="doctor" required>
+                    <option value="Dr. Lim">Dr. Lim</option>
+                    <option value="Dr. Tan">Dr. Tan</option>
+                    <option value="Dr. Wong">Dr. Wong</option>
+                </select>
+
                 <button type="submit" id="saveAppointmentBtn">Save</button>
             </form>
         </div>
     </div>
     <div id="apiStatus" class="api-status" style="display: none;"></div>
 
-    <script src="CalendarModel.js"></script>
-    <script src="CalendarMiddleware.js"></script>
-    <script src="CalendarController.js"></script>
-    <script src="app.js"></script>
+    <script src="/Model/CalendarModel.js"></script>
+    <script src="/Middleware/CalendarMiddleware.js"></script>
+    <script src="/Controller/CalendarController.js"></script>
+    <script src="/src/backend.js"></script>
+    <script src="/src/app.js"></script>
 </body>
 </html>

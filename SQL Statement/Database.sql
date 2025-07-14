@@ -244,11 +244,3 @@ INSERT INTO appointments (date, type, time, doctor, status) VALUES
 ('2025-10-05', 'Physiotherapy', '15:00', 'Dr. Tan', 'Rescheduled');
 GO
 
--- ===============================
--- UPDATE and DELETE statements (MSSQL)
--- ===============================
--- Update appointment
--- UPDATE appointments SET type = @type, time = @time, doctor = @doctor, status = @status WHERE id = @id;
-
--- Delete appointment
--- DELETE FROM appointments WHERE id = @id;

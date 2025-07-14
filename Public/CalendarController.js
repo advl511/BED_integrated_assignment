@@ -347,3 +347,39 @@ function loadAppointments() {
         });
     }
 }
+
+// Appointment API calls for MSSQL backend
+
+async function fetchAppointments(dateStr) {
+    const res = await fetch(`/api/appointments?date=${encodeURIComponent(dateStr)}`);
+    if (!res.ok) throw new Error('Failed to fetch appointments');
+    return await res.json();
+}
+
+async function createAppointment(appointment) {
+    const res = await fetch('/api/appointments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(appointment)
+    });
+    if (!res.ok) throw new Error('Failed to create appointment');
+    return await res.json();
+}
+
+async function updateAppointment(id, appointment) {
+    const res = await fetch(`/api/appointments/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(appointment)
+    });
+    if (!res.ok) throw new Error('Failed to update appointment');
+    return await res.json();
+}
+
+async function deleteAppointment(id) {
+    const res = await fetch(`/api/appointments/${id}`, {
+        method: 'DELETE'
+    });
+    if (!res.ok) throw new Error('Failed to delete appointment');
+    return await res.json();
+}

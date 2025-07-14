@@ -99,12 +99,24 @@
             </div>
         </div>
     </div>
-
+     <div id="appointmentModal" class="modal" style="display:none;">
+        <div class="modal-content">
+            <span class="close" id="closeAppointmentModal">&times;</span>
+            <h3 id="appointmentModalTitle">Book Appointment</h3>
+            <form id="appointmentForm">
+                <label for="appointmentTime">Time:</label>
+                <input type="time" id="appointmentTime" name="time" required>
+                <label for="appointmentDesc">Description:</label>
+                <input type="text" id="appointmentDesc" name="description" required>
+                <button type="submit" id="saveAppointmentBtn">Save</button>
+            </form>
+        </div>
+    </div>
     <div id="apiStatus" class="api-status" style="display: none;"></div>
 
-    <script src="/Model/CalendarModel.js"></script>
-    <script src="/Middleware/CalendarMiddleware.js"></script>
-    <script src="/Controller/CalendarController.js"></script>
-    <script src="/Public/app.js"></script>
+    <script src="CalendarModel.js"></script>
+    <script src="CalendarMiddleware.js"></script>
+    <script src="CalendarController.js"></script>
+    <script src="app.js"></script>
 </body>
 </html>

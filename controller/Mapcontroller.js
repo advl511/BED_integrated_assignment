@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const mapModel = require('../model/mapmodel');
-const { validateApiRequest, handleDatabaseErrors } = require('../middleware/mapmiddleware');
+const { validateApiRequest, handleDatabaseErrors } = require('../Middlewares/mapmiddleware');
 
 router.get('/config', validateApiRequest, async (req, res) => {
     try {

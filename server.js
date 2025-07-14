@@ -10,7 +10,7 @@ const PORT = process.env.PORT || 3000;
 
 // Import controllers and middleware
 const mapController = require('./controller/Mapcontroller');
-const mapMiddleware = require('./middleware/mapmiddleware');
+const mapMiddleware = require('./Middlewares/mapmiddleware');
 
 // Setup basic middleware stack
 mapMiddleware.setupBasicMiddleware(app);

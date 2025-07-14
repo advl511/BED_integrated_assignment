@@ -147,15 +147,6 @@ dist
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 
-# JSON files
-*.json
-!package.json
-!package-lock.json
-!tsconfig.json
-!jsconfig.json
-!composer.json
-!.prettierrc.json
-!.eslintrc.json
-!appsettings.json
+# Keep project configuration
 !project.config.json
 !manifest.json

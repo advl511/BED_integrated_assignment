@@ -138,4 +138,38 @@ dist
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 
+
 .env
+# Node.js specific
+node_modules/
+npm-debug.log
+.npm
+.node_repl_history
+*.env
+.env.local
+.env.*.local
+.env.development.local
+.env.test.local
+.env.production.local
+package-lock.json
+
+# IDE specific
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# JSON files
+*.json
+!package.json
+!package-lock.json
+!tsconfig.json
+!jsconfig.json
+!composer.json
+!.prettierrc.json
+!.eslintrc.json
+!appsettings.json
+
+# Keep project configuration
+!project.config.json
+!manifest.json

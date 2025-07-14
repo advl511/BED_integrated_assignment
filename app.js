@@ -24,8 +24,10 @@ app.use(loadSettings);
 app.use(express.static(path.join(__dirname, "public")));
 
 // Settings Routes (CRUD)
+
+app.put('/api/settings/:userId', settingsController.updateUserSettings);
 app.get("/api/settings/:userId", settingsController.getUserSettings);
-app.post("/api/settings/:userId", settingsController.saveOrUpdateUserSettings);
+app.post("/api/settings/:userId", settingsController.saveUserSettings);
 
 
 app.get("/api/some-feature", (req, res) => {

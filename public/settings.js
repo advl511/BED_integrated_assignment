@@ -1,46 +1,66 @@
-document.addEventListener("DOMContentLoaded", () => {
-  const form = document.getElementById("settingsForm");
+document.addEventListener("DOMContentLoaded", async () => {
+  const userId = localStorage.getItem("userId") || "user123"; // Fallback userId
 
+  const language = document.getElementById("language");
+  const direction = document.getElementById("direction");
+  const fontSize = document.getElementById("fontSize");
+  const timestamps = document.getElementById("timestamps");
+  const sound = document.getElementById("sound");
+  const settingsForm = document.getElementById("settingsForm");
+
+  // Check if all elements exist
+  if (!language || !direction || !fontSize || !timestamps || !sound || !settingsForm) {
+    console.error("One or more settings form elements not found in the DOM.");
+    return;
+  }
+
+  // Load settings from DB
   async function loadSettings() {
     try {
-      const res = await fetch("/api/settings", {
-        headers: { Authorization: `Bearer ${localStorage.getItem("jwtToken")}` }
-      });
+      const res = await fetch(`/api/settings/${userId}`);
+      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
       const data = await res.json();
-      if (!data) return;
 
-      document.getElementById("language").value = data.language;
-      document.getElementById("direction").value = data.direction;
-      document.getElementById("fontSize").value = data.fontSize;
-      document.getElementById("timestamps").checked = data.timestamps;
-      document.getElementById("sound").checked = data.sound;
+      if (data.language) language.value = data.language;
+      if (data.direction) direction.value = data.direction;
+      if (data.fontSize) fontSize.value = data.fontSize;
+      timestamps.checked = !!data.timestamps;
+      sound.checked = !!data.sound;
     } catch (err) {
-      console.error("Error loading settings:", err);
+      console.error("Failed to load settings:", err);
     }
   }
 
-  form.addEventListener("submit", async (e) => {
+  // Save settings to DB
+  settingsForm.addEventListener("submit", async (e) => {
     e.preventDefault();
+
     const settings = {
-      language: document.getElementById("language").value,
-      direction: document.getElementById("direction").value,
-      fontSize: document.getElementById("fontSize").value,
-      timestamps: document.getElementById("timestamps").checked,
-      sound: document.getElementById("sound").checked,
+      language: language.value,
+      direction: direction.value,
+      fontSize: fontSize.value,
+      timestamps: timestamps.checked,
+      sound: sound.checked,
     };
 
     try {
-      await fetch("/api/settings", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("jwtToken")}`
-        },
+      const res = await fetch(`/api/settings/${userId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(settings),
       });
-      alert("Settings saved!");
+
+      const data = await res.json();
+
+      if (res.ok) {
+        alert(data.message || "✅ Settings saved!");
+        localStorage.setItem("preferredLang", language.value); // Save preferred language
+      } else {
+        alert(data.error || "❌ Failed to save settings.");
+      }
     } catch (err) {
-      console.error("Save failed:", err);
+      console.error("Failed to save settings:", err);
+      alert("❌ Failed to save settings.");
     }
   });
 

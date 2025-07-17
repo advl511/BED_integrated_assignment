@@ -1,68 +1,56 @@
-document.addEventListener("DOMContentLoaded", async () => {
-  const userId = localStorage.getItem("userId") || "user123"; // Fallback userId
+document.addEventListener("DOMContentLoaded", () => {
+  // Elements
+  const langSelect = document.getElementById("languageSelect");
 
-  const language = document.getElementById("language");
-  const direction = document.getElementById("direction");
-  const fontSize = document.getElementById("fontSize");
-  const timestamps = document.getElementById("timestamps");
-  const sound = document.getElementById("sound");
-  const settingsForm = document.getElementById("settingsForm");
+  // Load saved preferred language or default to English
+  const savedLang = localStorage.getItem("preferredLang") || "en";
+  langSelect.value = savedLang;
 
-  // Check if all elements exist
-  if (!language || !direction || !fontSize || !timestamps || !sound || !settingsForm) {
-    console.error("One or more settings form elements not found in the DOM.");
-    return;
-  }
-
-  // Load settings from DB
-  async function loadSettings() {
-    try {
-      const res = await fetch(`/api/settings/${userId}`);
-      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-      const data = await res.json();
-
-      if (data.language) language.value = data.language;
-      if (data.direction) direction.value = data.direction;
-      if (data.fontSize) fontSize.value = data.fontSize;
-      timestamps.checked = !!data.timestamps;
-      sound.checked = !!data.sound;
-    } catch (err) {
-      console.error("Failed to load settings:", err);
-    }
-  }
-
-  // Save settings to DB
-  settingsForm.addEventListener("submit", async (e) => {
-    e.preventDefault();
-
-    const settings = {
-      language: language.value,
-      direction: direction.value,
-      fontSize: fontSize.value,
-      timestamps: timestamps.checked,
-      sound: sound.checked,
-    };
-
-    try {
-      const res = await fetch(`/api/settings/${userId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(settings),
-      });
-
-      const data = await res.json();
-
-      if (res.ok) {
-        alert(data.message || "✅ Settings saved!");
-        localStorage.setItem("preferredLang", language.value); // Save preferred language
-      } else {
-        alert(data.error || "❌ Failed to save settings.");
-      }
-    } catch (err) {
-      console.error("Failed to save settings:", err);
-      alert("❌ Failed to save settings.");
-    }
+  // Update localStorage on language change
+  langSelect.addEventListener("change", () => {
+    localStorage.setItem("preferredLang", langSelect.value);
+    alert("Language preference saved!");
   });
 
-  loadSettings();
+  // Load saved chat settings if available and populate inputs
+  const savedSettings = localStorage.getItem("chatSettings");
+  if (savedSettings) {
+    const settings = JSON.parse(savedSettings);
+
+    if (settings.direction) document.getElementById("translation-direction").value = settings.direction;
+    if (settings.fontSize) document.getElementById("font-size").value = settings.fontSize;
+    if (typeof settings.timestamps === "boolean") document.getElementById("timestamps").checked = settings.timestamps;
+    if (typeof settings.sound === "boolean") document.getElementById("sound").checked = settings.sound;
+  }
 });
+
+// Tab switcher function
+function showTab(tabName) {
+  document.getElementById("account").classList.add("hidden");
+  document.getElementById("chat").classList.add("hidden");
+  document.getElementById(tabName).classList.remove("hidden");
+}
+
+// Save all settings on button click
+function saveSettings() {
+  const language = document.getElementById("languageSelect").value; // languageSelect id matches selector above
+  const direction = document.getElementById("translation-direction").value;
+  const fontSize = document.getElementById("font-size").value;
+  const timestamps = document.getElementById("timestamps").checked;
+  const sound = document.getElementById("sound").checked;
+
+  const settings = {
+    language,
+    direction,
+    fontSize,
+    timestamps,
+    sound
+  };
+
+  // Save full chat settings as JSON
+  localStorage.setItem("chatSettings", JSON.stringify(settings));
+  // Save language separately for translation use
+  localStorage.setItem("preferredLang", language);
+
+  alert("Settings saved!");
+}

@@ -118,10 +118,15 @@ const validateApiRequest = (req, res, next) => {
 const responseTimeTracker = (req, res, next) => {
   const startTime = Date.now();
   
-  res.on('finish', () => {
+  // Set response time header before response finishes
+  const originalSend = res.send;
+  res.send = function(data) {
     const responseTime = Date.now() - startTime;
-    res.set('X-Response-Time', `${responseTime}ms`);
-  });
+    if (!res.headersSent) {
+      res.set('X-Response-Time', `${responseTime}ms`);
+    }
+    return originalSend.call(this, data);
+  };
   
   next();
 };

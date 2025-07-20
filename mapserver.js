@@ -11,6 +11,7 @@ const PORT = process.env.PORT || 3000;
 // Import middleware and controllers
 const mapMiddleware = require('./Middlewares/mapmiddleware');
 const mapController = require('./controller/Mapcontroller');
+const mapModel = require('./model/mapmodel');
 
 // Setup basic middleware
 mapMiddleware.setupBasicMiddleware(app);
@@ -22,7 +23,8 @@ app.use(express.static(path.join(__dirname, "public")));
 mapMiddleware.setupHealthCheck(app);
 
 // API routes
-app.use('/map', mapController);
+app.use('/api/map', mapController);  // Updated to use /api/map prefix
+app.use('/map', mapController);      // Keep backward compatibility
 
 // Serve the main page
 app.get('/', (req, res) => {
@@ -32,10 +34,29 @@ app.get('/', (req, res) => {
 // Setup error handling
 mapMiddleware.setupErrorHandling(app);
 
-
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+// Initialize database and start server
+async function startServer() {
+  try {
+    // Check if required environment variables are set
+    if (!process.env.GOOGLE_MAPS_API_KEY) {
+      console.error('GOOGLE_MAPS_API_KEY is not set in environment variables');
+      process.exit(1);
+    }
+    
+    // Connect to database and initialize tables
+    await mapModel.connect();
+    await mapModel.initializeTables();
+    
+    app.listen(PORT, () => {
+      console.log(`Server running on port ${PORT}`);
+      console.log(`Map available at http://localhost:${PORT}/`);
+      console.log(`Health check at http://localhost:${PORT}/health`);
+    });
+  } catch (error) {
+    console.error('Failed to start server:', error);
+    process.exit(1);
+  }
+}
 
 // Graceful shutdown
 process.on("SIGINT", async () => {
@@ -43,4 +64,6 @@ process.on("SIGINT", async () => {
   await sql.close();
   console.log("Database connections closed");
   process.exit(0);
-});    
+});
+
+startServer();

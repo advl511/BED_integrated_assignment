@@ -1,6 +1,12 @@
+/* Import Google Fonts for better typography */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
 body{
   margin: 0;
   overflow: hidden;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
 }
 
 #map {
@@ -9,18 +15,22 @@ body{
 }
 
 button {
-  padding: 6px 10px;
+  padding: 8px 14px;
   cursor: pointer;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 500;
 }
 
 #info{
   position: absolute;
   top: 0px;
-  background: rgba(255, 255, 255, 0.8);
-  padding: 10px;
-  border-radius: 8px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  background: rgba(255, 255, 255, 0.95);
+  padding: 12px;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
   z-index: 999;
+  font-size: 14px;
 }
 
 #UI-container {
@@ -70,8 +80,8 @@ sidebar img:hover {
 
 #locationNav{
   position: absolute;
-  top: 20px;
-  left: 90px; /* Position it just right of the sidebar */
+  top: 20px; /* Move to top of screen */
+  left: 90px; /* Keep left-aligned, not centered */
   margin-top: 0;
   display: flex;
   gap: 0;
@@ -80,8 +90,14 @@ sidebar img:hover {
   border-radius: 8px;
   overflow: hidden;
   pointer-events: all; /* Enable interactions */
-  transition: left 0.3s ease; /* Smooth transition when panel opens */
+  transition: left 0.3s ease, opacity 0.3s ease; /* Smooth transition when panel opens */
   z-index: 1001; /* Keep search bar above the panel */
+}
+
+/* Hide search bar when directions mode is active */
+#locationNav.directions-active {
+  opacity: 0;
+  pointer-events: none;
 }
 
 /* Move search bar when saved locations panel is active */
@@ -90,16 +106,17 @@ sidebar img:hover {
 }
 
 input[type="text"] {
-  height: 48px;
-  width: 400px;
-  padding: 0 16px;
+  height: 40px;
+  width: 360px;
+  padding: 0 14px;
   border-radius: 8px 0 0 8px;
-  font-size: 16px;
+  font-size: 14px;
   border: none;
   outline: none;
   box-shadow: none;
   background-color: white;
-  color: #333;
+  color: #2c3e50;
+  font-weight: 500;
 }
 
 input[type="text"]:focus {
@@ -107,13 +124,13 @@ input[type="text"]:focus {
 }
 
 input[type="text"]::placeholder {
-  color: #9aa0a6;
+  color: #8492a6;
+  font-weight: 400;
 }
 
-
 #locateMe{
-  height: 48px;
-  width: 48px;
+  height: 40px;
+  width: 40px;
   background: white;
   border: none;
   border-radius: 0 8px 8px 0;
@@ -185,41 +202,47 @@ input[type="text"]::placeholder {
   justify-content: space-between;
   align-items: center;
   padding: 20px;
-  border-bottom: 1px solid #e0e0e0;
-  background: #f8f9fa;
-  position: relative;
-  z-index: 1003; /* Ensure header is clickable */
-  pointer-events: auto; /* Enable pointer events */
+  border-bottom: 1px solid #e2e8f0;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  pointer-events: auto;
+  flex-shrink: 0; /* Prevent header from shrinking */
 }
 
 .panel-header h3 {
   margin: 0;
   font-size: 18px;
-  font-weight: 500;
-  color: #333;
+  font-weight: 600;
+  color: white;
+  letter-spacing: -0.02em;
 }
 
 #closePanelBtn {
-  background: none;
+  background: transparent;
   border: none;
-  font-size: 24px;
-  color: #666;
+  font-size: 20px;
+  color: white;
   cursor: pointer;
-  padding: 0;
-  width: 30px;
-  height: 30px;
+  padding: 8px;
+  width: 32px;
+  height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  transition: background-color 0.2s ease;
+  transition: all 0.3s ease;
   position: relative;
-  z-index: 1003; /* Ensure close button is above everything */
-  pointer-events: auto; /* Explicitly enable pointer events */
+  z-index: 1003;
+  pointer-events: auto;
+  font-weight: 600;
 }
 
 #closePanelBtn:hover {
-  background-color: #e0e0e0;
+  background: rgba(255, 255, 255, 0.1);
+  transform: scale(1.1);
 }
 
 .locations-list {
@@ -230,10 +253,10 @@ input[type="text"]::placeholder {
 
 .location-item {
   display: flex;
-  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
   padding: 15px;
   border-bottom: 1px solid #f0f0f0;
-  cursor: pointer;
   transition: background-color 0.2s ease;
 }
 
@@ -245,10 +268,48 @@ input[type="text"]::placeholder {
   border-bottom: none;
 }
 
+.location-info {
+  flex: 1;
+  cursor: pointer;
+}
+
 .location-name {
   font-weight: 500;
   color: #333;
   margin-bottom: 5px;
+}
+
+.location-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.action-btn {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.start-btn {
+  background: #4CAF50;
+  color: white;
+}
+
+.start-btn:hover {
+  background: #45a049;
+}
+
+.end-btn {
+  background: #f44336;
+  color: white;
+}
+
+.end-btn:hover {
+  background: #d32f2f;
 }
 
 .location-coords {
@@ -286,6 +347,17 @@ sidebar img.active {
   background-color: #e3f2fd !important; /* Light blue background for active state */
 }
 
+/* Specific styles for directions button */
+#directionsBtn {
+  object-fit: cover;
+  border-radius: 6px;
+}
+
+#directionsBtn.active {
+  background-color: #fff3e0 !important;
+  border: 2px solid #ff9800 !important;
+}
+
 /* Ensure Google Maps autocomplete dropdown follows the search bar */
 #UI-container.panel-open .pac-container {
   margin-left: 300px; /* Adjust dropdown position when panel is open */
@@ -312,3 +384,616 @@ sidebar img.active {
   z-index: -1;
   pointer-events: all;
 }
+
+/* Transport Controls - Enhanced styling and positioning */
+.transport-controls {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+  pointer-events: all;
+  z-index: 1000;
+  min-width: 320px;
+  max-width: 380px;
+  transition: right 0.3s ease;
+  border: 1px solid rgba(0,0,0,0.08);
+}
+
+/* Keep transport controls on right side when saved locations panel is open */
+#UI-container.panel-open .transport-controls {
+  right: 20px;
+}
+
+.transport-controls .control-group {
+  margin-bottom: 20px;
+}
+
+.transport-controls .control-group:last-child {
+  margin-bottom: 0;
+}
+
+.transport-controls label {
+  display: block;
+  font-size: 15px;
+  color: #2c3e50;
+  margin-bottom: 8px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.checkbox-label {
+  display: flex !important;
+  align-items: center;
+  cursor: pointer;
+  margin-bottom: 0 !important;
+  padding: 12px 16px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  font-weight: 500;
+}
+
+.checkbox-label:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.checkbox-label input[type="checkbox"] {
+  margin-right: 12px;
+  transform: scale(1.2);
+  accent-color: white;
+}
+
+.transport-controls select {
+  width: 100%;
+  padding: 12px 16px;
+  border: 2px solid #e1e5e9;
+  border-radius: 8px;
+  font-size: 15px;
+  background: white;
+  color: #2c3e50;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.transport-controls select:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+/* Enhanced Route Points Section - Smaller inputs */
+.route-point {
+  margin-bottom: 16px;
+}
+
+.route-point label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #2c3e50;
+  letter-spacing: -0.01em;
+}
+
+.input-group {
+  display: flex;
+  align-items: stretch;
+  border: 2px solid #e1e5e9;
+  border-radius: 8px;
+  background: white;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+  height: 40px;
+}
+
+.input-group:focus-within {
+  border-color: #667eea;
+  box-shadow: 0 4px 16px rgba(102, 126, 234, 0.15);
+  transform: translateY(-1px);
+}
+
+.input-group input {
+  flex: 1;
+  padding: 10px 12px;
+  border: none;
+  font-size: 14px;
+  outline: none;
+  background: transparent;
+  color: #2c3e50;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  text-align: left; /* Default alignment for typed text */
+  line-height: 20px; /* Match the available height for vertical centering */
+  height: 20px; /* Explicit height for consistent vertical alignment */
+}
+
+.input-group input:placeholder-shown {
+  text-align: left; /* Keep text left aligned when showing placeholder */
+}
+
+.input-group input::placeholder {
+  color: #8492a6;
+  font-weight: 400;
+  font-size: 13px;
+  text-align: left;
+  line-height: 20px; /* Match input line-height for perfect vertical alignment */
+}
+
+.location-btn {
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  color: white;
+  border: none;
+  padding: 10px 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  border-left: 1px solid rgba(255,255,255,0.2);
+}
+
+.location-btn:hover {
+  background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+  transform: scale(1.05);
+}
+
+.clear-btn {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: white;
+  border: none;
+  padding: 10px 12px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  border-left: 1px solid rgba(255,255,255,0.2);
+}
+
+.clear-btn:hover {
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+  transform: scale(1.05);
+}
+
+.route-btn {
+  width: 100%;
+  padding: 12px 18px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  margin-top: 12px;
+  background: #d1d5db;
+  color: #6b7280;
+  transition: all 0.3s ease;
+  letter-spacing: -0.01em;
+  height: 40px;
+}
+
+.route-btn:enabled {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  transform: translateY(0);
+}
+
+.route-btn:enabled:hover {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.3);
+}
+
+/* Enhanced Directions Container - Positioned on left side with smart spacing */
+.directions-container {
+  position: absolute;
+  top: 20px;
+  left: 90px; /* Start after the sidebar */
+  width: 360px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+  pointer-events: all;
+  z-index: 999;
+  max-height: calc(100vh - 40px);
+  overflow: hidden;
+  border: 1px solid rgba(0,0,0,0.08);
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Move directions panel to the right when saved locations panel is open */
+#UI-container.panel-open .directions-container {
+  left: 390px; /* 70px (sidebar) + 300px (panel width) + 20px (margin) */
+}
+
+/* Inner scroll wrapper for better scrollbar control */
+.directions-scroll-wrapper {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Custom scrollbar styling */
+.directions-scroll-wrapper::-webkit-scrollbar {
+  width: 8px;
+}
+
+.directions-scroll-wrapper::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 4px;
+  margin: 8px 0;
+}
+
+.directions-scroll-wrapper::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 4px;
+  transition: all 0.3s ease;
+}
+
+.directions-scroll-wrapper::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+/* Firefox scrollbar */
+.directions-scroll-wrapper {
+  scrollbar-width: thin;
+  scrollbar-color: #667eea #f1f5f9;
+}
+
+.directions-instructions {
+  padding: 20px;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border-bottom: 1px solid #e2e8f0;
+  font-size: 14px;
+}
+
+.directions-instructions p {
+  margin: 0 0 12px 0;
+  color: #2c3e50;
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.directions-instructions ol {
+  margin: 0;
+  padding-left: 20px;
+  color: #64748b;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.directions-instructions li {
+  margin: 6px 0;
+  font-weight: 500;
+}
+
+.directions-panel {
+  padding: 0;
+  border-bottom: 1px solid #e2e8f0;
+  display: none; /* Hidden by default, shown when directions are calculated */
+}
+
+/* Show directions panel when it has content */
+.directions-panel:not(:empty) {
+  display: block;
+  padding: 20px;
+}
+
+.route-info {
+  padding: 0;
+  border-bottom: 1px solid #e2e8f0;
+  display: none; /* Hidden by default, shown when route info is available */
+}
+
+/* Show route info when it has content */
+.route-info:not(:empty) {
+  display: block;
+  padding: 20px;
+}
+
+.route-summary {
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+  padding: 16px;
+  border-radius: 10px;
+  margin-bottom: 16px;
+  border: 1px solid #bae6fd;
+}
+
+.route-summary h4 {
+  margin: 0 0 12px 0;
+  color: #1e293b;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.route-summary p {
+  margin: 6px 0;
+  font-size: 15px;
+  color: #475569;
+  font-weight: 500;
+}
+
+.save-route-btn, .clear-route-btn {
+  padding: 12px 20px;
+  margin: 6px 8px 6px 0;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  letter-spacing: -0.01em;
+}
+
+.save-route-btn {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+}
+
+.save-route-btn:hover {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.clear-route-btn {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: white;
+}
+
+.clear-route-btn:hover {
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+.saved-routes-list {
+  padding: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Only show padding when there's content */
+.saved-routes-list:not(:empty) {
+  padding: 20px;
+}
+
+.saved-routes-list h4 {
+  margin: 0 0 16px 0;
+  color: #1e293b;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  padding: 20px 20px 0 20px;
+}
+
+/* Style for when saved routes list is empty */
+.saved-routes-list:empty::before {
+  content: "No saved routes yet. Create a route and save it to see it here.";
+  display: block;
+  text-align: center;
+  color: #94a3b8;
+  font-style: italic;
+  padding: 40px 20px;
+  font-size: 14px;
+}
+
+.saved-route-item {
+  padding: 16px;
+  margin-bottom: 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: white;
+}
+
+.saved-route-item:hover {
+  background-color: #f8fafc;
+  border-color: #cbd5e1;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+.saved-route-item h5 {
+  margin: 0 0 8px 0;
+  color: #1e293b;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.saved-route-item p {
+  margin: 0 0 4px 0;
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.saved-route-item small {
+  color: #94a3b8;
+  font-size: 12px;
+  font-weight: 400;
+}
+
+.no-routes {
+  color: #94a3b8;
+  font-style: italic;
+  text-align: center;
+  padding: 30px 20px;
+  font-size: 14px;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border-radius: 8px;
+  margin: 10px;
+  border: 1px dashed #cbd5e1;
+}
+
+/* Enhanced autocomplete styling for all search inputs */
+.pac-container {
+  border-radius: 8px !important;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.12) !important;
+  border: 1px solid rgba(0,0,0,0.08) !important;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+  margin-top: 2px !important;
+}
+
+.pac-item {
+  padding: 12px 16px !important;
+  cursor: pointer !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  transition: all 0.2s ease !important;
+}
+
+.pac-item:hover {
+  background-color: #f8fafc !important;
+}
+
+.pac-item:last-child {
+  border-bottom: none !important;
+}
+
+.pac-item-selected {
+  background-color: #eff6ff !important;
+}
+
+.pac-matched {
+  font-weight: 700 !important;
+  color: #3b82f6 !important;
+}
+
+.pac-icon {
+  margin-right: 12px !important;
+  margin-top: 2px !important;
+}
+
+/* Style the autocomplete dropdown for route inputs specifically */
+.pac-container:after {
+  content: "";
+  position: absolute;
+  top: -6px;
+  left: 20px;
+  width: 0;
+  height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-bottom: 6px solid white;
+  z-index: 1001;
+}
+
+/* Responsive design for smaller screens */
+@media (max-width: 1400px) {
+  .directions-container {
+    left: 90px;
+    width: 340px;
+  }
+  
+  /* When panel is open on smaller screens */
+  #UI-container.panel-open .directions-container {
+    left: 370px; /* Reduced spacing for smaller screens */
+  }
+  
+  .transport-controls {
+    top: 20px;
+    right: 20px;
+    min-width: 300px;
+  }
+}
+
+@media (max-width: 1200px) {
+  .directions-container {
+    width: 320px;
+  }
+  
+  /* When panel is open */
+  #UI-container.panel-open .directions-container {
+    left: 350px;
+  }
+  
+  .transport-controls {
+    min-width: 280px;
+  }
+}
+
+@media (max-width: 768px) {
+  .directions-container {
+    left: 10px;
+    right: 10px;
+    width: auto;
+    top: 50%;
+    transform: translateY(-50%);
+    max-height: 80vh;
+  }
+  
+  /* Reset positioning for mobile when panel is open */
+  #UI-container.panel-open .directions-container {
+    left: 10px;
+    right: 10px;
+    transform: translateY(-50%);
+  }
+  
+  .transport-controls {
+    right: 10px;
+    top: 10px;
+    min-width: 260px;
+    max-width: calc(100vw - 100px);
+  }
+  
+  sidebar {
+    width: 60px;
+  }
+  
+  sidebar img {
+    width: 24px;
+    height: 24px;
+  }
+}
+
+/* Enhanced loading indicator */
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 30px 20px;
+  color: #64748b;
+  font-style: italic;
+  font-size: 14px;
+  font-weight: 500;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border-radius: 8px;
+  margin: 10px;
+  border: 1px dashed #cbd5e1;
+}
+
+.loading::before {
+  content: "";
+  width: 16px;
+  height: 16px;
+  border: 2px solid #e2e8f0;
+  border-top: 2px solid #667eea;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-right: 10px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+

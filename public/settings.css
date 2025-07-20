@@ -1,43 +1,47 @@
 .settings-container {
-  max-width: 500px;
-  margin: 2rem auto;
-  padding: 2rem;
+  max-width: 700px; /* Increased from 500px */
+  margin: 3rem auto;
+  padding: 3rem;
   font-family: 'Segoe UI', sans-serif;
   background: #f8f9fa;
-  border-radius: 12px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  border-radius: 16px;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.1);
 }
 
 .settings-container h2 {
   text-align: center;
-  margin-bottom: 1.5rem;
-  font-size: 1.75rem;
+  margin-bottom: 2rem;
+  font-size: 2.25rem; /* Bigger title */
   color: #333;
 }
 
 label {
   display: block;
-  margin-top: 1.2rem;
+  margin-top: 1.5rem;
   font-weight: 600;
   color: #333;
+  font-size: 1.1rem; /* Bigger labels */
 }
 
-select, input[type="checkbox"], button {
+select,
+input[type="checkbox"],
+button {
   width: 100%;
-  padding: 0.75rem;
-  margin-top: 0.4rem;
-  border-radius: 6px;
+  padding: 1rem; /* Increased padding */
+  margin-top: 0.5rem;
+  border-radius: 8px;
   border: 1px solid #ccc;
-  font-size: 1rem;
+  font-size: 1.1rem; /* Larger text */
 }
 
 button {
   background-color: #007bff;
   color: white;
   border: none;
-  margin-top: 1.5rem;
+  margin-top: 2rem;
   font-weight: bold;
   cursor: pointer;
+  transition: background-color 0.2s ease;
 }
 
 button:hover {
@@ -46,7 +50,18 @@ button:hover {
 
 @media (max-width: 600px) {
   .settings-container {
-    padding: 1rem;
+    padding: 1.5rem;
     margin: 1rem;
+  }
+
+  .settings-container h2 {
+    font-size: 1.75rem;
+  }
+
+  label,
+  select,
+  input[type="checkbox"],
+  button {
+    font-size: 1rem;
   }
 }

@@ -75,12 +75,11 @@
 
       <!-- Directions Panel - Enhanced with better positioning and scroll -->
       <div id="directionsContainer" class="directions-container" style="display: none;">
+        <div class="panel-header">
+          <h3>Directions & Routes</h3>
+          <button id="closeDirectionsBtn" onclick="hideDirectionsPanel();">×</button>
+        </div>
         <div class="directions-scroll-wrapper">
-          <div class="panel-header">
-            <h3>Directions & Routes</h3>
-            <button onclick="hideDirectionsPanel();">✕</button>
-          </div>
-          
           <!-- Instructions -->
           <div class="directions-instructions">
             <p><strong>How to get directions:</strong></p>

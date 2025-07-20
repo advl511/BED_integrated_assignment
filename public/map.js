@@ -137,7 +137,11 @@ async function initMap() {
   directionsRenderer.addListener('directions_changed', () => {
     const directions = directionsRenderer.getDirections();
     currentRoute = directions;
-    displayRouteInfo(directions);
+    
+    // Only display route info if we have actual routes (not when clearing)
+    if (directions.routes && directions.routes.length > 0) {
+      displayRouteInfo(directions);
+    }
   });
 
   addMarker(defaultLocation, "Singapore (Default Location)");
@@ -285,11 +289,27 @@ function clearEndPoint() {
 function clearRoutePoints() {
   startPoint = null;
   endPoint = null;
-  document.getElementById('startPoint').value = '';
-  document.getElementById('endPoint').value = '';
+  
+  const startInput = document.getElementById('startPoint');
+  const endInput = document.getElementById('endPoint');
+  
+  if (startInput) {
+    startInput.value = '';
+    startInput.placeholder = 'Enter starting location...';
+  }
+
+  if (endInput) {
+    endInput.value = '';
+    endInput.placeholder = 'Enter destination...';
+  }
+  
   updateCalculateButton();
   clearMarkers();
-  clearDirections();
+  
+  // Also clear any existing route display
+  if (directionsRenderer) {
+    directionsRenderer.setDirections({routes: []});
+  }
 }
 
 // Update calculate button state
@@ -387,10 +407,69 @@ async function calculateRoute(origin, destination, travelMode = null) {
   }
 }
 
+// Extract location name from address
+function extractLocationName(address) {
+  if (!address) return 'Unknown Location';
+  
+  // Common patterns to extract meaningful names
+  const patterns = [
+    // Educational institutions
+    /^([^,]+(?:University|Polytechnic|School|College|Institute))/i,
+    // Shopping centers and malls
+    /^([^,]+(?:Mall|Centre|Center|Plaza|Hub))/i,
+    // Hotels and resorts
+    /^([^,]+(?:Hotel|Resort|Inn))/i,
+    // Hospitals and clinics
+    /^([^,]+(?:Hospital|Clinic|Medical))/i,
+    // Parks and recreation
+    /^([^,]+(?:Park|Garden|Stadium|Sports))/i,
+    // Transport hubs
+    /^([^,]+(?:Airport|Station|Terminal|Port))/i,
+    // Government buildings
+    /^([^,]+(?:Ministry|Building|Tower|Office))/i,
+    // Religious places
+    /^([^,]+(?:Temple|Church|Mosque|Cathedral))/i,
+    // General building names (before comma)
+    /^([A-Za-z0-9\s&'-]+)(?:,|\s+\d)/
+  ];
+  
+  // Try each pattern
+  for (const pattern of patterns) {
+    const match = address.match(pattern);
+    if (match && match[1] && match[1].trim().length > 3) {
+      return match[1].trim();
+    }
+  }
+  
+  // Fallback: take first part before comma if it's meaningful
+  const parts = address.split(',');
+  if (parts.length > 0) {
+    const firstPart = parts[0].trim();
+    // If first part is just a number/block, try second part
+    if (/^(BLK|Block|blk|\d+[A-Za-z]?)\s/.test(firstPart) && parts.length > 1) {
+      const secondPart = parts[1].trim();
+      if (secondPart.length > 3) {
+        return secondPart;
+      }
+    }
+    // Return first part if it's not just numbers
+    if (!/^\d+$/.test(firstPart) && firstPart.length > 3) {
+      return firstPart;
+    }
+  }
+  
+  // Last resort: return original address truncated
+  return address.length > 30 ? address.substring(0, 30) + '...' : address;
+}
+
 // Display route information
 function displayRouteInfo(directions) {
   const route = directions.routes[0];
   const leg = route.legs[0];
+  
+  // Extract meaningful location names
+  const fromName = extractLocationName(leg.start_address);
+  const toName = extractLocationName(leg.end_address);
   
   const routeInfo = document.getElementById('routeInfo');
   if (routeInfo) {
@@ -399,12 +478,20 @@ function displayRouteInfo(directions) {
         <h4>Route Summary</h4>
         <p><strong>Distance:</strong> ${leg.distance.text}</p>
         <p><strong>Duration:</strong> ${leg.duration.text}</p>
-        <p><strong>From:</strong> ${leg.start_address}</p>
-        <p><strong>To:</strong> ${leg.end_address}</p>
+        <p><strong>From:</strong> ${fromName}</p>
+        <p><strong>To:</strong> ${toName}</p>
+        <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #e2e8f0;">
+          <p style="font-size: 12px; color: #64748b; margin: 0;"><strong>Full addresses:</strong></p>
+          <p style="font-size: 11px; color: #94a3b8; margin: 4px 0 0 0;">${leg.start_address}</p>
+          <p style="font-size: 11px; color: #94a3b8; margin: 4px 0 0 0;">${leg.end_address}</p>
+        </div>
       </div>
       <button onclick="saveCurrentRoute()" class="save-route-btn">Save Route</button>
       <button onclick="clearDirections()" class="clear-route-btn">Clear Route</button>
     `;
+    
+    // Ensure the route info is visible
+    routeInfo.style.display = 'block';
   }
 }
 
@@ -421,15 +508,19 @@ async function saveCurrentRoute() {
   const route = currentRoute.routes[0];
   const leg = route.legs[0];
   
+  // Use extracted location names for better display
+  const fromName = extractLocationName(leg.start_address);
+  const toName = extractLocationName(leg.end_address);
+  
   const routeData = {
     name: routeName,
     origin: {
-      name: leg.start_address,
+      name: fromName, // Use extracted name instead of full address
       lat: leg.start_location.lat(),
       lng: leg.start_location.lng()
     },
     destination: {
-      name: leg.end_address,
+      name: toName, // Use extracted name instead of full address
       lat: leg.end_location.lat(),
       lng: leg.end_location.lng()
     },
@@ -451,8 +542,47 @@ async function saveCurrentRoute() {
 
 // Clear directions
 function clearDirections() {
-  directionsRenderer.setDirections({routes: []});
+  // Reset current route first to prevent re-triggering
   currentRoute = null;
+  
+  // Clear and completely hide route info section (including clear button) BEFORE clearing directions
+  const routeInfo = document.getElementById('routeInfo');
+  if (routeInfo) {
+    routeInfo.innerHTML = '';
+    routeInfo.style.display = 'none';
+  }
+  
+  // Clear the directions renderer more safely
+  if (directionsRenderer) {
+    try {
+      // Clear the panel first
+      directionsRenderer.setPanel(null);
+      // Clear directions
+      directionsRenderer.setDirections({routes: []});
+      // Reset the panel
+      directionsRenderer.setPanel(document.getElementById('directionsPanel'));
+    } catch (error) {
+      console.log('Error clearing directions renderer:', error);
+      // If there's an error, try recreating the renderer
+      directionsRenderer.setMap(null);
+      directionsRenderer = new google.maps.DirectionsRenderer({
+        draggable: true,
+        panel: document.getElementById('directionsPanel')
+      });
+      directionsRenderer.setMap(map);
+      
+      // Re-add the event listener
+      directionsRenderer.addListener('directions_changed', () => {
+        const directions = directionsRenderer.getDirections();
+        currentRoute = directions;
+        
+        // Only display route info if we have actual routes (not when clearing)
+        if (directions.routes && directions.routes.length > 0) {
+          displayRouteInfo(directions);
+        }
+      });
+    }
+  }
   
   // Clear directions panel content
   const directionsPanel = document.getElementById('directionsPanel');
@@ -460,11 +590,34 @@ function clearDirections() {
     directionsPanel.innerHTML = '';
   }
   
-  // Clear route info
-  const routeInfo = document.getElementById('routeInfo');
-  if (routeInfo) {
-    routeInfo.innerHTML = '';
+  // Clear route points and inputs
+  clearRoutePoints();
+  
+  // Clear any route markers
+  clearMarkers();
+  
+  // Reset travel mode to default
+  const travelModeSelect = document.getElementById('travelMode');
+  if (travelModeSelect) {
+    travelModeSelect.value = 'DRIVING';
   }
+  
+  // Reset calculate button
+  updateCalculateButton();
+  
+  // Reset placeholder text in search inputs
+  const startInput = document.getElementById('startPoint');
+  const endInput = document.getElementById('endPoint');
+  if (startInput) {
+    startInput.value = '';
+    startInput.placeholder = 'Enter starting location...';
+  }
+  if (endInput) {
+    endInput.value = '';
+    endInput.placeholder = 'Enter destination...';
+  }
+  
+  showNotification("Route and summary cleared successfully");
 }
 
 // Show/hide directions panel
@@ -510,19 +663,25 @@ async function loadSavedRoutes() {
         routesList.innerHTML = '<div class="no-routes">No saved routes found.</div>';
       } else {
         routesList.innerHTML = `
-          <h4>Saved Routes</h4>
-          ${routes.map(route => `
-            <div class="saved-route-item" onclick="loadRoute(${route.id})">
-              <h5>${route.route_name}</h5>
-              <p>${route.origin_name} → ${route.destination_name}</p>
-              <small>${route.distance_text} • ${route.duration_text}</small>
-            </div>
-          `).join('')}
+          <h4 style="padding: 20px 20px 10px 20px; margin: 0; color: #1e293b; font-size: 16px; font-weight: 600;">Saved Routes</h4>
+          <div style="padding: 0 20px 20px 20px; flex: 1; overflow-y: auto;">
+            ${routes.map(route => `
+              <div class="saved-route-item" onclick="loadRoute(${route.id})">
+                <h5>${route.route_name}</h5>
+                <p>${route.origin_name} → ${route.destination_name}</p>
+                <small>${route.distance_text} • ${route.duration_text}</small>
+              </div>
+            `).join('')}
+          </div>
         `;
       }
     }
   } catch (error) {
     console.error('Error loading saved routes:', error);
+    const routesList = document.getElementById('savedRoutesList');
+    if (routesList) {
+      routesList.innerHTML = '<div class="error-message">Failed to load routes. Please try again.</div>';
+    }
   }
 }
 
@@ -751,7 +910,7 @@ function locateMe(){
   return new Promise((resolve, reject) => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
-        (pos) => {
+        async (pos) => {
           const userLocation = {
             lat: parseFloat(pos.coords.latitude.toFixed(4)),
             lng: parseFloat(pos.coords.longitude.toFixed(4)),
@@ -765,14 +924,51 @@ function locateMe(){
               map.setZoom(18);
             }, 800);
             
-            setTimeout(() => {
+            setTimeout(async () => {
+              // Get address from coordinates using reverse geocoding
+              let locationName = "You are here!";
+              let fullAddress = "";
+              
+              try {
+                const geocoder = new google.maps.Geocoder();
+                const result = await new Promise((resolve, reject) => {
+                  geocoder.geocode(
+                    { location: { lat: userLocation.lat, lng: userLocation.lng } },
+                    (results, status) => {
+                      if (status === 'OK' && results[0]) {
+                        resolve(results[0]);
+                      } else {
+                        reject(new Error('Geocoding failed'));
+                      }
+                    }
+                  );
+                });
+                
+                // Extract a meaningful location name from the result
+                locationName = extractLocationName(result.formatted_address) || result.formatted_address || "Your Current Location";
+                fullAddress = result.formatted_address;
+              } catch (error) {
+                console.log('Reverse geocoding failed:', error);
+                locationName = `Your Location (${userLocation.lat}, ${userLocation.lng})`;
+                fullAddress = locationName;
+              }
+              
               const userMarker = new google.maps.Marker({
                 position: userLocation,
                 map: map,
-                title: "You are here!"
+                title: locationName
               });
               
               markers.push(userMarker);
+              
+              // Update the search input with the location address
+              const searchInput = document.getElementById("search");
+              if (searchInput) {
+                searchInput.value = fullAddress;
+              }
+              
+              // Show notification with the location name
+              showNotification(`Located: ${locationName}`);
               
               setTimeout(() => {
                 userMarker.setAnimation(google.maps.Animation.BOUNCE);

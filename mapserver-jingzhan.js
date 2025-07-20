@@ -13,10 +13,14 @@ const mapMiddleware = require('./Middlewares/mapmiddleware');
 const mapController = require('./controller/Mapcontroller');
 const mapModel = require('./model/mapmodel');
 
+// Setup basic middleware
 mapMiddleware.setupBasicMiddleware(app);
 
 // Serve static files from public directory
 app.use(express.static(path.join(__dirname, "public")));
+
+// Setup health check
+mapMiddleware.setupHealthCheck(app);
 
 // API routes
 app.use('/api/map', mapController);  // Updated to use /api/map prefix

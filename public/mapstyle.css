@@ -245,6 +245,32 @@ input[type="text"]::placeholder {
   transform: scale(1.1);
 }
 
+/* Directions panel close button styling */
+#closeDirectionsBtn {
+  background: transparent;
+  border: none;
+  font-size: 20px;
+  color: white;
+  cursor: pointer;
+  padding: 8px;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+  position: relative;
+  z-index: 1003;
+  pointer-events: auto;
+  font-weight: 600;
+}
+
+#closeDirectionsBtn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  transform: scale(1.1);
+}
+
 .locations-list {
   flex: 1;
   overflow-y: auto;
@@ -624,6 +650,8 @@ sidebar img.active {
   overflow-x: hidden;
   display: flex;
   flex-direction: column;
+  min-height: 0; /* Important: allows flex child to shrink */
+  max-height: calc(100vh - 140px); /* Account for header height */
 }
 
 /* Custom scrollbar styling */
@@ -659,6 +687,7 @@ sidebar img.active {
   background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
   border-bottom: 1px solid #e2e8f0;
   font-size: 14px;
+  flex-shrink: 0; /* Prevent instructions from shrinking */
 }
 
 .directions-instructions p {
@@ -685,6 +714,7 @@ sidebar img.active {
   padding: 0;
   border-bottom: 1px solid #e2e8f0;
   display: none; /* Hidden by default, shown when directions are calculated */
+  flex-shrink: 0; /* Prevent from shrinking */
 }
 
 /* Show directions panel when it has content */
@@ -697,6 +727,7 @@ sidebar img.active {
   padding: 0;
   border-bottom: 1px solid #e2e8f0;
   display: none; /* Hidden by default, shown when route info is available */
+  flex-shrink: 0; /* Prevent from shrinking */
 }
 
 /* Show route info when it has content */
@@ -767,6 +798,28 @@ sidebar img.active {
   flex: 1;
   display: flex;
   flex-direction: column;
+  overflow-y: auto; /* Enable scrolling for saved routes */
+  min-height: 0; /* Allow flex item to shrink below content size */
+  max-height: 300px; /* Set a maximum height to force scrolling when needed */
+}
+
+/* Apply custom scrollbar to saved routes list */
+.saved-routes-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.saved-routes-list::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 3px;
+}
+
+.saved-routes-list::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 3px;
+}
+
+.saved-routes-list::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
 }
 
 /* Only show padding when there's content */

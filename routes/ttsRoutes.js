@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const translationController = require("../controllers/translationController");
 
+
 router.post("/translate", translationController.createTranslation);
 router.get("/history", translationController.getAllTranslations);
 router.get("/history/:id", translationController.getTranslationById);

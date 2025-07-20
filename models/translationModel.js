@@ -29,6 +29,7 @@ async function deleteTranslation(id) {
   return result.rowsAffected[0] > 0;
 }
 
+
 module.exports = {
   saveTranslation,
   getAllTranslations,

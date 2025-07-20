@@ -7,9 +7,11 @@
   <link rel="stylesheet" href="tts.css" />
 </head>
 <body>
+  <a href="index.html" class="home-button">🏠 Home</a>
   <main class="container">
     <h2>Text-to-Speech Translator</h2>
 
+    <!-- Language Selection -->
     <div class="lang-select">
       <select id="fromLang">
         <option value="en">English</option>
@@ -17,6 +19,11 @@
         <option value="fr">French</option>
         <option value="ja">Japanese</option>
         <option value="ko">Korean</option>
+        <option value="zh">Chinese</option>
+        <option value="hi">Hindi</option>
+        <option value="ta">Tamil</option>
+        
+        
       </select>
 
       <button id="swapBtn">🔄</button>
@@ -27,13 +34,30 @@
         <option value="es">Spanish</option>
         <option value="fr">French</option>
         <option value="ko">Korean</option>
+        <option value="zh">Chinese</option>
+        <option value="hi">Hindi</option>
+        <option value="ta">Tamil</option>
+        
       </select>
     </div>
 
+    <!-- Text Input -->
     <textarea id="inputText" placeholder="Type text to translate..."></textarea>
     <button id="translateBtn">🔁 Translate</button>
 
-    <!-- Translated output will appear here AFTER translation -->
+    <!-- Additional TTS Settings -->
+    <div class="tts-settings">
+
+
+      <label for="speedSelect">⏩ Speed:</label>
+      <select id="speedSelect">
+        <option value="0.5">Slow</option>
+        <option value="1" selected>Normal</option>
+        <option value="1.5">Fast</option>
+      </select>
+    </div>
+
+    <!-- Translated Output -->
     <div class="output" id="outputBox" style="display: none;">
       <p><strong>Translated Text:</strong></p>
       <p id="translatedText"></p>

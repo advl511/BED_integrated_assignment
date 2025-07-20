@@ -26,6 +26,8 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, "publictts")));
 
+
+
 // Routes
 app.use("/api/tts", ttsRoutes);
 

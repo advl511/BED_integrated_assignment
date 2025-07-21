@@ -1,9 +1,10 @@
 const express = require("express");
 const router = express.Router();
-const settingsController = require("../controller/settingsController");
-const authorizeUser = require("../Middlewares/authorizeUser");
+const settingsController = require("../Controller/settingsController");
 
-router.get("/", authorizeUser, settingsController.getSettings);
-router.post("/", authorizeUser, settingsController.saveSettings);
+router.get("/:userId", settingsController.getUserSettings);
+
+
+router.post("/:userId", settingsController.upsertUserSettings);
 
 module.exports = router;

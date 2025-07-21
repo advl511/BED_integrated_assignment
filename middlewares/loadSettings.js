@@ -19,4 +19,4 @@ async function loadSettings(req, res, next) {
   }
 }
 
-module.exports = loadSettings;
+module.exports = { loadSettings };

@@ -6,7 +6,11 @@ const cors = require("cors");
 
 dotenv.config();
 
-const settingsController = require("./controller/settingsController");
+const settingsController = require("./Controller/settingsController");
+const {loadSettings} = require("./Middlewares/loadSettings");
+
+
+
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -15,30 +19,34 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-const loadSettings = require("./middlewares/loadSettings");
 
-app.use(loadSettings);
+// Serve static files (for HTML/CSS/JS)
+app.use(express.static(path.join(__dirname, "Public")));
+const settingsRoutes = require("./routes/settings");
+app.use("/api/settings", settingsRoutes);
 
-
-// Static files (for settings.html, settings.js, settings.css)
-app.use(express.static(path.join(__dirname, "public")));
-
-// Settings Routes (CRUD)
+// ========== Settings API Routes ==========
 app.get("/api/settings/:userId", settingsController.getUserSettings);
-app.post("/api/settings/:userId", settingsController.saveOrUpdateUserSettings);
+app.post("/api/settings/:userId", settingsController.upsertUserSettings);
+app.put("/api/settings/:userId", settingsController.upsertUserSettings);
 
+// Apply `loadSettings` middleware only to front-end routes needing user settings
+console.log("loadSettings is", typeof loadSettings);
+app.use("/settings", loadSettings);
 
-app.get("/api/some-feature", (req, res) => {
+// ========== Example Route with Settings ==========
+app.get("/api/some-feature", loadSettings, (req, res) => {
   const lang = req.settings.language || "en";
-  res.json({ message: `Preferred language is ${lang}` });
+  const fontSize = req.settings.fontSize || "medium";
+  res.json({ message: `Preferred language is ${lang}, font size is ${fontSize}` });
 });
 
-// Start server
+// ========== Start Server ==========
 app.listen(PORT, () => {
   console.log(`✅ Settings app running on http://localhost:${PORT}`);
 });
 
-// Graceful shutdown
+// ========== Graceful Shutdown ==========
 process.on("SIGINT", async () => {
   console.log("Shutting down...");
   await sql.close();

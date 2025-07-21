@@ -1,48 +1,104 @@
-document.addEventListener("DOMContentLoaded", () => {
-  const form = document.getElementById("settingsForm");
+document.addEventListener("DOMContentLoaded", async () => {
+  const userId = localStorage.getItem("userId") || "1"; // adjust as needed
 
-  async function loadSettings() {
-    try {
-      const res = await fetch("/api/settings", {
-        headers: { Authorization: `Bearer ${localStorage.getItem("jwtToken")}` }
-      });
-      const data = await res.json();
-      if (!data) return;
+  try {
+    const res = await fetch(`/api/settings/${userId}`, { method: "GET", credentials: "include" });
+    if (!res.ok) throw new Error("Failed to load settings");
+    const settings = await res.json();
 
-      document.getElementById("language").value = data.language;
-      document.getElementById("direction").value = data.direction;
-      document.getElementById("fontSize").value = data.fontSize;
-      document.getElementById("timestamps").checked = data.timestamps;
-      document.getElementById("sound").checked = data.sound;
-    } catch (err) {
-      console.error("Error loading settings:", err);
+    if (settings.language) document.getElementById("language").value = settings.language;
+    if (settings.fontSize) {
+      document.getElementById("fontSize").value = settings.fontSize;
+      document.documentElement.style.setProperty('--font-size', fontSizeValue(settings.fontSize));
     }
+    if (settings.theme) {
+      document.getElementById("theme").value = settings.theme;
+      applyTheme(settings.theme);
+    }
+    if (settings.timeFormat) document.getElementById("timeFormat").value = settings.timeFormat;
+  } catch (error) {
+    console.error(error);
   }
-
-  form.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const settings = {
-      language: document.getElementById("language").value,
-      direction: document.getElementById("direction").value,
-      fontSize: document.getElementById("fontSize").value,
-      timestamps: document.getElementById("timestamps").checked,
-      sound: document.getElementById("sound").checked,
-    };
-
-    try {
-      await fetch("/api/settings", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("jwtToken")}`
-        },
-        body: JSON.stringify(settings),
-      });
-      alert("Settings saved!");
-    } catch (err) {
-      console.error("Save failed:", err);
-    }
-  });
-
-  loadSettings();
 });
+
+function fontSizeValue(label) {
+  switch (label) {
+    case "small": return "14px";
+    case "medium": return "18px";
+    case "large": return "22px";
+    case "xlarge": return "26px";
+    default: return "18px";
+  }
+}
+
+function applyTheme(theme) {
+  const htmlEl = document.documentElement;
+  if (theme === "dark") {
+    htmlEl.classList.add("dark-theme");
+  } else if (theme === "light") {
+    htmlEl.classList.remove("dark-theme");
+  } else if (theme === "system") {
+    // Apply theme based on system preference
+    const isDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    if (isDark) {
+      htmlEl.classList.add("dark-theme");
+    } else {
+      htmlEl.classList.remove("dark-theme");
+    }
+    // Listen for changes in system preference
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+      if (e.matches) {
+        htmlEl.classList.add("dark-theme");
+      } else {
+        htmlEl.classList.remove("dark-theme");
+      }
+    });
+  }
+}
+
+async function saveSettings() {
+  const userId = localStorage.getItem("userId") || "1";
+
+  const settings = {
+    language: document.getElementById("language").value,
+    fontSize: document.getElementById("fontSize").value,
+    theme: document.getElementById("theme").value,
+    timeFormat: document.getElementById("timeFormat").value,
+  };
+
+  try {
+    const res = await fetch(`/api/settings/${userId}`, {
+      method: "POST", // or PUT if you prefer
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify(settings),
+    });
+
+    if (res.ok) {
+      alert("Settings saved!");
+      document.documentElement.style.setProperty('--font-size', fontSizeValue(settings.fontSize));
+      applyTheme(settings.theme);
+    } else {
+      alert("Error saving settings.");
+    }
+  } catch (error) {
+    alert("Network error.");
+    console.error(error);
+  }
+}
+
+// Attach save handler to form submission
+document.getElementById("settingsForm").addEventListener("submit", (e) => {
+  e.preventDefault();
+  saveSettings();
+});
+
+// Optional: Reset button behavior if you have one
+const resetBtn = document.getElementById("resetBtn");
+if (resetBtn) {
+  resetBtn.addEventListener("click", () => {
+    document.getElementById("settingsForm").reset();
+    document.documentElement.style.setProperty('--font-size', fontSizeValue("medium"));
+    applyTheme("light"); // or "system" or your default
+  });
+}

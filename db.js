@@ -1,5 +1,3 @@
-const sql = require("mssql");
-
 const config = {
   user: process.env.DB_USER,
   password: process.env.DB_PASS,
@@ -11,4 +9,3 @@ const config = {
   },
 };
 
-module.exports = { sql, config };

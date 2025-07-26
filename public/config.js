@@ -21,10 +21,8 @@ class MapConfig {
   // Fetch API key from backend
   async fetchApiKeyFromBackend() {
     try {
-      // Determine the correct API URL based on current environment
-      const apiUrl = window.location.port === '5501' 
-        ? 'http://localhost:3000/map/config'  // Live Server pointing to backend
-        : '/map/config';  // Same server
+      // Always try the backend API first (works for both server and file:// URLs)
+      const apiUrl = 'http://localhost:3000/map/config';
 
       console.log('Fetching API key from:', apiUrl);
       
@@ -46,12 +44,13 @@ class MapConfig {
         throw new Error('Google Maps API key not found in response');
       }
       
+      console.log('✅ Successfully loaded API key from backend');
       return data.googleMapsApiKey;
     } catch (error) {
       console.error('Error fetching API key from backend:', error);
       
-      // Fallback for development - you should remove this in production
-      console.warn('Using fallback API key for development');
+      // Fallback API key for development when backend is not available
+      console.warn('🔄 Using fallback API key - make sure your backend is running at http://localhost:3000');
       return 'AIzaSyDEOJ5uSsWR77w5mxxATEI3BWZBngyTtx8';
     }
   }

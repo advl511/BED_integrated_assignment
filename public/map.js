@@ -5,7 +5,23 @@ let savedLocationMarkers = [];
 let directionsService;
 let directionsRenderer;
 let currentRoute = null;
+
+// Detect if running from file system or server
+const isFileSystem = window.location.protocol === 'file:';
 const apiBaseUrl = "http://localhost:3000";
+
+// User management - for demo purposes, using a fixed user ID
+let currentUser = {
+  id: 1,
+  name: "Demo User"
+};
+
+// Show connection status
+if (isFileSystem) {
+  console.log('🗂️  Running from file system - connecting to backend at', apiBaseUrl);
+} else {
+  console.log('🌐 Running from server at', window.location.origin);
+}
 
 // Transport modes
 const TRANSPORT_MODES = {
@@ -16,13 +32,21 @@ const TRANSPORT_MODES = {
 };
 
 // API Functions
-async function fetchSavedLocations() {
+async function fetchSavedLocations(userId = null) {
   try {
-    const response = await fetch(`${apiBaseUrl}/map/locations`);
+    let url = `${apiBaseUrl}/locations`;
+    if (userId) {
+      url = `${apiBaseUrl}/locations/${userId}`;
+    }
+    
+    const response = await fetch(url);
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
-    const locations = await response.json();
+    const result = await response.json();
+    
+    // Handle both old and new response formats
+    const locations = result.data || result;
     savedLocations = locations;
     return locations;
   } catch (error) {
@@ -33,7 +57,12 @@ async function fetchSavedLocations() {
 
 async function saveLocation(locationData) {
   try {
-    const response = await fetch(`${apiBaseUrl}/map/locations`, {
+    // Add user_id if not present (for demo purposes, using user_id = 1)
+    if (!locationData.user_id) {
+      locationData.user_id = 1;
+    }
+    
+    const response = await fetch(`${apiBaseUrl}/locations`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -42,7 +71,8 @@ async function saveLocation(locationData) {
     });
     
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      const errorText = await response.text();
+      throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
     }
     
     return await response.json();
@@ -52,38 +82,15 @@ async function saveLocation(locationData) {
   }
 }
 
+// Route functionality disabled - not implemented in backend yet
 async function saveRoute(routeData) {
-  try {
-    const response = await fetch(`${apiBaseUrl}/map/routes`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(routeData)
-    });
-    
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    
-    return await response.json();
-  } catch (error) {
-    console.error('Error saving route:', error);
-    throw error;
-  }
+  console.log('Route saving not implemented yet');
+  showNotification('Route saving feature coming soon!');
 }
 
 async function fetchSavedRoutes() {
-  try {
-    const response = await fetch(`${apiBaseUrl}/map/routes`);
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    return await response.json();
-  } catch (error) {
-    console.error('Error fetching saved routes:', error);
-    throw error;
-  }
+  console.log('Route fetching not implemented yet');
+  return [];
 }
 
 // Initialize the map application
@@ -156,6 +163,11 @@ function initializeTransportControls() {
     if (document.getElementById('directionsMode') && document.getElementById('directionsMode').checked) {
       handleDirectionsClick(event.latLng);
     }
+  });
+
+  // Add right-click listener for saving locations
+  map.addListener('rightclick', (event) => {
+    showSaveLocationPrompt(event.latLng);
   });
 
   // Add listener for directions mode toggle
@@ -371,6 +383,42 @@ function resetDirectionsMode() {
   directionsClicks = [];
   clearMarkers();
   clearDirections();
+}
+
+// Show save location prompt
+function showSaveLocationPrompt(latLng) {
+  const locationName = prompt(`Save this location?\n\nLatitude: ${latLng.lat().toFixed(6)}\nLongitude: ${latLng.lng().toFixed(6)}\n\nEnter a name for this location:`);
+  
+  if (locationName && locationName.trim()) {
+    const locationData = {
+      name: locationName.trim(),
+      latitude: latLng.lat(),
+      longitude: latLng.lng(),
+      user_id: currentUser.id
+    };
+    
+    saveLocationToDatabase(locationData);
+  }
+}
+
+// Save location to database
+async function saveLocationToDatabase(locationData) {
+  try {
+    console.log('Saving location:', locationData);
+    const result = await saveLocation(locationData);
+    console.log('Location saved successfully:', result);
+    
+    showNotification(`Location "${locationData.name}" saved successfully!`);
+    
+    // Refresh saved locations if panel is open
+    const panel = document.getElementById('savedLocationsPanel');
+    if (panel.classList.contains('active')) {
+      openSavedLocations();
+    }
+  } catch (error) {
+    console.error('Error saving location:', error);
+    showNotification(`Error saving location: ${error.message}`, 'error');
+  }
 }
 
 // Calculate and display route
@@ -774,10 +822,11 @@ async function openSavedLocations() {
   locationsList.innerHTML = '<div class="loading">Loading locations...</div>';
   
   try {
-    const locations = await fetchSavedLocations();
+    const locations = await fetchSavedLocations(currentUser.id);
     displayLocationsList(locations);
     displayLocationsOnMap(locations);
   } catch (error) {
+    console.error('Error loading saved locations:', error);
     locationsList.innerHTML = '<div class="error-message">Failed to load locations. Please try again.</div>';
   }
 }

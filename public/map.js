@@ -82,15 +82,120 @@ async function saveLocation(locationData) {
   }
 }
 
-// Route functionality disabled - not implemented in backend yet
+// Route functionality - now implemented!
 async function saveRoute(routeData) {
-  console.log('Route saving not implemented yet');
-  showNotification('Route saving feature coming soon!');
+  try {
+    // Add user_id if not present (for demo purposes, using user_id = 1)
+    if (!routeData.user_id) {
+      routeData.user_id = currentUser.id;
+    }
+    
+    const response = await fetch(`${apiBaseUrl}/routes`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(routeData)
+    });
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('Error saving route:', error);
+    throw error;
+  }
 }
 
-async function fetchSavedRoutes() {
-  console.log('Route fetching not implemented yet');
-  return [];
+async function fetchSavedRoutes(userId = null) {
+  try {
+    let url = `${apiBaseUrl}/routes`;
+    if (userId) {
+      url = `${apiBaseUrl}/routes/${userId}`;
+    }
+    
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    const result = await response.json();
+    
+    // Handle response format
+    return result.data || result;
+  } catch (error) {
+    console.error('Error fetching routes:', error);
+    return [];
+  }
+}
+
+async function deleteLocation(locationId, userId = null) {
+  try {
+    const user = userId || currentUser.id;
+    const response = await fetch(`${apiBaseUrl}/locations/${user}/${locationId}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+      }
+    });
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('Error deleting location:', error);
+    throw error;
+  }
+}
+
+async function deleteRoute(routeId, userId = null) {
+  try {
+    const user = userId || currentUser.id;
+    const response = await fetch(`${apiBaseUrl}/routes/${user}/${routeId}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+      }
+    });
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('Error deleting route:', error);
+    throw error;
+  }
+}
+
+async function updateRoute(routeId, newName, userId = null) {
+  try {
+    const user = userId || currentUser.id;
+    const response = await fetch(`${apiBaseUrl}/routes/${user}/${routeId}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ name: newName })
+    });
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('Error updating route:', error);
+    throw error;
+  }
 }
 
 // Initialize the map application
@@ -556,35 +661,28 @@ async function saveCurrentRoute() {
   const route = currentRoute.routes[0];
   const leg = route.legs[0];
   
-  // Use extracted location names for better display
-  const fromName = extractLocationName(leg.start_address);
-  const toName = extractLocationName(leg.end_address);
-  
   const routeData = {
     name: routeName,
-    origin: {
-      name: fromName, // Use extracted name instead of full address
-      lat: leg.start_location.lat(),
-      lng: leg.start_location.lng()
-    },
-    destination: {
-      name: toName, // Use extracted name instead of full address
-      lat: leg.end_location.lat(),
-      lng: leg.end_location.lng()
-    },
-    travelMode: document.getElementById('travelMode')?.value || 'DRIVING',
-    distance: leg.distance.text,
-    duration: leg.duration.text,
-    polyline: route.overview_polyline
+    start_lat: leg.start_location.lat(),
+    start_lng: leg.start_location.lng(),
+    end_lat: leg.end_location.lat(),
+    end_lng: leg.end_location.lng(),
+    user_id: currentUser.id
   };
 
   try {
+    showNotification('Saving route...', 'info');
     const response = await saveRoute(routeData);
-    showNotification('Route saved successfully!');
-    loadSavedRoutes();
+    
+    if (response.success) {
+      showNotification('Route saved successfully!', 'success');
+      loadSavedRoutes();
+    } else {
+      showNotification('Failed to save route', 'error');
+    }
   } catch (error) {
     console.error('Error saving route:', error);
-    alert('Failed to save route. Please try again.');
+    showNotification('Failed to save route. Please try again.', 'error');
   }
 }
 
@@ -704,7 +802,7 @@ function hideDirectionsPanel() {
 // Load saved routes
 async function loadSavedRoutes() {
   try {
-    const routes = await fetchSavedRoutes();
+    const routes = await fetchSavedRoutes(currentUser.id);
     const routesList = document.getElementById('savedRoutesList');
     if (routesList) {
       if (routes.length === 0) {
@@ -714,10 +812,17 @@ async function loadSavedRoutes() {
           <h4 style="padding: 20px 20px 10px 20px; margin: 0; color: #1e293b; font-size: 16px; font-weight: 600;">Saved Routes</h4>
           <div style="padding: 0 20px 20px 20px; flex: 1; overflow-y: auto;">
             ${routes.map(route => `
-              <div class="saved-route-item" onclick="loadRoute(${route.id})">
-                <h5>${route.route_name}</h5>
-                <p>${route.origin_name} → ${route.destination_name}</p>
-                <small>${route.distance_text} • ${route.duration_text}</small>
+              <div class="saved-route-item">
+                <div class="route-info" onclick="loadRoute(${route.route_id}, ${route.start_lat}, ${route.start_lng}, ${route.end_lat}, ${route.end_lng})">
+                  <h5>${route.route_name}</h5>
+                  <p>Start: ${route.start_lat.toFixed(4)}, ${route.start_lng.toFixed(4)}</p>
+                  <p>End: ${route.end_lat.toFixed(4)}, ${route.end_lng.toFixed(4)}</p>
+                  <small>Saved: ${new Date(route.created_at).toLocaleDateString()}</small>
+                </div>
+                <div class="route-actions">
+                  <button onclick="editRouteName(${route.route_id}, '${route.route_name}')" class="action-btn edit-btn" title="Edit route name">✏️</button>
+                  <button onclick="confirmDeleteRoute(${route.route_id}, '${route.route_name}')" class="action-btn delete-btn" title="Delete route">🗑️</button>
+                </div>
               </div>
             `).join('')}
           </div>
@@ -734,53 +839,116 @@ async function loadSavedRoutes() {
 }
 
 // Load a specific route
-async function loadRoute(routeId) {
+async function loadRoute(routeId, startLat, startLng, endLat, endLng) {
   try {
-    const response = await fetch(`${apiBaseUrl}/map/routes/${routeId}`);
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    
-    const route = await response.json();
-    
-    // Set travel mode
+    // Set travel mode to driving by default
     const travelModeSelect = document.getElementById('travelMode');
     if (travelModeSelect) {
-      travelModeSelect.value = route.travel_mode || 'DRIVING';
+      travelModeSelect.value = 'DRIVING';
     }
     
-    // Calculate route
-    const origin = { lat: route.origin_lat, lng: route.origin_lng };
-    const destination = { lat: route.destination_lat, lng: route.destination_lng };
+    // Calculate and display the route
+    const request = {
+      origin: { lat: startLat, lng: startLng },
+      destination: { lat: endLat, lng: endLng },
+      travelMode: google.maps.TravelMode.DRIVING
+    };
     
-    calculateRoute(origin, destination, route.travel_mode);
-    showNotification(`Loaded route: ${route.route_name}`);
+    directionsService.route(request, (result, status) => {
+      if (status === 'OK') {
+        directionsRenderer.setDirections(result);
+        currentRoute = result;
+        updateRouteInfo(result);
+        showDirectionsPanel();
+      } else {
+        console.error('Directions request failed due to ' + status);
+        showNotification('Failed to load route directions', 'error');
+      }
+    });
+    
   } catch (error) {
     console.error('Error loading route:', error);
-    alert('Failed to load route. Please try again.');
+    showNotification('Failed to load route. Please try again.', 'error');
+  }
+}
+
+// Route management functions
+async function editRouteName(routeId, currentName) {
+  const newName = prompt('Enter new route name:', currentName);
+  if (!newName || newName === currentName) return;
+  
+  try {
+    showNotification('Updating route name...', 'info');
+    const result = await updateRoute(routeId, newName, currentUser.id);
+    
+    if (result.success) {
+      showNotification('Route name updated successfully!', 'success');
+      loadSavedRoutes();
+    } else {
+      showNotification('Failed to update route name', 'error');
+    }
+  } catch (error) {
+    console.error('Error updating route name:', error);
+    showNotification('Error updating route name. Please try again.', 'error');
+  }
+}
+
+async function confirmDeleteRoute(routeId, routeName) {
+  if (confirm(`Are you sure you want to delete the route "${routeName}"?`)) {
+    await deleteRouteFromDatabase(routeId);
+  }
+}
+
+async function deleteRouteFromDatabase(routeId) {
+  try {
+    showNotification('Deleting route...', 'info');
+    
+    const result = await deleteRoute(routeId, currentUser.id);
+    
+    if (result.success) {
+      showNotification('Route deleted successfully!', 'success');
+      loadSavedRoutes();
+    } else {
+      showNotification('Failed to delete route', 'error');
+    }
+  } catch (error) {
+    console.error('Error deleting route:', error);
+    showNotification('Error deleting route. Please try again.', 'error');
   }
 }
 
 // Show notification
-function showNotification(message) {
+function showNotification(message, type = 'info') {
   const notification = document.createElement('div');
-  notification.className = 'notification';
+  notification.className = `notification notification-${type}`;
   notification.textContent = message;
+  
+  // Color scheme based on type
+  let backgroundColor = '#4CAF50'; // success (default)
+  if (type === 'error') backgroundColor = '#f44336';
+  if (type === 'info') backgroundColor = '#2196F3';
+  if (type === 'warning') backgroundColor = '#ff9800';
+  
   notification.style.cssText = `
     position: fixed;
     top: 20px;
     right: 20px;
-    background: #4CAF50;
+    background: ${backgroundColor};
     color: white;
     padding: 12px 20px;
     border-radius: 4px;
     z-index: 1000;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    font-size: 14px;
+    max-width: 300px;
   `;
   
   document.body.appendChild(notification);
   
   setTimeout(() => {
-    document.body.removeChild(notification);
+    if (notification.parentNode) {
+      document.body.removeChild(notification);
+    }
   }, 3000);
 }
 
@@ -843,6 +1011,32 @@ function closeSavedLocations() {
   clearSavedLocationMarkers();
 }
 
+// Delete location functionality
+async function confirmDeleteLocation(locationId, locationName) {
+  if (confirm(`Are you sure you want to delete "${locationName}"?`)) {
+    await deleteLocationFromDatabase(locationId);
+  }
+}
+
+async function deleteLocationFromDatabase(locationId) {
+  try {
+    showNotification('Deleting location...', 'info');
+    
+    const result = await deleteLocation(locationId, currentUser.id);
+    
+    if (result.success) {
+      showNotification('Location deleted successfully!', 'success');
+      // Refresh the locations list
+      await openSavedLocations();
+    } else {
+      showNotification('Failed to delete location', 'error');
+    }
+  } catch (error) {
+    console.error('Error deleting location:', error);
+    showNotification('Error deleting location. Please try again.', 'error');
+  }
+}
+
 function displayLocationsList(locations) {
   const locationsList = document.getElementById('locationsList');
   
@@ -859,6 +1053,7 @@ function displayLocationsList(locations) {
       <div class="location-actions">
         <button onclick="setAsStartPoint(${location.latitude}, ${location.longitude}, '${location.location_name}')" class="action-btn start-btn">Start</button>
         <button onclick="setAsEndPoint(${location.latitude}, ${location.longitude}, '${location.location_name}')" class="action-btn end-btn">End</button>
+        <button onclick="confirmDeleteLocation(${location.location_id}, '${location.location_name}')" class="action-btn delete-btn" title="Delete location">🗑️</button>
       </div>
     </div>
   `).join('');

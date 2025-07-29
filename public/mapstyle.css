@@ -338,6 +338,26 @@ input[type="text"]::placeholder {
   background: #d32f2f;
 }
 
+.delete-btn {
+  background: #ff9800;
+  color: white;
+  min-width: 30px;
+}
+
+.delete-btn:hover {
+  background: #f57c00;
+}
+
+.edit-btn {
+  background: #2196F3;
+  color: white;
+  min-width: 30px;
+}
+
+.edit-btn:hover {
+  background: #1976D2;
+}
+
 .location-coords {
   font-size: 12px;
   color: #666;
@@ -848,11 +868,12 @@ sidebar img.active {
 }
 
 .saved-route-item {
+  display: flex;
+  align-items: center;
   padding: 16px;
   margin-bottom: 12px;
   border: 1px solid #e2e8f0;
   border-radius: 10px;
-  cursor: pointer;
   transition: all 0.3s ease;
   background: white;
 }
@@ -862,6 +883,17 @@ sidebar img.active {
   border-color: #cbd5e1;
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+.route-info {
+  flex: 1;
+  cursor: pointer;
+}
+
+.route-actions {
+  display: flex;
+  gap: 6px;
+  margin-left: 12px;
 }
 
 .saved-route-item h5 {

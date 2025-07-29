@@ -48,6 +48,14 @@ app.get("/map/config", (req, res) => {
 app.get("/locations", mapController.getAllLocations);
 app.get("/locations/:user_id", mapMiddleware.validateUserId, mapController.getLocationByUser);
 app.post("/locations", mapMiddleware.validateUserId, mapMiddleware.validateLocationData, mapController.saveLocation);
+app.delete("/locations/:user_id/:location_id", mapMiddleware.validateUserId, mapMiddleware.validateLocationId, mapController.deleteLocation);
+
+// Routes API
+app.get("/routes", mapController.getAllRoutes);
+app.get("/routes/:user_id", mapMiddleware.validateUserId, mapController.getRoutesByUser);
+app.post("/routes", mapMiddleware.validateUserId, mapMiddleware.validateRouteData, mapController.saveRoute);
+app.put("/routes/:user_id/:route_id", mapMiddleware.validateUserId, mapMiddleware.validateRouteId, mapMiddleware.validateRouteNameUpdate, mapController.updateRoute);
+app.delete("/routes/:user_id/:route_id", mapMiddleware.validateUserId, mapMiddleware.validateRouteId, mapController.deleteRoute);
 
 
 app.listen(PORT, () => {

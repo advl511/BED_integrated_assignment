@@ -2,6 +2,7 @@ const path = require("path");
 const express = require("express");
 const sql = require("mssql");
 const dotenv = require("dotenv");
+const swaggerUi = require("swagger-ui-express");
 
 dotenv.config();
 
@@ -9,8 +10,22 @@ const mapController = require("./controller/Mapcontroller");
 const mapMiddleware = require("./Middlewares/mapmiddleware");
 const mapModel = require("./model/mapmodel");
 
+// Import generated swagger spec (generate it first by running swagger.js)
+let swaggerDocument;
+try {
+  swaggerDocument = require("./swagger-output.json");
+} catch (error) {
+  console.log("Swagger document not found. Run 'node swagger.js' to generate it.");
+}
+
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// Serve the Swagger UI at a specific route
+if (swaggerDocument) {
+  app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+  console.log("Swagger UI available at http://localhost:3000/api-docs");
+}
 
 // Global middleware
 app.use(express.json());

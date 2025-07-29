@@ -18,9 +18,9 @@ let currentUser = {
 
 // Show connection status
 if (isFileSystem) {
-  console.log('🗂️  Running from file system - connecting to backend at', apiBaseUrl);
+  console.log('Running from file system - connecting to backend at', apiBaseUrl);
 } else {
-  console.log('🌐 Running from server at', window.location.origin);
+  console.log('Running from server at', window.location.origin);
 }
 
 // Transport modes
@@ -259,6 +259,11 @@ async function initMap() {
   addMarker(defaultLocation, "Singapore (Default Location)");
   searchLocation();
   initializeTransportControls();
+  
+  // Show helpful tip about saving locations
+  setTimeout(() => {
+    showNotification('💡 Tip: Double-click anywhere on the map to save that location!', 'info');
+  }, 3000);
 }
 
 // Initialize transport controls
@@ -270,10 +275,20 @@ function initializeTransportControls() {
     }
   });
 
-  // Add right-click listener for saving locations
-  map.addListener('rightclick', (event) => {
-    showSaveLocationPrompt(event.latLng);
+  // Add double-click listener for saving locations
+  console.log('Adding double-click listener to map'); // Debug log
+  map.addListener('dblclick', (event) => {
+    console.log('Double-click detected on map:', event); // Debug log
+    
+    if (event.latLng) {
+      console.log('Opening save location modal for:', event.latLng.lat(), event.latLng.lng());
+      showSaveLocationPrompt(event.latLng);
+    } else {
+      console.error('No latLng available in double-click event');
+    }
   });
+
+  // Remove the old contextmenu fallback since we're using double-click now
 
   // Add listener for directions mode toggle
   document.getElementById('directionsMode').addEventListener('change', function() {
@@ -492,17 +507,186 @@ function resetDirectionsMode() {
 
 // Show save location prompt
 function showSaveLocationPrompt(latLng) {
-  const locationName = prompt(`Save this location?\n\nLatitude: ${latLng.lat().toFixed(6)}\nLongitude: ${latLng.lng().toFixed(6)}\n\nEnter a name for this location:`);
+  openSaveLocationModal(latLng);
+}
+
+// Variables to store current location data
+let currentSaveLocation = null;
+
+// Open save location modal
+async function openSaveLocationModal(latLng) {
+  currentSaveLocation = {
+    lat: latLng.lat(),
+    lng: latLng.lng()
+  };
   
-  if (locationName && locationName.trim()) {
+  const modal = document.getElementById('saveLocationModal');
+  const addressElement = document.getElementById('saveModalAddress');
+  const nameInput = document.getElementById('locationNameInput');
+  
+  // Show modal
+  modal.style.display = 'flex';
+  
+  // Clear and focus input after a brief delay to ensure modal is rendered
+  nameInput.value = '';
+  updateCharacterCounters();
+  
+  setTimeout(() => {
+    nameInput.focus();
+  }, 100);
+  
+  // Try to get address using reverse geocoding
+  try {
+    addressElement.textContent = 'Finding address...';
+    const geocoder = new google.maps.Geocoder();
+    const result = await new Promise((resolve, reject) => {
+      geocoder.geocode(
+        { location: { lat: currentSaveLocation.lat, lng: currentSaveLocation.lng } },
+        (results, status) => {
+          if (status === 'OK' && results[0]) {
+            resolve(results[0]);
+          } else {
+            reject(new Error('Address not found'));
+          }
+        }
+      );
+    });
+    
+    addressElement.textContent = result.formatted_address;
+    
+    // Auto-suggest a name based on the address
+    const suggestedName = extractLocationName(result.formatted_address);
+    if (suggestedName && suggestedName !== 'Unknown Location') {
+      nameInput.placeholder = `e.g., ${suggestedName}`;
+    }
+    
+  } catch (error) {
+    console.log('Could not get address:', error);
+    addressElement.textContent = 'Address not available';
+  }
+}
+
+// Close save location modal
+function closeSaveLocationModal() {
+  const modal = document.getElementById('saveLocationModal');
+  modal.style.display = 'none';
+  currentSaveLocation = null;
+  
+  // Reset form
+  document.getElementById('saveLocationForm').reset();
+  updateCharacterCounters();
+}
+
+// Handle save location form submission
+async function handleSaveLocationSubmit(event) {
+  event.preventDefault();
+  
+  if (!currentSaveLocation) {
+    showNotification('Error: No location selected', 'error');
+    return;
+  }
+  
+  const nameInput = document.getElementById('locationNameInput');
+  const saveBtn = document.getElementById('saveLocationBtn');
+  
+  const locationName = nameInput.value.trim();
+  
+  if (!locationName) {
+    showNotification('Please enter a name for this location', 'error');
+    nameInput.focus();
+    return;
+  }
+  
+  // Disable save button and show loading
+  saveBtn.disabled = true;
+  saveBtn.innerHTML = '<span class="btn-icon">⏳</span> Saving...';
+  
+  try {
     const locationData = {
-      name: locationName.trim(),
-      latitude: latLng.lat(),
-      longitude: latLng.lng(),
+      name: locationName,
+      latitude: currentSaveLocation.lat,
+      longitude: currentSaveLocation.lng,
       user_id: currentUser.id
     };
     
-    saveLocationToDatabase(locationData);
+    await saveLocationToDatabase(locationData);
+    closeSaveLocationModal();
+    
+  } catch (error) {
+    console.error('Error saving location:', error);
+    showNotification('Failed to save location. Please try again.', 'error');
+  } finally {
+    // Reset save button
+    saveBtn.disabled = false;
+    saveBtn.innerHTML = '<span class="btn-icon">💾</span> Save Location';
+  }
+}
+
+// Update character counters
+function updateCharacterCounters() {
+  const nameInput = document.getElementById('locationNameInput');
+  const nameCounter = document.getElementById('nameCounter');
+  
+  if (nameInput && nameCounter) {
+    const currentLength = nameInput.value.length;
+    nameCounter.textContent = currentLength;
+    
+    // Add visual feedback for character limit
+    if (currentLength > 40) {
+      nameCounter.style.color = '#f59e0b'; // Warning color
+    } else if (currentLength > 45) {
+      nameCounter.style.color = '#ef4444'; // Danger color
+    } else {
+      nameCounter.style.color = '#64748b'; // Default color
+    }
+  }
+}
+
+// Initialize character counter event listeners
+document.addEventListener('DOMContentLoaded', () => {
+  const nameInput = document.getElementById('locationNameInput');
+  
+  if (nameInput) {
+    nameInput.addEventListener('input', updateCharacterCounters);
+  }
+  
+  // Close modal when clicking outside
+  const modal = document.getElementById('saveLocationModal');
+  if (modal) {
+    modal.addEventListener('click', (event) => {
+      if (event.target === modal) {
+        closeSaveLocationModal();
+      }
+    });
+  }
+  
+  // Close modal with Escape key
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') {
+      const modal = document.getElementById('saveLocationModal');
+      if (modal && modal.style.display === 'flex') {
+        closeSaveLocationModal();
+      }
+    }
+  });
+});
+
+// Save current location function
+async function saveCurrentLocation() {
+  try {
+    showNotification('Getting your current location...', 'info');
+    
+    const userLocation = await locateMe();
+    const latLng = {
+      lat: () => userLocation.lat,
+      lng: () => userLocation.lng
+    };
+    
+    showSaveLocationPrompt(latLng);
+    
+  } catch (error) {
+    console.error('Error getting current location:', error);
+    showNotification('Could not get your current location. Please try again or click on the map.', 'error');
   }
 }
 
@@ -820,8 +1004,8 @@ async function loadSavedRoutes() {
                   <small>Saved: ${new Date(route.created_at).toLocaleDateString()}</small>
                 </div>
                 <div class="route-actions">
-                  <button onclick="editRouteName(${route.route_id}, '${route.route_name}')" class="action-btn edit-btn" title="Edit route name">✏️</button>
-                  <button onclick="confirmDeleteRoute(${route.route_id}, '${route.route_name}')" class="action-btn delete-btn" title="Delete route">🗑️</button>
+                  <button onclick="editRouteName(${route.route_id}, '${route.route_name}')" class="action-btn edit-btn" title="Edit route name">Edit</button>
+                  <button onclick="confirmDeleteRoute(${route.route_id}, '${route.route_name}')" class="action-btn delete-btn" title="Delete route">Delete</button>
                 </div>
               </div>
             `).join('')}
@@ -858,7 +1042,7 @@ async function loadRoute(routeId, startLat, startLng, endLat, endLng) {
       if (status === 'OK') {
         directionsRenderer.setDirections(result);
         currentRoute = result;
-        updateRouteInfo(result);
+        displayRouteInfo(result);
         showDirectionsPanel();
       } else {
         console.error('Directions request failed due to ' + status);
@@ -987,7 +1171,18 @@ async function openSavedLocations() {
   btn.classList.add('active');
   uiContainer.classList.add('panel-open');
   
-  locationsList.innerHTML = '<div class="loading">Loading locations...</div>';
+  // Clear search filter
+  const filterInput = document.getElementById('locationFilter');
+  if (filterInput) {
+    filterInput.value = '';
+  }
+  
+  locationsList.innerHTML = `
+    <div class="loading">
+      <div class="loading-spinner"></div>
+      <p>Loading your saved places...</p>
+    </div>
+  `;
   
   try {
     const locations = await fetchSavedLocations(currentUser.id);
@@ -995,7 +1190,12 @@ async function openSavedLocations() {
     displayLocationsOnMap(locations);
   } catch (error) {
     console.error('Error loading saved locations:', error);
-    locationsList.innerHTML = '<div class="error-message">Failed to load locations. Please try again.</div>';
+    locationsList.innerHTML = `
+      <div class="error-message">
+        <strong>Oops! Something went wrong</strong><br>
+        Failed to load your saved locations. Please check your connection and try again.
+      </div>
+    `;
   }
 }
 
@@ -1041,24 +1241,117 @@ function displayLocationsList(locations) {
   const locationsList = document.getElementById('locationsList');
   
   if (!locations || locations.length === 0) {
-    locationsList.innerHTML = '<div class="no-locations">No saved locations found.</div>';
+    locationsList.innerHTML = `
+      <div class="no-locations">
+        <h4 style="margin: 0 0 8px 0; color: #374151;">No saved places yet</h4>
+        <p style="margin: 0; font-size: 13px;">Start exploring and save your favorite locations!</p>
+      </div>
+    `;
     return;
   }
   
-  const locationsHTML = locations.map(location => `
-    <div class="location-item">
-      <div class="location-info" onclick="goToLocation(${location.latitude}, ${location.longitude}, '${location.location_name}')">
-        <div class="location-name">${location.location_name}</div>
+  const locationsHTML = locations.map(location => {
+    const createdDate = new Date(location.created_at);
+    const formattedDate = createdDate.toLocaleDateString('en-US', { 
+      month: 'short', 
+      day: 'numeric',
+      year: createdDate.getFullYear() !== new Date().getFullYear() ? 'numeric' : undefined
+    });
+    
+    return `
+      <div class="location-item" role="listitem" data-location-name="${location.location_name.toLowerCase()}">
+        <div class="location-info" onclick="goToLocation(${location.latitude}, ${location.longitude}, '${location.location_name.replace(/'/g, "\\'")}')" 
+             role="button" tabindex="0" aria-label="Go to ${location.location_name}">
+          <div class="location-name">${location.location_name}</div>
+          <div class="location-coords">${parseFloat(location.latitude).toFixed(4)}°, ${parseFloat(location.longitude).toFixed(4)}°</div>
+          <div class="location-date">Saved ${formattedDate}</div>
+        </div>
+        <div class="location-actions">
+          <button onclick="setAsStartPoint(${location.latitude}, ${location.longitude}, '${location.location_name.replace(/'/g, "\\'")}')" 
+                  class="action-btn start-btn" 
+                  title="Set as starting point for directions"
+                  aria-label="Use ${location.location_name} as starting point">Start</button>
+          <button onclick="setAsEndPoint(${location.latitude}, ${location.longitude}, '${location.location_name.replace(/'/g, "\\'")}')" 
+                  class="action-btn end-btn" 
+                  title="Set as destination for directions"
+                  aria-label="Use ${location.location_name} as destination">End</button>
+          <button onclick="confirmDeleteLocation(${location.location_id}, '${location.location_name.replace(/'/g, "\\'")}')" 
+                  class="action-btn delete-btn" 
+                  title="Delete this saved location"
+                  aria-label="Delete ${location.location_name}">Delete</button>
+        </div>
       </div>
-      <div class="location-actions">
-        <button onclick="setAsStartPoint(${location.latitude}, ${location.longitude}, '${location.location_name}')" class="action-btn start-btn">Start</button>
-        <button onclick="setAsEndPoint(${location.latitude}, ${location.longitude}, '${location.location_name}')" class="action-btn end-btn">End</button>
-        <button onclick="confirmDeleteLocation(${location.location_id}, '${location.location_name}')" class="action-btn delete-btn" title="Delete location">🗑️</button>
-      </div>
-    </div>
-  `).join('');
+    `;
+  }).join('');
   
   locationsList.innerHTML = locationsHTML;
+  
+  // Initialize search functionality
+  initializeLocationFilter();
+  
+  // Add keyboard support for location items
+  const locationInfoElements = locationsList.querySelectorAll('.location-info[role="button"]');
+  locationInfoElements.forEach(element => {
+    element.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        element.click();
+      }
+    });
+  });
+}
+
+// Initialize location search/filter functionality
+function initializeLocationFilter() {
+  const filterInput = document.getElementById('locationFilter');
+  if (!filterInput) return;
+  
+  // Remove existing event listener
+  filterInput.removeEventListener('input', handleLocationFilter);
+  
+  // Add new event listener
+  filterInput.addEventListener('input', handleLocationFilter);
+}
+
+// Handle location filtering
+function handleLocationFilter(event) {
+  const searchTerm = event.target.value.toLowerCase().trim();
+  const locationItems = document.querySelectorAll('.location-item');
+  let visibleCount = 0;
+  
+  locationItems.forEach(item => {
+    const locationName = item.getAttribute('data-location-name');
+    const isVisible = locationName.includes(searchTerm);
+    
+    if (isVisible) {
+      item.style.display = 'flex';
+      visibleCount++;
+    } else {
+      item.style.display = 'none';
+    }
+  });
+  
+  // Show/hide "no results" message
+  const locationsList = document.getElementById('locationsList');
+  let noResultsMsg = locationsList.querySelector('.no-filter-results');
+  
+  if (visibleCount === 0 && searchTerm.length > 0) {
+    if (!noResultsMsg) {
+      noResultsMsg = document.createElement('div');
+      noResultsMsg.className = 'no-filter-results';
+      noResultsMsg.innerHTML = `
+        <div style="text-align: center; padding: 30px 20px; color: #64748b;">
+          <div style="font-size: 32px; margin-bottom: 12px;">🔍</div>
+          <h4 style="margin: 0 0 8px 0; color: #374151;">No locations found</h4>
+          <p style="margin: 0; font-size: 13px;">Try searching with different keywords</p>
+        </div>
+      `;
+      locationsList.appendChild(noResultsMsg);
+    }
+    noResultsMsg.style.display = 'block';
+  } else if (noResultsMsg) {
+    noResultsMsg.style.display = 'none';
+  }
 }
 
 function displayLocationsOnMap(locations) {

@@ -49,9 +49,8 @@ class MapConfig {
     } catch (error) {
       console.error('Error fetching API key from backend:', error);
       
-      // Fallback API key for development when backend is not available
-      console.warn('🔄 Using fallback API key - make sure your backend is running at http://localhost:3000');
-      return 'AIzaSyDEOJ5uSsWR77w5mxxATEI3BWZBngyTtx8';
+      // No fallback key - API key must come from backend
+      throw new Error('Failed to load Google Maps API key from backend. Please ensure the server is running at http://localhost:3000 and the API key is configured in the .env file.');
     }
   }
 

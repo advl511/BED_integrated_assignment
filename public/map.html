@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Document</title>
+  <title>Smart Map Navigator - Save Locations & Get Directions</title>
   <link rel="stylesheet" href="mapstyle.css"/>
 </head>
 <body>
@@ -14,7 +14,7 @@
 
       <sidebar>
         <img id="savedLocationsBtn" src="/public/images/saved-unselected.svg" alt="Saved Locations" onclick="toggleSavedLocations()">
-        <img src="/public/images/recent.svg" alt="Recent Locations">         
+        <img id="saveCurrentBtn" src="/public/images/mylocation.svg" alt="Save Current Location" onclick="saveCurrentLocation()" style="opacity: 0.8;" title="Save Current Location">      
       </sidebar>
 
       <!-- Transport Controls - Always Visible -->
@@ -65,11 +65,22 @@
       <!-- Saved Locations Panel -->
       <div id="savedLocationsPanel" class="locations-panel">
         <div class="panel-header">
-          <h3>Saved Locations</h3>
-          <button id="closePanelBtn" onclick="closeSavedLocations()">×</button>
+          <h3>📍 Your Saved Places</h3>
+          <button id="closePanelBtn" onclick="closeSavedLocations()" aria-label="Close saved locations panel">×</button>
         </div>
-        <div id="locationsList" class="locations-list">
-          <div class="loading">Loading locations...</div>
+        <div class="panel-content">
+          <div class="search-filter">
+            <input type="text" id="locationFilter" placeholder="🔍 Search your saved locations..." aria-label="Filter saved locations">
+          </div>
+          <div id="locationsList" class="locations-list" role="list" aria-label="Your saved locations">
+            <div class="loading">
+              <div class="loading-spinner"></div>
+              <p>Loading your saved places...</p>
+            </div>
+          </div>
+          <div class="panel-footer">
+            <p class="tip">💡 <strong>Tip:</strong> Double-click anywhere on the map to save a new location!</p>
+          </div>
         </div>
       </div>
 
@@ -96,6 +107,52 @@
           <div id="routeInfo" class="route-info"></div>
           <div id="savedRoutesList" class="saved-routes-list">
             <div class="loading">Loading saved routes...</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Save Location Modal -->
+      <div id="saveLocationModal" class="modal-overlay" style="display: none;">
+        <div class="modal-container">
+          <div class="modal-header">
+            <h3>� Save Location</h3>
+            <button class="modal-close" onclick="closeSaveLocationModal()" aria-label="Close modal">×</button>
+          </div>
+          <div class="modal-body">
+            <div class="location-preview">
+              <div class="location-preview-icon">🗺️</div>
+              <div class="location-preview-info">
+                <div class="location-preview-address" id="saveModalAddress">Finding address...</div>
+              </div>
+            </div>
+            
+            <form id="saveLocationForm" onsubmit="handleSaveLocationSubmit(event)">
+              <div class="form-group">
+                <label for="locationNameInput" class="form-label">Location Name:</label>
+                <input 
+                  type="text" 
+                  id="locationNameInput" 
+                  class="form-input" 
+                  placeholder="Enter a name for this location..."
+                  required
+                  maxlength="50"
+                  autocomplete="off"
+                  spellcheck="true">
+                <div class="input-counter">
+                  <span id="nameCounter">0</span>/50 characters
+                </div>
+                <div class="input-hint">💡 Choose a memorable name like "Home", "Work", or "Favorite Cafe"</div>
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn-secondary" onclick="closeSaveLocationModal()">
+              Cancel
+            </button>
+            <button type="submit" form="saveLocationForm" class="btn-primary" id="saveLocationBtn">
+              <span class="btn-icon">💾</span>
+              Save Location
+            </button>
           </div>
         </div>
       </div>

@@ -27,10 +27,50 @@ body {
     font-size: 16px;
 }
 
-.font-small { font-size: 14px; }
-.font-medium { font-size: 16px; }
-.font-large { font-size: 18px; }
-.font-extra-large { font-size: 22px; }
+/* Font Size Classes - Apply to all text elements */
+.font-small {
+    font-size: 12px;
+}
+.font-small h1 { font-size: 20px; }
+.font-small h2 { font-size: 18px; }
+.font-small h3 { font-size: 16px; }
+.font-small .calendar-day { font-size: 12px; }
+.font-small button { font-size: 12px; }
+.font-small select { font-size: 12px; }
+.font-small label { font-size: 12px; }
+
+.font-medium {
+    font-size: 16px;
+}
+.font-medium h1 { font-size: 24px; }
+.font-medium h2 { font-size: 20px; }
+.font-medium h3 { font-size: 18px; }
+.font-medium .calendar-day { font-size: 16px; }
+.font-medium button { font-size: 16px; }
+.font-medium select { font-size: 16px; }
+.font-medium label { font-size: 16px; }
+
+.font-large {
+    font-size: 18px;
+}
+.font-large h1 { font-size: 28px; }
+.font-large h2 { font-size: 24px; }
+.font-large h3 { font-size: 20px; }
+.font-large .calendar-day { font-size: 18px; }
+.font-large button { font-size: 18px; }
+.font-large select { font-size: 18px; }
+.font-large label { font-size: 18px; }
+
+.font-extra-large {
+    font-size: 22px;
+}
+.font-extra-large h1 { font-size: 32px; }
+.font-extra-large h2 { font-size: 28px; }
+.font-extra-large h3 { font-size: 24px; }
+.font-extra-large .calendar-day { font-size: 22px; }
+.font-extra-large button { font-size: 22px; }
+.font-extra-large select { font-size: 22px; }
+.font-extra-large label { font-size: 22px; }
 
 .container {
     max-width: 1200px;
@@ -213,6 +253,20 @@ button:hover {
     background: linear-gradient(135deg, #4299e1, #3182ce);
     color: white;
     font-weight: 600;
+}
+
+.calendar-day.selected {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    font-weight: 600;
+    border: 2px solid #5a67d8;
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.calendar-day.selected:hover {
+    background: linear-gradient(135deg, #5a67d8, #6b46c1);
+    transform: scale(1.05);
 }
 
 .day-number {

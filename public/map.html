@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Smart Map Navigator - Save Locations & Get Directions</title>
+  <title>Map</title>
   <link rel="stylesheet" href="mapstyle.css"/>
 </head>
 <body>
@@ -112,41 +112,57 @@
       </div>
 
       <!-- Save Location Modal -->
+      <!-- Save Location Modal - Complete Remake -->
       <div id="saveLocationModal" class="modal-overlay" style="display: none;">
         <div class="modal-container">
           <div class="modal-header">
-            <h3>� Save Location</h3>
+            <h3>📍 Save Location</h3>
             <button class="modal-close" onclick="closeSaveLocationModal()" aria-label="Close modal">×</button>
           </div>
           <div class="modal-body">
+            <!-- Location Preview Section -->
             <div class="location-preview">
-              <div class="location-preview-icon">🗺️</div>
-              <div class="location-preview-info">
-                <div class="location-preview-address" id="saveModalAddress">Finding address...</div>
+              <div class="location-preview-header">
+                <div class="location-preview-icon">🗺️</div>
+                <div class="location-preview-info">
+                  <div class="location-preview-title">Selected Location</div>
+                  <div class="location-preview-address" id="saveModalAddress">Finding address...</div>
+                </div>
               </div>
             </div>
             
-            <form id="saveLocationForm" onsubmit="handleSaveLocationSubmit(event)">
-              <div class="form-group">
-                <label for="locationNameInput" class="form-label">Location Name:</label>
-                <input 
-                  type="text" 
-                  id="locationNameInput" 
-                  class="form-input" 
-                  placeholder="Enter a name for this location..."
-                  required
-                  maxlength="50"
-                  autocomplete="off"
-                  spellcheck="true">
-                <div class="input-counter">
-                  <span id="nameCounter">0</span>/50 characters
+            <!-- Form Section -->
+            <div class="form-section">
+              <form id="saveLocationForm" onsubmit="handleSaveLocationSubmit(event)">
+                <div class="form-group">
+                  <label for="locationNameInput" class="form-label">Name this location</label>
+                  <div class="form-input-container">
+                    <input 
+                      type="text" 
+                      id="locationNameInput" 
+                      class="form-input" 
+                      placeholder="Enter a memorable name..."
+                      required
+                      maxlength="50"
+                      autocomplete="off"
+                      spellcheck="true">
+                  </div>
+                  <div class="input-footer">
+                    <div class="input-hint">
+                      <div class="input-hint-icon">💡</div>
+                      <span>Choose something memorable like "Home", "Work", or "Coffee Shop"</span>
+                    </div>
+                    <div class="input-counter">
+                      <span id="nameCounter">0</span>/50
+                    </div>
+                  </div>
                 </div>
-                <div class="input-hint">💡 Choose a memorable name like "Home", "Work", or "Favorite Cafe"</div>
-              </div>
-            </form>
+              </form>
+            </div>
           </div>
           <div class="modal-footer">
             <button type="button" class="btn-secondary" onclick="closeSaveLocationModal()">
+              <span class="btn-icon">✖️</span>
               Cancel
             </button>
             <button type="submit" form="saveLocationForm" class="btn-primary" id="saveLocationBtn">

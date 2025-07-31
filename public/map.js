@@ -554,6 +554,10 @@ async function openSaveLocationModal(latLng) {
     
     addressElement.textContent = result.formatted_address;
     
+    // Display a more focused version of the address
+    const focusedAddress = extractFocusedAddress(result.formatted_address);
+    addressElement.textContent = focusedAddress;
+    
     // Auto-suggest a name based on the address
     const suggestedName = extractLocationName(result.formatted_address);
     if (suggestedName && suggestedName !== 'Unknown Location') {
@@ -797,6 +801,41 @@ function extractLocationName(address) {
   
   // Last resort: return original address truncated
   return address.length > 30 ? address.substring(0, 30) + '...' : address;
+}
+
+// Extract a more focused version of the address for display
+function extractFocusedAddress(address) {
+  if (!address) return 'Location not available';
+  
+  // Singapore address patterns - focus on key identifying information
+  const parts = address.split(',');
+  
+  if (parts.length >= 2) {
+    const streetInfo = parts[0].trim();
+    const areaInfo = parts[1].trim();
+    
+    // For Singapore addresses, typically show street + area
+    // Example: "38 Soo Chow Vw, Singapore 575430" -> "38 Soo Chow Vw, Singapore"
+    if (areaInfo.match(/Singapore\s+\d+/)) {
+      return `${streetInfo}, Singapore`;
+    }
+    
+    // For addresses with postal codes, remove the postal code
+    // Example: "Marina Bay Sands, 10 Bayfront Ave, Singapore 018956" -> "Marina Bay Sands, 10 Bayfront Ave"
+    const withoutPostal = parts.slice(0, -1).join(', ').replace(/,\s*Singapore\s*$/, '');
+    
+    // Limit length for better display
+    if (withoutPostal.length > 50) {
+      const shortForm = parts.slice(0, 2).join(', ');
+      return shortForm.length > 50 ? parts[0] : shortForm;
+    }
+    
+    return withoutPostal || streetInfo;
+  }
+  
+  // Fallback: return first part or truncated address
+  const firstPart = parts[0].trim();
+  return firstPart.length > 50 ? firstPart.substring(0, 47) + '...' : firstPart;
 }
 
 // Display route information

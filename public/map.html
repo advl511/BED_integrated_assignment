@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Document</title>
+  <title>Map</title>
   <link rel="stylesheet" href="mapstyle.css"/>
 </head>
 <body>
@@ -13,25 +13,163 @@
     <div id="UI-container">
 
       <sidebar>
-        <img id="savedLocationsBtn" src="/images/saved-unselected.svg" alt="Saved Locations" onclick="toggleSavedLocations()">
-        <img src="/images/recent.svg" alt="Recent Locations">         
+        <img id="savedLocationsBtn" src="/public/images/saved-unselected.svg" alt="Saved Locations" onclick="toggleSavedLocations()">
+        <img id="saveCurrentBtn" src="/public/images/mylocation.svg" alt="Save Current Location" onclick="saveCurrentLocation()" style="opacity: 0.8;" title="Save Current Location">      
       </sidebar>
+
+      <!-- Transport Controls - Always Visible -->
+      <div id="transportControls" class="transport-controls">
+        <div class="control-group">
+          <label class="checkbox-label">
+            <input type="checkbox" id="directionsMode"> Directions Mode
+          </label>
+        </div>
+        <div class="control-group">
+          <label for="travelMode">Travel Mode:</label>
+          <select id="travelMode" onchange="updateTravelMode()">
+            <option value="DRIVING">Driving</option>
+            <option value="WALKING">Walking</option>
+            <option value="BICYCLING">Bicycling</option>
+            <option value="TRANSIT">Transit</option>
+          </select>
+        </div>
+        <div class="control-group" id="routePoints" style="display: none;">
+          <div class="route-point">
+            <label>From:</label>
+            <div class="input-group">
+              <input type="text" id="startPoint" placeholder="Enter starting location...">
+              <button onclick="useCurrentLocation()" class="location-btn" title="Use My Location">
+                <img src="/public/images/mylocation.svg" alt="My Location" style="width: 14px; height: 14px;">
+              </button>
+              <button onclick="clearStartPoint()" class="clear-btn">×</button>
+            </div>
+          </div>
+          <div class="route-point">
+            <label>To:</label>
+            <div class="input-group">
+              <input type="text" id="endPoint" placeholder="Enter destination...">
+              <button onclick="clearEndPoint()" class="clear-btn">×</button>
+            </div>
+          </div>
+          <button onclick="calculateRouteFromInputs()" class="route-btn" id="calculateBtn" disabled>Get Directions</button>
+        </div>
+      </div>
 
       <div id="locationNav">
         <input id="search" type="text" placeholder="Search for places..." title="Search for places...">
         <button id="locateMe" onclick="locateMe()" title="Find My Location">
-          <img src="/images/mylocation.svg" alt="My Location">
+          <img src="/public/images/mylocation.svg" alt="My Location">
         </button>
       </div>
 
       <!-- Saved Locations Panel -->
       <div id="savedLocationsPanel" class="locations-panel">
         <div class="panel-header">
-          <h3>Saved Locations</h3>
-          <button id="closePanelBtn" onclick="closeSavedLocations()">×</button>
+          <h3>📍 Your Saved Places</h3>
+          <button id="closePanelBtn" onclick="closeSavedLocations()" aria-label="Close saved locations panel">×</button>
         </div>
-        <div id="locationsList" class="locations-list">
-          <div class="loading">Loading locations...</div>
+        <div class="panel-content">
+          <div class="search-filter">
+            <input type="text" id="locationFilter" placeholder="🔍 Search your saved locations..." aria-label="Filter saved locations">
+          </div>
+          <div id="locationsList" class="locations-list" role="list" aria-label="Your saved locations">
+            <div class="loading">
+              <div class="loading-spinner"></div>
+              <p>Loading your saved places...</p>
+            </div>
+          </div>
+          <div class="panel-footer">
+            <p class="tip">💡 <strong>Tip:</strong> Double-click anywhere on the map to save a new location!</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Directions Panel - Enhanced with better positioning and scroll -->
+      <div id="directionsContainer" class="directions-container" style="display: none;">
+        <div class="panel-header">
+          <h3>Directions & Routes</h3>
+          <button id="closeDirectionsBtn" onclick="hideDirectionsPanel();">×</button>
+        </div>
+        <div class="directions-scroll-wrapper">
+          <!-- Instructions -->
+          <div class="directions-instructions">
+            <p><strong>How to get directions:</strong></p>
+            <ol>
+              <li>Check "Directions Mode" in the right panel</li>
+              <li>Click your starting point on the map</li>
+              <li>Click your destination</li>
+              <li>Choose your travel mode</li>
+              <li>View and save your route below</li>
+            </ol>
+          </div>
+          
+          <div id="directionsPanel" class="directions-panel"></div>
+          <div id="routeInfo" class="route-info"></div>
+          <div id="savedRoutesList" class="saved-routes-list">
+            <div class="loading">Loading saved routes...</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Save Location Modal -->
+      <!-- Save Location Modal - Complete Remake -->
+      <div id="saveLocationModal" class="modal-overlay" style="display: none;">
+        <div class="modal-container">
+          <div class="modal-header">
+            <h3>📍 Save Location</h3>
+            <button class="modal-close" onclick="closeSaveLocationModal()" aria-label="Close modal">×</button>
+          </div>
+          <div class="modal-body">
+            <!-- Location Preview Section -->
+            <div class="location-preview">
+              <div class="location-preview-header">
+                <div class="location-preview-icon">🗺️</div>
+                <div class="location-preview-info">
+                  <div class="location-preview-title">Selected Location</div>
+                  <div class="location-preview-address" id="saveModalAddress">Finding address...</div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Form Section -->
+            <div class="form-section">
+              <form id="saveLocationForm" onsubmit="handleSaveLocationSubmit(event)">
+                <div class="form-group">
+                  <label for="locationNameInput" class="form-label">Name this location</label>
+                  <div class="form-input-container">
+                    <input 
+                      type="text" 
+                      id="locationNameInput" 
+                      class="form-input" 
+                      placeholder="Enter a memorable name..."
+                      required
+                      maxlength="50"
+                      autocomplete="off"
+                      spellcheck="true">
+                  </div>
+                  <div class="input-footer">
+                    <div class="input-hint">
+                      <div class="input-hint-icon">💡</div>
+                      <span>Choose something memorable like "Home", "Work", or "Coffee Shop"</span>
+                    </div>
+                    <div class="input-counter">
+                      <span id="nameCounter">0</span>/50
+                    </div>
+                  </div>
+                </div>
+              </form>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn-secondary" onclick="closeSaveLocationModal()">
+              <span class="btn-icon">✖️</span>
+              Cancel
+            </button>
+            <button type="submit" form="saveLocationForm" class="btn-primary" id="saveLocationBtn">
+              <span class="btn-icon">💾</span>
+              Save Location
+            </button>
+          </div>
         </div>
       </div>
 

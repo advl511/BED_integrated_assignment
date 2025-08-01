@@ -9,10 +9,10 @@ document.addEventListener('DOMContentLoaded', function() {
 async function handleSignin(event) {
     event.preventDefault();
 
-    const username = document.getElementById('username').value.trim();
+    const usernameOrEmail = document.getElementById('username').value.trim();
     const password = document.getElementById('password').value;
 
-    if (!username || !password) {
+    if (!usernameOrEmail || !password) {
         showError('Please fill in all fields');
         return;
     }
@@ -24,21 +24,34 @@ async function handleSignin(event) {
         submitButton.textContent = 'Signing in...';
         submitButton.disabled = true;
         
+        // Determine if input is email or username
+        const isEmail = usernameOrEmail.includes('@');
+        const requestBody = {
+            password: password
+        };
+        
+        if (isEmail) {
+            requestBody.email = usernameOrEmail;
+        } else {
+            requestBody.username = usernameOrEmail;
+        }
+        
+        console.log('Login request body:', requestBody);
+        
         // Make API call to backend
         const response = await fetch('http://localhost:3000/api/users/login', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({
-                username: username,
-                password: password
-            })
+            credentials: 'include', // Include cookies
+            body: JSON.stringify(requestBody)
         });
         
         const data = await response.json();
         
         if (response.ok) {
+            // No localStorage - token is handled server-side via cookies/session
             showSuccess('Login successful! Redirecting...');
             
             setTimeout(() => {

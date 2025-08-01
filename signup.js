@@ -57,6 +57,7 @@ async function handleSignup(e) {
             headers: {
                 'Content-Type': 'application/json'
             },
+            credentials: 'include', // Include cookies
             body: JSON.stringify({ 
                 username, 
                 email, 
@@ -68,6 +69,7 @@ async function handleSignup(e) {
         const data = await res.json();
         
         if (res.ok) {
+            // No localStorage - token is handled server-side
             showSuccess(data.message);
             e.target.reset();
             
@@ -156,7 +158,9 @@ async function checkEmailAvailability() {
         validationDiv.textContent = 'Checking...';
         validationDiv.className = 'validation-message checking';
         
-        const response = await fetch(`http://localhost:3000/api/users/check-email/${encodeURIComponent(email)}`);
+        const response = await fetch(`http://localhost:3000/api/users/check-email/${encodeURIComponent(email)}`, {
+            credentials: 'include' // Include cookies
+        });
         const data = await response.json();
         
         if (response.ok) {
@@ -200,7 +204,9 @@ async function checkUsernameAvailability() {
         const url = `http://localhost:3000/api/users/check-username/${encodeURIComponent(username)}`;
         console.log('Making request to:', url);
         
-        const response = await fetch(url);
+        const response = await fetch(url, {
+            credentials: 'include' // Include cookies
+        });
         const data = await response.json();
         
         console.log('Response status:', response.status);

@@ -5,11 +5,15 @@ const Joi = require("joi");
 const path = require("path");
 const dbConfig = require("./dbconfig.js");
 
+// Import the new appointment components
+const AppointmentController = require("../Controller/AppointmentController");
+const AppointmentMiddleware = require("../Middleware/AppointmentMiddleware");
+
 const app = express();
 const port = process.env.PORT || 3000;
 
 app.use(express.json());
-app.use(express.static(path.join(__dirname, "Public")));
+app.use(express.static(path.join(__dirname, "../Public")));
 
 // --- SETTINGS CRUD ---
 const settingsSchema = Joi.object({
@@ -50,7 +54,56 @@ app.post('/api/settings/:userId', async (req, res) => {
     }
 });
 
-// --- APPOINTMENTS CRUD ---
+
+// Get polyclinics
+app.get('/api/polyclinics', 
+    AppointmentMiddleware.logAppointmentActivity,
+    AppointmentController.getPolyclinics
+);
+
+// Get doctors for a polyclinic
+app.get('/api/polyclinics/:id/doctors',
+    AppointmentMiddleware.validateAppointmentId,
+    AppointmentMiddleware.logAppointmentActivity,
+    AppointmentController.getPolyclinicDoctors
+);
+
+// Get available time slots
+app.get('/api/appointments/available-slots',
+    AppointmentMiddleware.validateDateParameter,
+    AppointmentMiddleware.logAppointmentActivity,
+    AppointmentController.getAvailableSlots
+);
+
+// Get appointment statistics
+app.get('/api/appointments/stats',
+    AppointmentMiddleware.logAppointmentActivity,
+    AppointmentController.getAppointmentStats
+);
+
+// Get specific appointment by ID
+app.get('/api/appointments/:id',
+    AppointmentMiddleware.validateAppointmentId,
+    AppointmentMiddleware.logAppointmentActivity,
+    AppointmentController.getAppointmentById
+);
+
+// Create new appointment 
+app.post('/api/appointments/book',
+    AppointmentMiddleware.logAppointmentActivity,
+    AppointmentMiddleware.rateLimitAppointments,
+    AppointmentMiddleware.validateAppointmentData,
+    AppointmentMiddleware.checkBusinessHours,
+    AppointmentController.createAppointment
+);
+
+// Update appointment
+app.put('/api/appointments/:id',
+    AppointmentMiddleware.validateAppointmentId,
+    AppointmentMiddleware.logAppointmentActivity,
+    AppointmentController.updateAppointment
+);
+
 const appointmentSchema = Joi.object({
     date: Joi.string().isoDate().required(),
     type: Joi.string().max(100).required(),
@@ -60,60 +113,46 @@ const appointmentSchema = Joi.object({
 });
 
 app.get('/api/appointments', async (req, res) => {
-    const { date } = req.query;
     try {
-        await sql.connect(dbConfig);
-        const result = await sql.query`SELECT * FROM Appointments WHERE date = ${date}`;
-        res.json(result.recordset);
-    } catch (err) {
-        res.status(500).json({ error: err.message });
+        await AppointmentController.getAppointments(req, res);
+    } catch (error) {
+        const { date } = req.query;
+        try {
+            await sql.connect(dbConfig);
+            const result = await sql.query`SELECT * FROM Appointments WHERE AppointmentDate = ${date}`;
+            res.json(result.recordset);
+        } catch (err) {
+            res.status(500).json({ error: err.message });
+        }
     }
 });
 
 app.post('/api/appointments', async (req, res) => {
-    const { error } = appointmentSchema.validate(req.body);
-    if (error) return res.status(400).json({ error: error.details[0].message });
-    const { date, type, time, doctor, status } = req.body;
-    try {
-        await sql.connect(dbConfig);
-        await sql.query`
-            INSERT INTO appointments (date, type, time, doctor, status)
-            VALUES (${date}, ${type}, ${time}, ${doctor}, ${status})
-        `;
-        res.json({ success: true });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
+    res.status(410).json({ 
+        success: false, 
+        message: 'This endpoint has been deprecated. Please use /api/appointments/book for new appointments.' 
+    });
 });
 
 app.put('/api/appointments/:id', async (req, res) => {
-    const { error } = appointmentSchema.validate(req.body);
-    if (error) return res.status(400).json({ error: error.details[0].message });
-    const { id } = req.params;
-    const { date, type, time, doctor, status } = req.body;
     try {
-        await sql.connect(dbConfig);
-        await sql.query`
-            UPDATE appointments
-            SET date=${date}, type=${type}, time=${time}, doctor=${doctor}, status=${status}
-            WHERE id=${id}
-        `;
-        res.json({ success: true });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
+        await AppointmentController.updateAppointment(req, res);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
     }
 });
 
 app.delete('/api/appointments/:id', async (req, res) => {
-    const { id } = req.params;
     try {
-        await sql.connect(dbConfig);
-        await sql.query`DELETE FROM Appointments WHERE id=${id}`;
-        res.json({ success: true });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
+        await AppointmentController.deleteAppointment(req, res);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
     }
 });
+
+// Add error handling middleware for appointment routes
+app.use('/api/appointments', AppointmentMiddleware.handleErrors);
+app.use('/api/polyclinics', AppointmentMiddleware.handleErrors);
 
 app.listen(port, () => {
     console.log(`Server running on port ${port}`);

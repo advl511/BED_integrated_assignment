@@ -17,8 +17,8 @@ let isAuthenticated = false;
 // Check authentication status on load
 async function checkAuthentication() {
   try {
-    console.log('Checking authentication...');
-    console.log('Making request to:', `${apiBaseUrl}/auth/me`);
+    console.log('MAP.JS: Checking authentication...');
+    console.log('MAP.JS: Making request to:', `${apiBaseUrl}/auth/me`);
     
     // Prepare headers for the request
     const headers = {
@@ -27,10 +27,13 @@ async function checkAuthentication() {
     
     // Check if we have a token in localStorage (for Live Server)
     const localToken = localStorage.getItem('auth_token');
+    console.log('MAP.JS: Token from localStorage:', localToken ? 'Token found' : 'No token found');
     if (localToken) {
       headers['Authorization'] = `Bearer ${localToken}`;
-      console.log('Using token from localStorage for authentication');
+      console.log('MAP.JS: Using token from localStorage for authentication');
     }
+    
+    console.log('MAP.JS: Request headers:', headers);
     
     const response = await fetch(`${apiBaseUrl}/auth/me`, {
       credentials: 'include',
@@ -38,32 +41,36 @@ async function checkAuthentication() {
       headers: headers
     });
     
-    console.log('Auth response status:', response.status);
-    console.log('Auth response headers:', response.headers);
+    console.log('MAP.JS: Auth response status:', response.status);
+    console.log('MAP.JS: Auth response headers:', Object.fromEntries(response.headers.entries()));
     
     if (response.ok) {
       const data = await response.json();
+      console.log('MAP.JS: Auth response data:', data);
       currentUser = data.user;
       isAuthenticated = true;
-      console.log('Authenticated user:', currentUser);
+      console.log('MAP.JS: Authenticated user:', currentUser);
+      console.log('MAP.JS: isAuthenticated set to:', isAuthenticated);
       updateUserInterface();
       return true;
     } else {
       const errorData = await response.text();
-      console.log('Authentication failed:', response.status, errorData);
+      console.log('MAP.JS: Authentication failed:', response.status, errorData);
       // Not authenticated, allow guest access
-      console.log('User not authenticated, allowing guest access');
+      console.log('MAP.JS: User not authenticated, allowing guest access');
       currentUser = { user_id: null, username: "Guest User" };
       isAuthenticated = false;
+      console.log('MAP.JS: isAuthenticated set to:', isAuthenticated);
       updateUserInterface();
       return false;
     }
   } catch (error) {
-    console.error('Authentication check failed:', error);
+    console.error('MAP.JS: Authentication check failed:', error);
     // Allow guest access
-    console.log('Authentication failed, allowing guest access');
+    console.log('MAP.JS: Authentication failed, allowing guest access');
     currentUser = { user_id: null, username: "Guest User" };
     isAuthenticated = false;
+    console.log('MAP.JS: isAuthenticated set to:', isAuthenticated);
     updateUserInterface();
     return false;
   }
@@ -71,6 +78,10 @@ async function checkAuthentication() {
 
 // Update UI based on authentication status
 function updateUserInterface() {
+  console.log('MAP.JS: updateUserInterface called');
+  console.log('MAP.JS: isAuthenticated:', isAuthenticated);
+  console.log('MAP.JS: currentUser:', currentUser);
+  
   // Add user info to the map interface
   const userInfo = document.createElement('div');
   userInfo.id = 'userInfo';
@@ -78,56 +89,64 @@ function updateUserInterface() {
     position: fixed;
     top: 20px;
     left: 580px;
-    background: rgba(255, 255, 255, 0.9);
+    background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(248,250,252,0.95) 100%);
     padding: 0;
-    border-radius: 5px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+    backdrop-filter: blur(10px);
     z-index: 1000;
     font-size: 14px;
-    border: 1px solid #ddd;
+    border: 1px solid rgba(203,213,225,0.8);
+    min-width: 200px;
+    max-width: 280px;
+    overflow: hidden;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   `;
   
   // Create header area
   const headerArea = document.createElement('div');
   headerArea.style.cssText = `
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
     color: white;
-    padding: 8px 10px;
-    border-radius: 5px 5px 0 0;
-    font-weight: bold;
+    padding: 12px 16px;
+    border-radius: 12px 12px 0 0;
+    font-weight: 600;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    font-size: 12px;
+    font-size: 13px;
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
   `;
   
   // Create content area
   const contentArea = document.createElement('div');
   contentArea.style.cssText = `
-    padding: 10px;
-    background: rgba(255, 255, 255, 0.95);
-    border-radius: 0 0 5px 5px;
+    padding: 14px 16px;
+    background: rgba(255, 255, 255, 0.98);
+    border-radius: 0 0 12px 12px;
   `;
   
   if (isAuthenticated) {
+    console.log('MAP.JS: Showing authenticated user interface');
     headerArea.innerHTML = `
-      <span>User: ${currentUser.username}</span>
+      <span>Welcome, ${currentUser.username}</span>
+      <div style="width: 8px; height: 8px; background: #10b981; border-radius: 50%; box-shadow: 0 0 8px rgba(16, 185, 129, 0.6);"></div>
     `;
     contentArea.innerHTML = `
-      <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-        <button onclick="goToHomepage()" style="padding: 6px 12px; font-size: 12px; border: 1px solid #10b981; background: #10b981; color: white; border-radius: 4px; cursor: pointer; font-weight: 500;">Home</button>
-        <button onclick="goToHomepage()" style="padding: 6px 12px; font-size: 12px; border: 1px solid #3b82f6; background: #3b82f6; color: white; border-radius: 4px; cursor: pointer; font-weight: 500;">Back to Home</button>
+      <div style="display: flex; gap: 10px; flex-direction: column;">
+        <button onclick="goToHomepage()" style="padding: 10px 16px; font-size: 13px; border: 2px solid #10b981; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.3s ease; box-shadow: 0 2px 8px rgba(16, 185, 129, 0.2);" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 16px rgba(16, 185, 129, 0.3)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(16, 185, 129, 0.2)';">🏠 Back to Home</button>
       </div>
     `;
   } else {
+    console.log('MAP.JS: Showing guest user interface');
     headerArea.innerHTML = `
       <span>Guest Mode</span>
     `;
     contentArea.innerHTML = `
-      <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-        <button onclick="goToHomepage()" style="padding: 6px 12px; font-size: 12px; border: 1px solid #10b981; background: #10b981; color: white; border-radius: 4px; cursor: pointer; font-weight: 500;">Home</button>
-        <button onclick="goToLogin()" style="padding: 6px 12px; font-size: 12px; border: 1px solid #667eea; background: #667eea; color: white; border-radius: 4px; cursor: pointer; font-weight: 500;">Login</button>
-        <button onclick="goToRegister()" style="padding: 6px 12px; font-size: 12px; border: 1px solid #f59e0b; background: #f59e0b; color: white; border-radius: 4px; cursor: pointer; font-weight: 500;">Register</button>
+      <div style="display: flex; gap: 10px; flex-direction: column;">
+        <button onclick="goToHomepage()" style="padding: 10px 16px; font-size: 13px; border: 2px solid #10b981; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.3s ease; box-shadow: 0 2px 8px rgba(16, 185, 129, 0.2);" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 16px rgba(16, 185, 129, 0.3)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(16, 185, 129, 0.2)';">🏠 Home</button>
+        <button onclick="goToLogin()" style="padding: 10px 16px; font-size: 13px; border: 2px solid #667eea; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.3s ease; box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2);" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 16px rgba(102, 126, 234, 0.3)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(102, 126, 234, 0.2)';">🔐 Login</button>
+        <button onclick="goToRegister()" style="padding: 10px 16px; font-size: 13px; border: 2px solid #f59e0b; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.3s ease; box-shadow: 0 2px 8px rgba(245, 158, 11, 0.2);" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 16px rgba(245, 158, 11, 0.3)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(245, 158, 11, 0.2)';">📝 Register</button>
       </div>
     `;
   }
@@ -142,6 +161,14 @@ function updateUserInterface() {
   }
   
   document.body.appendChild(userInfo);
+}
+
+// Test function to manually check authentication
+window.testAuth = async function() {
+  console.log('Manual auth test started...');
+  console.log('Current token:', localStorage.getItem('auth_token'));
+  await checkAuthentication();
+  console.log('Manual auth test completed');
 }
 
 // Make element draggable
@@ -293,23 +320,63 @@ const TRANSPORT_MODES = {
 // API Functions
 async function fetchSavedLocations(userId = null) {
   try {
-    let url = `${apiBaseUrl}/locations`;
-    if (userId) {
-      url = `${apiBaseUrl}/locations/${userId}`;
+    console.log('Fetching saved locations for user:', userId);
+    
+    // Ensure we have a valid userId - no fallback to all locations
+    if (!userId || userId === null || userId === undefined || userId === 'undefined') {
+      console.log('No valid user ID provided, cannot fetch locations');
+      return [];
     }
+    
+    // Always fetch user-specific locations
+    const url = `${apiBaseUrl}/locations/${userId}`;
+    console.log('Fetching from URL:', url);
     
     const response = await fetch(url);
+    console.log('Response status:', response.status);
+    
     if (!response.ok) {
+      if (response.status === 404) {
+        // Return empty array for 404 - might mean no locations found for this user
+        console.log('No locations found for user (404), returning empty array');
+        return [];
+      }
       throw new Error(`HTTP error! status: ${response.status}`);
     }
+    
     const result = await response.json();
+    console.log('Fetched locations result:', result);
     
     // Handle both old and new response formats
-    const locations = result.data || result;
-    savedLocations = locations;
-    return locations;
+    const locations = result.data || result || [];
+    savedLocations = Array.isArray(locations) ? locations : [];
+    
+    console.log('Processed locations:', savedLocations);
+    console.log('Number of locations found:', savedLocations.length);
+    
+    return savedLocations;
   } catch (error) {
     console.error('Error fetching saved locations:', error);
+    
+    // Check for network errors that indicate server is down
+    if (error.message.includes('Failed to fetch') || 
+        error.message.includes('NetworkError') || 
+        error.message.includes('fetch') ||
+        error.name === 'TypeError') {
+      console.log('Network error detected - server may be offline');
+      
+      // If user has a token but server is unreachable, clear authentication
+      if (localStorage.getItem('auth_token')) {
+        console.log('Server unreachable, clearing authentication data');
+        clearAuthenticationData();
+        isAuthenticated = false;
+        currentUser = { user_id: null, username: "Guest User" };
+        updateUserInterface();
+        showNotification('Server connection lost. You have been logged out.', 'warning');
+      }
+      
+      return [];
+    }
     throw error;
   }
 }
@@ -1136,6 +1203,32 @@ function extractFocusedAddress(address) {
   return firstPart.length > 50 ? firstPart.substring(0, 47) + '...' : firstPart;
 }
 
+// Get location name from coordinates using reverse geocoding
+async function getLocationNameFromCoords(lat, lng) {
+  try {
+    const geocoder = new google.maps.Geocoder();
+    const result = await new Promise((resolve, reject) => {
+      geocoder.geocode(
+        { location: { lat: parseFloat(lat), lng: parseFloat(lng) } },
+        (results, status) => {
+          if (status === 'OK' && results[0]) {
+            resolve(results[0]);
+          } else {
+            reject(new Error('Address not found'));
+          }
+        }
+      );
+    });
+    
+    // Extract a meaningful location name
+    const locationName = extractLocationName(result.formatted_address);
+    return locationName || `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+  } catch (error) {
+    console.log('Could not get location name for coords:', lat, lng, error);
+    return `${parseFloat(lat).toFixed(4)}, ${parseFloat(lng).toFixed(4)}`;
+  }
+}
+
 // Display route information
 function displayRouteInfo(directions) {
   const route = directions.routes[0];
@@ -1160,8 +1253,14 @@ function displayRouteInfo(directions) {
           <p style="font-size: 11px; color: #94a3b8; margin: 4px 0 0 0;">${leg.end_address}</p>
         </div>
       </div>
-      <button onclick="saveCurrentRoute()" class="save-route-btn">Save Route</button>
-      <button onclick="clearDirections()" class="clear-route-btn">Clear Route</button>
+      <div class="route-actions-container">
+        <button onclick="saveCurrentRoute()" class="save-route-btn">
+          Save Route
+        </button>
+        <button onclick="clearDirections()" class="clear-route-btn">
+          Clear Route
+        </button>
+      </div>
     `;
     
     // Ensure the route info is visible
@@ -1188,17 +1287,24 @@ async function saveCurrentRoute() {
   const route = currentRoute.routes[0];
   const leg = route.legs[0];
   
-  const routeData = {
-    name: routeName,
-    start_lat: leg.start_location.lat(),
-    start_lng: leg.start_location.lng(),
-    end_lat: leg.end_location.lat(),
-    end_lng: leg.end_location.lng(),
-    user_id: currentUser ? currentUser.user_id : 1
-  };
-
   try {
     showNotification('Saving route...', 'info');
+    
+    // Get meaningful location names for start and end points
+    const startLocationName = extractLocationName(leg.start_address);
+    const endLocationName = extractLocationName(leg.end_address);
+    
+    const routeData = {
+      name: routeName,
+      start_lat: leg.start_location.lat(),
+      start_lng: leg.start_location.lng(),
+      end_lat: leg.end_location.lat(),
+      end_lng: leg.end_location.lng(),
+      start_location_name: startLocationName,
+      end_location_name: endLocationName,
+      user_id: currentUser ? currentUser.user_id : 1
+    };
+
     const response = await saveRoute(routeData);
     
     if (response.success) {
@@ -1296,15 +1402,23 @@ function clearDirections() {
 // Show/hide directions panel
 function showDirectionsPanel() {
   const panel = document.getElementById('directionsContainer');
+  const uiContainer = document.getElementById('UI-container');
   if (panel) {
     panel.style.display = 'block';
+    if (uiContainer) {
+      uiContainer.classList.add('directions-open');
+    }
   }
 }
 
 function hideDirectionsPanel() {
   const panel = document.getElementById('directionsContainer');
+  const uiContainer = document.getElementById('UI-container');
   if (panel) {
     panel.style.display = 'none';
+    if (uiContainer) {
+      uiContainer.classList.remove('directions-open');
+    }
   }
   
   // Also uncheck directions mode and hide route points when panel is closed
@@ -1329,31 +1443,104 @@ function hideDirectionsPanel() {
 // Load saved routes
 async function loadSavedRoutes() {
   try {
+    // Check if user is authenticated (not a guest)
+    if (!isAuthenticated || (currentUser && currentUser.username === "Guest User")) {
+      const routesList = document.getElementById('savedRoutesList');
+      if (routesList) {
+        routesList.innerHTML = `
+          <div class="no-routes">
+            <h4>Sign in to view routes</h4>
+            <p>Create an account to save and access your routes!</p>
+          </div>
+        `;
+      }
+      return;
+    }
+    
     const routes = await fetchSavedRoutes(currentUser ? currentUser.user_id : 1);
     const routesList = document.getElementById('savedRoutesList');
     if (routesList) {
       if (routes.length === 0) {
-        routesList.innerHTML = '<div class="no-routes">No saved routes found.</div>';
-      } else {
         routesList.innerHTML = `
-          <h4 style="padding: 20px 20px 10px 20px; margin: 0; color: #1e293b; font-size: 16px; font-weight: 600;">Saved Routes</h4>
-          <div style="padding: 0 20px 20px 20px; flex: 1; overflow-y: auto;">
-            ${routes.map(route => `
-              <div class="saved-route-item">
-                <div class="route-info" onclick="loadRoute(${route.route_id}, ${route.start_lat}, ${route.start_lng}, ${route.end_lat}, ${route.end_lng})">
-                  <h5>${route.route_name}</h5>
-                  <p>Start: ${route.start_lat.toFixed(4)}, ${route.start_lng.toFixed(4)}</p>
-                  <p>End: ${route.end_lat.toFixed(4)}, ${route.end_lng.toFixed(4)}</p>
-                  <small>Saved: ${new Date(route.created_at).toLocaleDateString()}</small>
-                </div>
-                <div class="route-actions">
-                  <button onclick="editRouteName(${route.route_id}, '${route.route_name}')" class="action-btn edit-btn" title="Edit route name">Edit</button>
-                  <button onclick="confirmDeleteRoute(${route.route_id}, '${route.route_name}')" class="action-btn delete-btn" title="Delete route">Delete</button>
-                </div>
-              </div>
-            `).join('')}
+          <div class="no-routes">
+            <h4>No saved routes yet</h4>
+            <p>Create and save your first route to see it here!</p>
           </div>
         `;
+      } else {
+        // Check if we need to get location names (for older routes without stored names)
+        const needsGeocoding = routes.some(route => !route.start_location_name || !route.end_location_name);
+        
+        if (needsGeocoding) {
+          // Show loading state first
+          routesList.innerHTML = `
+            <h4 style="padding: 20px 20px 10px 20px; margin: 0; color: #1e293b; font-size: 16px; font-weight: 600;">Saved Routes</h4>
+            <div style="padding: 0 20px 20px 20px; flex: 1; overflow-y: auto;">
+              <div class="loading">
+                <div class="loading-spinner"></div>
+                <p>Loading route locations...</p>
+              </div>
+            </div>
+          `;
+          
+          // Get location names for routes that don't have them stored
+          const routesWithNames = await Promise.all(routes.map(async (route) => {
+            let startName = route.start_location_name;
+            let endName = route.end_location_name;
+            
+            // Only geocode if names are not already stored
+            if (!startName) {
+              startName = await getLocationNameFromCoords(route.start_lat, route.start_lng);
+            }
+            if (!endName) {
+              endName = await getLocationNameFromCoords(route.end_lat, route.end_lng);
+            }
+            
+            return { ...route, startName, endName };
+          }));
+          
+          // Update with actual route data
+          routesList.innerHTML = `
+            <h4 style="padding: 20px 20px 10px 20px; margin: 0; color: #1e293b; font-size: 16px; font-weight: 600;">Saved Routes</h4>
+            <div style="padding: 0 20px 20px 20px; flex: 1; overflow-y: auto;">
+              ${routesWithNames.map(route => `
+                <div class="saved-route-item">
+                  <div class="route-info" onclick="loadRoute(${route.route_id}, ${route.start_lat}, ${route.start_lng}, ${route.end_lat}, ${route.end_lng})">
+                    <h5>${route.route_name}</h5>
+                    <p>From: ${route.startName}</p>
+                    <p>To: ${route.endName}</p>
+                    <small>Saved: ${new Date(route.created_at).toLocaleDateString()}</small>
+                  </div>
+                  <div class="route-actions">
+                    <button onclick="editRouteName(${route.route_id}, '${route.route_name}')" class="action-btn edit-btn" title="Edit route name">Edit</button>
+                    <button onclick="confirmDeleteRoute(${route.route_id}, '${route.route_name}')" class="action-btn delete-btn" title="Delete route">Delete</button>
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          `;
+        } else {
+          // All routes have stored location names, display immediately
+          routesList.innerHTML = `
+            <h4 style="padding: 20px 20px 10px 20px; margin: 0; color: #1e293b; font-size: 16px; font-weight: 600;">Saved Routes</h4>
+            <div style="padding: 0 20px 20px 20px; flex: 1; overflow-y: auto;">
+              ${routes.map(route => `
+                <div class="saved-route-item">
+                  <div class="route-info" onclick="loadRoute(${route.route_id}, ${route.start_lat}, ${route.start_lng}, ${route.end_lat}, ${route.end_lng})">
+                    <h5>${route.route_name}</h5>
+                    <p>From: ${route.start_location_name}</p>
+                    <p>To: ${route.end_location_name}</p>
+                    <small>Saved: ${new Date(route.created_at).toLocaleDateString()}</small>
+                  </div>
+                  <div class="route-actions">
+                    <button onclick="editRouteName(${route.route_id}, '${route.route_name}')" class="action-btn edit-btn" title="Edit route name">Edit</button>
+                    <button onclick="confirmDeleteRoute(${route.route_id}, '${route.route_name}')" class="action-btn delete-btn" title="Delete route">Delete</button>
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          `;
+        }
       }
     }
   } catch (error) {
@@ -1569,6 +1756,110 @@ function showGuestSavePrompt() {
   };
 }
 
+// Show guest access prompt for viewing saved data
+function showGuestAccessPrompt(dataType = 'saved data') {
+  const modal = document.createElement('div');
+  modal.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1001;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  `;
+  
+  const content = document.createElement('div');
+  content.style.cssText = `
+    background: white;
+    padding: 32px;
+    border-radius: 12px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    max-width: 400px;
+    text-align: center;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  `;
+  
+  content.innerHTML = `
+    <div style="margin-bottom: 24px;">
+      <div style="
+        width: 56px;
+        height: 56px;
+        background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+        border-radius: 50%;
+        margin: 0 auto 16px auto;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 24px;
+      ">🔒</div>
+      <h3 style="margin: 0 0 8px 0; color: #1f2937; font-size: 20px; font-weight: 600;">Sign In Required</h3>
+      <p style="margin: 0; color: #6b7280; font-size: 16px; line-height: 1.5;">
+        Access to ${dataType} requires an account. Sign in to view and manage your personalized content.
+      </p>
+    </div>
+    <div style="display: flex; gap: 12px;">
+      <button onclick="window.location.href='signin.html'" style="
+        flex: 1;
+        background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        min-height: 44px;
+      " onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 4px 12px rgba(59, 130, 246, 0.4)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none'">
+        Sign In
+      </button>
+      <button onclick="window.location.href='signup.html'" style="
+        flex: 1;
+        background: transparent;
+        color: #374151;
+        border: 2px solid #e5e7eb;
+        padding: 12px 24px;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        min-height: 44px;
+      " onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background='transparent'">
+        Sign Up
+      </button>
+    </div>
+    <button onclick="this.closest('.guest-access-modal').remove()" style="
+      background: transparent;
+      color: #9ca3af;
+      border: none;
+      padding: 8px;
+      margin-top: 16px;
+      font-size: 14px;
+      cursor: pointer;
+      transition: color 0.2s ease;
+    " onmouseover="this.style.color='#6b7280'" onmouseout="this.style.color='#9ca3af'">
+      Continue as Guest
+    </button>
+  `;
+  
+  modal.className = 'guest-access-modal';
+  modal.appendChild(content);
+  document.body.appendChild(modal);
+  
+  // Close modal when clicking outside
+  modal.onclick = (e) => {
+    if (e.target === modal) {
+      modal.remove();
+    }
+  };
+}
+
 // Enhanced marker function
 function addMarker(location, title, color = 'red') {
   const marker = new google.maps.Marker({
@@ -1595,6 +1886,12 @@ function toggleSavedLocations() {
 }
 
 async function openSavedLocations() {
+  // Check if user is authenticated (not a guest)
+  if (!isAuthenticated || (currentUser && currentUser.username === "Guest User")) {
+    showGuestAccessPrompt('saved locations');
+    return;
+  }
+  
   const panel = document.getElementById('savedLocationsPanel');
   const btn = document.getElementById('savedLocationsBtn');
   const locationsList = document.getElementById('locationsList');
@@ -1602,7 +1899,7 @@ async function openSavedLocations() {
   
   panel.classList.add('active');
   btn.classList.add('active');
-  uiContainer.classList.add('panel-open');
+  uiContainer.classList.add('panel-open', 'saved-locations-open');
   
   // Clear search filter
   const filterInput = document.getElementById('locationFilter');
@@ -1618,17 +1915,85 @@ async function openSavedLocations() {
   `;
   
   try {
-    const locations = await fetchSavedLocations(currentUser ? currentUser.user_id : 1);
-    displayLocationsList(locations);
+    // Get user ID for authenticated users only
+    let userId = null;
+    if (currentUser && currentUser.user_id && currentUser.user_id !== null) {
+      userId = currentUser.user_id;
+    } else {
+      console.log('No valid user ID found, user may not be properly authenticated');
+      throw new Error('User authentication required');
+    }
+    
+    console.log('Fetching locations for authenticated user ID:', userId);
+    const locations = await fetchSavedLocations(userId);
+    await displayLocationsList(locations);
     displayLocationsOnMap(locations);
   } catch (error) {
     console.error('Error loading saved locations:', error);
-    locationsList.innerHTML = `
-      <div class="error-message">
-        <strong>Oops! Something went wrong</strong><br>
-        Failed to load your saved locations. Please check your connection and try again.
-      </div>
-    `;
+    
+    // Determine the type of error and show appropriate message
+    let errorMessage = '';
+    if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+      errorMessage = `
+        <div class="error-message">
+          <div class="error-icon">🌐</div>
+          <strong>Connection Problem</strong><br>
+          <p>Can't connect to the server. Please check your internet connection and try again.</p>
+          <button onclick="openSavedLocations()" style="
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-top: 8px;
+            font-size: 14px;
+          ">Try Again</button>
+        </div>
+      `;
+    } else if (error.message.includes('404')) {
+      errorMessage = `
+        <div class="no-locations">
+          <div class="empty-icon">📍</div>
+          <h4 style="margin: 8px 0; color: #374151;">No saved places yet</h4>
+          <p style="margin: 0; font-size: 14px; color: #6b7280;">
+            Start exploring and double-click on the map to save your favorite locations!
+          </p>
+          <div style="margin-top: 12px;">
+            <button onclick="saveCurrentLocation()" style="
+              background: #10b981;
+              color: white;
+              border: none;
+              padding: 8px 16px;
+              border-radius: 6px;
+              cursor: pointer;
+              font-size: 14px;
+              margin-right: 8px;
+            ">Save Current Location</button>
+          </div>
+        </div>
+      `;
+    } else {
+      errorMessage = `
+        <div class="error-message">
+          <div class="error-icon">⚠️</div>
+          <strong>Oops! Something went wrong</strong><br>
+          <p>We're having trouble loading your saved locations. Please try again in a moment.</p>
+          <button onclick="openSavedLocations()" style="
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-top: 8px;
+            font-size: 14px;
+          ">Try Again</button>
+        </div>
+      `;
+    }
+    
+    locationsList.innerHTML = errorMessage;
   }
 }
 
@@ -1639,7 +2004,7 @@ function closeSavedLocations() {
   
   panel.classList.remove('active');
   btn.classList.remove('active');
-  uiContainer.classList.remove('panel-open');
+  uiContainer.classList.remove('panel-open', 'saved-locations-open');
   
   clearSavedLocationMarkers();
 }
@@ -1670,20 +2035,59 @@ async function deleteLocationFromDatabase(locationId) {
   }
 }
 
-function displayLocationsList(locations) {
+async function displayLocationsList(locations) {
   const locationsList = document.getElementById('locationsList');
   
   if (!locations || locations.length === 0) {
     locationsList.innerHTML = `
       <div class="no-locations">
-        <h4 style="margin: 0 0 8px 0; color: #374151;">No saved places yet</h4>
-        <p style="margin: 0; font-size: 13px;">Start exploring and save your favorite locations!</p>
+        <div class="empty-state-icon" style="font-size: 48px; margin-bottom: 16px;">🗺️</div>
+        <h4 style="margin: 0 0 8px 0; color: #374151; font-size: 18px;">No saved places yet</h4>
+        <p style="margin: 0 0 16px 0; font-size: 14px; color: #6b7280; line-height: 1.5;">
+          Start exploring and save your favorite locations! Double-click anywhere on the map to save a place.
+        </p>
+        <div style="display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;">
+          ${isAuthenticated ? `
+            <button onclick="saveCurrentLocation()" style="
+              background: linear-gradient(135deg, #10b981, #059669);
+              color: white;
+              border: none;
+              padding: 10px 16px;
+              border-radius: 8px;
+              cursor: pointer;
+              font-size: 14px;
+              font-weight: 500;
+              box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2);
+              transition: all 0.2s ease;
+            " onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 4px 8px rgba(16, 185, 129, 0.3)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 4px rgba(16, 185, 129, 0.2)'">
+              📍 Save Current Location
+            </button>
+          ` : `
+            <p style="margin: 8px 0 0 0; font-size: 13px; color: #9ca3af;">
+              <a href="signin.html" style="color: #3b82f6; text-decoration: none;">Sign in</a> to start saving your favorite places!
+            </p>
+          `}
+        </div>
       </div>
     `;
     return;
   }
   
-  const locationsHTML = locations.map(location => {
+  // Show loading state while getting location names
+  locationsList.innerHTML = `
+    <div class="loading">
+      <div class="loading-spinner"></div>
+      <p>Loading location addresses...</p>
+    </div>
+  `;
+  
+  // Get location names (addresses) for each location
+  const locationsWithNames = await Promise.all(locations.map(async (location) => {
+    const addressName = await getLocationNameFromCoords(location.latitude, location.longitude);
+    return { ...location, addressName };
+  }));
+  
+  const locationsHTML = locationsWithNames.map(location => {
     const createdDate = new Date(location.created_at);
     const formattedDate = createdDate.toLocaleDateString('en-US', { 
       month: 'short', 
@@ -1696,7 +2100,7 @@ function displayLocationsList(locations) {
         <div class="location-info" onclick="goToLocation(${location.latitude}, ${location.longitude}, '${location.location_name.replace(/'/g, "\\'")}')" 
              role="button" tabindex="0" aria-label="Go to ${location.location_name}">
           <div class="location-name">${location.location_name}</div>
-          <div class="location-coords">${parseFloat(location.latitude).toFixed(4)}°, ${parseFloat(location.longitude).toFixed(4)}°</div>
+          <div class="location-coords">${location.addressName}</div>
           <div class="location-date">Saved ${formattedDate}</div>
         </div>
         <div class="location-actions">
@@ -2036,6 +2440,94 @@ function showLocationActionDialog(location, name) {
     actions[choice - 1].action();
   }
 }
+
+// Server connection and token cleanup management
+function clearAuthenticationData() {
+  console.log('Clearing authentication data...');
+  localStorage.removeItem('auth_token');
+  localStorage.removeItem('user_id');
+  localStorage.removeItem('username');
+  localStorage.removeItem('email');
+  console.log('Authentication data cleared');
+}
+
+// Check server connectivity and clear tokens if server is down
+async function checkServerConnection() {
+  try {
+    const response = await fetch(`${apiBaseUrl}/health`, { 
+      method: 'GET',
+      signal: AbortSignal.timeout(5000) // 5 second timeout
+    });
+    return response.ok;
+  } catch (error) {
+    console.log('Server connection failed:', error.message);
+    return false;
+  }
+}
+
+// Periodic server health check
+let serverHealthInterval;
+
+function startServerHealthMonitoring() {
+  // Check server health every 30 seconds
+  serverHealthInterval = setInterval(async () => {
+    const isServerOnline = await checkServerConnection();
+    
+    if (!isServerOnline && localStorage.getItem('auth_token')) {
+      console.log('Server is offline, clearing authentication tokens');
+      clearAuthenticationData();
+      
+      // Update UI to guest mode
+      isAuthenticated = false;
+      currentUser = { user_id: null, username: "Guest User" };
+      updateUserInterface();
+      
+      // Show notification to user
+      showNotification('Server connection lost. You have been logged out.', 'warning');
+    }
+  }, 30000); // Check every 30 seconds
+}
+
+function stopServerHealthMonitoring() {
+  if (serverHealthInterval) {
+    clearInterval(serverHealthInterval);
+    serverHealthInterval = null;
+  }
+}
+
+// Handle page visibility change (when user switches tabs or minimizes browser)
+document.addEventListener('visibilitychange', async () => {
+  if (!document.hidden) {
+    // Page became visible again, check server connection
+    const isServerOnline = await checkServerConnection();
+    
+    if (!isServerOnline && localStorage.getItem('auth_token')) {
+      console.log('Server is offline upon page focus, clearing tokens');
+      clearAuthenticationData();
+      isAuthenticated = false;
+      currentUser = { user_id: null, username: "Guest User" };
+      updateUserInterface();
+      showNotification('Server connection lost. You have been logged out.', 'warning');
+    }
+  }
+});
+
+// Handle page unload (when user closes browser or navigates away)
+window.addEventListener('beforeunload', () => {
+  stopServerHealthMonitoring();
+});
+
+// Handle browser close or tab close
+window.addEventListener('unload', () => {
+  // Optional: Clear tokens when browser/tab closes (if you want immediate cleanup)
+  // Uncomment the line below if you want tokens cleared when browser closes
+  // clearAuthenticationData();
+});
+
+// Start monitoring when page loads
+window.addEventListener('load', () => {
+  startServerHealthMonitoring();
+});
 
 // Start the application when the page loads
 document.addEventListener('DOMContentLoaded', initializeApp);

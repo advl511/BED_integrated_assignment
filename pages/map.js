@@ -76,26 +76,23 @@ function updateUserInterface() {
   userInfo.id = 'userInfo';
   userInfo.style.cssText = `
     position: fixed;
-    top: 10px;
-    left: 10px;
+    top: 20px;
+    left: 580px;
     background: rgba(255, 255, 255, 0.9);
     padding: 0;
     border-radius: 5px;
     box-shadow: 0 2px 10px rgba(0,0,0,0.1);
     z-index: 1000;
     font-size: 14px;
-    cursor: move;
-    user-select: none;
     border: 1px solid #ddd;
   `;
   
-  // Create drag handle
-  const dragHandle = document.createElement('div');
-  dragHandle.style.cssText = `
+  // Create header area
+  const headerArea = document.createElement('div');
+  headerArea.style.cssText = `
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
     padding: 8px 10px;
-    cursor: move;
     border-radius: 5px 5px 0 0;
     font-weight: bold;
     display: flex;
@@ -113,9 +110,8 @@ function updateUserInterface() {
   `;
   
   if (isAuthenticated) {
-    dragHandle.innerHTML = `
+    headerArea.innerHTML = `
       <span>User: ${currentUser.username}</span>
-      <span style="cursor: pointer; opacity: 0.7;">⋮⋮</span>
     `;
     contentArea.innerHTML = `
       <div style="display: flex; gap: 8px; flex-wrap: wrap;">
@@ -124,9 +120,8 @@ function updateUserInterface() {
       </div>
     `;
   } else {
-    dragHandle.innerHTML = `
+    headerArea.innerHTML = `
       <span>Guest Mode</span>
-      <span style="cursor: pointer; opacity: 0.7;">⋮⋮</span>
     `;
     contentArea.innerHTML = `
       <div style="display: flex; gap: 8px; flex-wrap: wrap;">
@@ -137,11 +132,8 @@ function updateUserInterface() {
     `;
   }
   
-  userInfo.appendChild(dragHandle);
+  userInfo.appendChild(headerArea);
   userInfo.appendChild(contentArea);
-  
-  // Make the panel draggable
-  makeDraggable(userInfo, dragHandle);
   
   // Remove existing user info if present
   const existing = document.getElementById('userInfo');

@@ -56,9 +56,15 @@ function setupNavigation() {
     // Handle navigation clicks
     document.querySelectorAll('.nav-item').forEach(item => {
         item.addEventListener('click', function(e) {
-            e.preventDefault();
-            
             const tabName = this.getAttribute('data-tab');
+            
+            // Special handling for map tab - navigate directly to map.html
+            if (tabName === 'map') {
+                return; // Let the default link behavior happen
+            }
+            
+            // For other tabs, prevent default and switch tab
+            e.preventDefault();
             if (tabName) {
                 switchTab(tabName);
             }

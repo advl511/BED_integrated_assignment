@@ -115,6 +115,113 @@ async function cleanupExpiredTokens() {
   }
 }
 
+async function searchUsers(query, limit = 10) {
+  try {
+    await sql.connect(config);
+    const result = await sql.query`
+      SELECT user_id, username, email, first_name, last_name
+      FROM users 
+      WHERE username LIKE ${'%' + query + '%'} 
+         OR first_name LIKE ${'%' + query + '%'} 
+         OR last_name LIKE ${'%' + query + '%'}
+         OR email LIKE ${'%' + query + '%'}
+      ORDER BY username
+      OFFSET 0 ROWS
+      FETCH NEXT ${limit} ROWS ONLY
+    `;
+    return result.recordset;
+  } catch (err) {
+    throw err;
+  }
+}
+
+async function getUserById(userId) {
+  try {
+    await sql.connect(config);
+    const result = await sql.query`
+      SELECT user_id, username, email, first_name, last_name, phone_number, 
+             race, age, gender, date_of_birth, nationality, created_at
+      FROM users 
+      WHERE user_id = ${userId}
+    `;
+    return result.recordset[0];
+  } catch (err) {
+    throw err;
+  }
+}
+
+async function updateUser(userId, userData) {
+  try {
+    await sql.connect(config);
+    
+    // Build dynamic SET clause for only provided fields
+    const setFields = [];
+    const values = { userId };
+    
+    if (userData.username !== undefined) {
+      setFields.push('username = @username');
+      values.username = userData.username;
+    }
+    if (userData.email !== undefined) {
+      setFields.push('email = @email');
+      values.email = userData.email;
+    }
+    if (userData.first_name !== undefined) {
+      setFields.push('first_name = @firstName');
+      values.firstName = userData.first_name;
+    }
+    if (userData.last_name !== undefined) {
+      setFields.push('last_name = @lastName');
+      values.lastName = userData.last_name;
+    }
+    if (userData.phone_number !== undefined) {
+      setFields.push('phone_number = @phoneNumber');
+      values.phoneNumber = userData.phone_number;
+    }
+    if (userData.race !== undefined) {
+      setFields.push('race = @race');
+      values.race = userData.race;
+    }
+    if (userData.age !== undefined) {
+      setFields.push('age = @age');
+      values.age = userData.age;
+    }
+    if (userData.gender !== undefined) {
+      setFields.push('gender = @gender');
+      values.gender = userData.gender;
+    }
+    if (userData.date_of_birth !== undefined) {
+      setFields.push('date_of_birth = @dateOfBirth');
+      values.dateOfBirth = userData.date_of_birth;
+    }
+    if (userData.nationality !== undefined) {
+      setFields.push('nationality = @nationality');
+      values.nationality = userData.nationality;
+    }
+    
+    if (setFields.length === 0) {
+      throw new Error('No fields to update');
+    }
+    
+    const query = `
+      UPDATE users 
+      SET ${setFields.join(', ')}
+      OUTPUT INSERTED.*
+      WHERE user_id = @userId
+    `;
+    
+    const request = new sql.Request();
+    Object.keys(values).forEach(key => {
+      request.input(key, values[key]);
+    });
+    
+    const result = await request.query(query);
+    return result.recordset[0];
+  } catch (err) {
+    throw err;
+  }
+}
+
 module.exports = {
   createUser,
   findUserByEmail,
@@ -124,4 +231,7 @@ module.exports = {
   invalidateUserToken,
   invalidateAllUserTokens,
   cleanupExpiredTokens,
+  searchUsers,
+  getUserById,
+  updateUser,
 };

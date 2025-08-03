@@ -157,7 +157,8 @@ async function loginUser(req, res) {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    const valid = bcrypt.compareSync(password, user.password_hash);    if (!valid) {
+    const valid = bcrypt.compareSync(password, user.password_hash);
+    if (!valid) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
@@ -285,6 +286,88 @@ async function refreshToken(req, res) {
   }
 }
 
+async function searchUsers(req, res) {
+  try {
+    const { q: query, limit = 10 } = req.query;
+    
+    if (!query || query.trim().length === 0) {
+      return res.status(400).json({ error: 'Search query is required' });
+    }
+    
+    const users = await userModel.searchUsers(query.trim(), parseInt(limit));
+    res.status(200).json(users);
+  } catch (err) {
+    console.error('Search users error:', err);
+    res.status(500).json({ error: err.message });
+  }
+}
+
+async function getUserProfile(req, res) {
+  try {
+    const { userId } = req.params;
+    
+    const user = await userModel.getUserById(userId);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    // Remove sensitive information
+    const { password_hash, salt, ...userProfile } = user;
+    res.status(200).json(userProfile);
+  } catch (err) {
+    console.error('Get user profile error:', err);
+    res.status(500).json({ error: err.message });
+  }
+}
+
+async function updateUserProfile(req, res) {
+  try {
+    const { userId } = req.params;
+    const userData = req.body;
+    
+    // Validate that the user can only update their own profile
+    if (req.user && req.user.user_id != userId) {
+      return res.status(403).json({ error: 'You can only update your own profile' });
+    }
+    
+    // Check if user exists
+    const existingUser = await userModel.getUserById(userId);
+    if (!existingUser) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    // Filter out sensitive fields that shouldn't be updated via this endpoint
+    const allowedFields = [
+      'first_name', 'last_name', 'phone_number', 'race', 
+      'age', 'gender', 'date_of_birth', 'nationality'
+    ];
+    
+    const filteredData = {};
+    allowedFields.forEach(field => {
+      if (userData[field] !== undefined) {
+        filteredData[field] = userData[field];
+      }
+    });
+    
+    // Validate that at least one field is being updated
+    if (Object.keys(filteredData).length === 0) {
+      return res.status(400).json({ error: 'No valid fields to update' });
+    }
+    
+    console.log('Updating user profile with data:', filteredData);
+    
+    // Update user
+    const updatedUser = await userModel.updateUser(userId, filteredData);
+    
+    // Remove sensitive information
+    const { password_hash, salt, ...userProfile } = updatedUser;
+    res.status(200).json(userProfile);
+  } catch (err) {
+    console.error('Update user profile error:', err);
+    res.status(500).json({ error: err.message });
+  }
+}
+
 module.exports = {
   registerUser,
   loginUser,
@@ -294,5 +377,8 @@ module.exports = {
   logoutAllSessions,
   refreshToken,
   verifyToken,
-  generateToken
+  generateToken,
+  searchUsers,
+  getUserProfile,
+  updateUserProfile
 };

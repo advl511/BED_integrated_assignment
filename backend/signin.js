@@ -51,13 +51,38 @@ async function handleSignin(event) {
         const data = await response.json();
         
         if (response.ok) {
-            // No localStorage - token is handled server-side via cookies/session
+            console.log('Login successful, received data:', data);
+            
+            // Clear any existing localStorage data first
+            localStorage.removeItem('user_id');
+            localStorage.removeItem('username');
+            localStorage.removeItem('email');
+            
+            // Set new user data in localStorage
+            if (data.user) {
+                localStorage.setItem('user_id', data.user.user_id.toString());
+                localStorage.setItem('username', data.user.username);
+                localStorage.setItem('email', data.user.email);
+                console.log('Set localStorage:', {
+                    user_id: data.user.user_id,
+                    username: data.user.username,
+                    email: data.user.email
+                });
+            }
+            
             showSuccess('Login successful! Redirecting...');
             
+            // Reduce the timeout to make redirect faster
             setTimeout(() => {
-                // Redirect to dashboard page
-                window.location.href = '/dashboard.html';
-            }, 1000);
+                console.log('Attempting redirect to profile.html');
+                console.log('Current localStorage after login:', {
+                    user_id: localStorage.getItem('user_id'),
+                    username: localStorage.getItem('username'),
+                    email: localStorage.getItem('email')
+                });
+                // Redirect to profile page
+                window.location.href = 'profile.html';
+            }, 500);  // Reduced from 1000ms to 500ms
             
         } else {
             showError(data.error || 'Login failed');

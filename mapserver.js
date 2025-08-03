@@ -7,7 +7,7 @@ const cookieParser = require("cookie-parser");
 
 dotenv.config();
 
-const dbConfig = require("./dbConfig");
+const dbConfig = require("./dbconfig.js");
 const mapController = require("./Controller/mapController");
 const mapMiddleware = require("./Middleware/mapMiddleware");
 const mapModel = require("./model/mapmodel");

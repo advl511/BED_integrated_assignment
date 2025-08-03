@@ -41,6 +41,8 @@ app.use(cookieParser());
 app.use(express.static('../Public'));
 // Serve static files from the pages directory  
 app.use(express.static('../pages'));
+// Serve static files from the styles directory
+app.use(express.static('../styles'));
 
 // Add request logging for debugging
 app.use((req, res, next) => {

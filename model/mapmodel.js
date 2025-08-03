@@ -200,6 +200,35 @@ async function deleteRoute(route_id, user_id) {
     }
 }
 
+async function updateLocation(location_id, user_id, location) {
+    let connection
+    try {
+        connection = await sql.connect(dbConfig)
+        const query = 
+            'UPDATE user_saved_locations SET location_name = @location_name, latitude = @latitude, longitude = @longitude, updated_at = GETDATE() WHERE location_id = @location_id AND user_id = @user_id';
+        const request = connection.request();
+        request.input('location_id', location_id);
+        request.input('user_id', user_id);
+        request.input('location_name', location.name);
+        request.input('latitude', location.latitude);
+        request.input('longitude', location.longitude);
+        const result = await request.query(query);
+
+        return result.rowsAffected[0] > 0;
+    } catch (error) {
+        console.error('Error updating location:', error);
+        throw error;
+    } finally {
+        if (connection) {
+            try{
+                await connection.close();
+            } catch (err){
+                console.error('Error closing connection:', err);
+            }
+        }
+    }
+}
+
 async function deleteLocation(location_id, user_id) {
     let connection
     try {
@@ -230,6 +259,7 @@ module.exports = {
     getAllLocations,
     getLocationByUser,
     saveLocation,
+    updateLocation,
     deleteLocation,
     getAllRoutes,
     getRoutesByUser,

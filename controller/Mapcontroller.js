@@ -75,6 +75,37 @@ async function saveLocation(req, res) {
     }
 }
 
+async function updateLocation(req, res) {
+    try {
+        const { location_id, user_id } = req.params;
+        const { name, latitude, longitude } = req.body;
+        
+        const location = { name, latitude, longitude };
+        const result = await mapModel.updateLocation(location_id, user_id, location);
+        
+        if (result) {
+            res.status(200).json({
+                success: true,
+                message: "Location updated successfully",
+                data: { location_id, ...location, user_id }
+            });
+        } else {
+            res.status(404).json({
+                success: false,
+                error: "Location not found",
+                message: "No location found with the specified ID for this user"
+            });
+        }
+    } catch (error) {
+        console.error('Error updating location:', error);
+        res.status(500).json({
+            success: false,
+            error: "Error updating location",
+            message: error.message
+        });
+    }
+}
+
 async function deleteLocation(req, res) {
     try {
         const { location_id, user_id } = req.params;
@@ -239,6 +270,7 @@ module.exports = {
     getAllLocations,
     getLocationByUser,
     saveLocation,
+    updateLocation,
     deleteLocation,
     getAllRoutes,
     getRoutesByUser,

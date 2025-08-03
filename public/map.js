@@ -153,6 +153,29 @@ async function deleteLocation(locationId, userId = null) {
   }
 }
 
+async function updateLocation(locationId, locationData, userId = null) {
+  try {
+    const user = userId || currentUser.id;
+    const response = await fetch(`${apiBaseUrl}/locations/${user}/${locationId}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(locationData)
+    });
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('Error updating location:', error);
+    throw error;
+  }
+}
+
 async function deleteRoute(routeId, userId = null) {
   try {
     const user = userId || currentUser.id;

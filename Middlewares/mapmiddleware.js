@@ -61,25 +61,25 @@ const validateLocationData = (req, res, next) => {
 
 // Validation middleware for route parameters (location ID)
 const validateLocationId = (req, res, next) => {
-    const { id } = req.params;
+    const { location_id } = req.params;
     
-    if (!id) {
+    if (!location_id) {
         return res.status(400).json({
             error: "Missing location ID",
             message: "Location ID is required in the URL path"
         });
     }
 
-    const locationId = parseInt(id, 10);
+    const locationId = parseInt(location_id, 10);
     if (isNaN(locationId) || locationId <= 0) {
         return res.status(400).json({
             error: "Invalid location ID",
             message: "Location ID must be a positive integer",
-            received: id
+            received: location_id
         });
     }
 
-    req.params.id = locationId;
+    req.params.location_id = locationId;
     next();
 };
 

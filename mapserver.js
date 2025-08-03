@@ -63,6 +63,7 @@ app.get("/map/config", (req, res) => {
 app.get("/locations", mapController.getAllLocations);
 app.get("/locations/:user_id", mapMiddleware.validateUserId, mapController.getLocationByUser);
 app.post("/locations", mapMiddleware.validateUserId, mapMiddleware.validateLocationData, mapController.saveLocation);
+app.put("/locations/:user_id/:location_id", mapMiddleware.validateUserId, mapMiddleware.validateLocationId, mapMiddleware.validateLocationData, mapController.updateLocation);
 app.delete("/locations/:user_id/:location_id", mapMiddleware.validateUserId, mapMiddleware.validateLocationId, mapController.deleteLocation);
 
 // Routes API

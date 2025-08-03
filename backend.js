@@ -5,9 +5,9 @@ const Joi = require("joi");
 const path = require("path");
 const dbConfig = require("./dbconfig.js");
 
-// Import the new appointment components
-const AppointmentController = require("../Controller/AppointmentController");
-const AppointmentMiddleware = require("../Middleware/AppointmentMiddleware");
+// Import the appointment components with correct paths
+const AppointmentController = require("./Controller/AppointmentController");
+const AppointmentMiddleware = require("./Middleware/AppointmentMiddleware");
 
 const app = express();
 const port = process.env.PORT || 3000;

@@ -67,6 +67,25 @@ body {
     margin-top: 5px;
 }
 
+.login-section {
+    display: flex;
+    align-items: center;
+}
+
+.login-btn {
+    background-color: #3b82f6;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 500;
+    transition: background-color 0.3s ease;
+}
+
+.login-btn:hover {
+    background-color: #2563eb;
+}
+
 /* Navigation */
 .nav {
     background-color: var(--accent-color);
@@ -530,5 +549,10 @@ body {
 
     .profile-grid {
         grid-template-columns: 1fr;
+    }
+
+    .login-btn {
+        padding: 6px 12px;
+        font-size: 14px;
     }
 }

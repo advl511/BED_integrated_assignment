@@ -401,11 +401,11 @@ async function startServer() {
     
     app.listen(PORT, () => {
       console.log(`Together Server running on http://localhost:${PORT}`);
-      console.log(`📍 Map functionality available at http://localhost:${PORT}/map`);
+      console.log(`Map functionality available at http://localhost:${PORT}/map`);
       console.log(`User profiles available at http://localhost:${PORT}/profile`);
-      console.log(`🏠 Home page available at http://localhost:${PORT}/home.html`);
-      console.log(`📚 API documentation at http://localhost:${PORT}/api-docs`);
-      console.log(`🔧 Test endpoint at http://localhost:${PORT}/test`);
+      console.log(`Home page available at http://localhost:${PORT}/home.html`);
+      console.log(`API documentation at http://localhost:${PORT}/api-docs`);
+      console.log(`Test endpoint at http://localhost:${PORT}/test`);
     });
   } catch (error) {
     console.error('Database connection failed:', error);

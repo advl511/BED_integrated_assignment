@@ -564,3 +564,24 @@ CREATE INDEX idx_team_members_user_id ON team_members(user_id);
 -- Sample query to insert a new appointment
 -- INSERT INTO Appointments (UserID, PolyclinicID, DoctorID, AppointmentDate, AppointmentTime, Reason, BookingReference)
 -- VALUES (1, 1, 1, '2024-01-15', '09:00:00', 'General checkup', 'APT-ABC123');
+
+CREATE TABLE TranslationHistory (
+    id INT PRIMARY KEY IDENTITY(1,1),
+    originalText NVARCHAR(MAX),
+    translatedText NVARCHAR(MAX),
+    sourceLang NVARCHAR(10),
+    targetLang NVARCHAR(10),
+    createdAt DATETIME DEFAULT GETDATE()
+);
+
+
+CREATE TABLE Settings (
+  userId INT PRIMARY KEY,
+  language NVARCHAR(10),
+  direction NVARCHAR(20),
+  fontSize NVARCHAR(10),
+  timestamps BIT,
+  sound BIT,
+  theme NVARCHAR(20),
+  timeFormat NVARCHAR(10)
+);

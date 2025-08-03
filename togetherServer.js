@@ -179,6 +179,16 @@ app.get('/matchmaking', (req, res) => {
   res.sendFile(path.join(__dirname, 'pages', 'matchmaking.html'));
 });
 
+// Health check endpoint for monitoring server status
+app.get('/health', (req, res) => {
+  res.status(200).json({ 
+    status: 'ok', 
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    message: 'Server is healthy'
+  });
+});
+
 // ===============================
 // MAP API ROUTES
 // ===============================

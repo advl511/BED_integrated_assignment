@@ -148,6 +148,20 @@ button:disabled:hover {
   width: 100%;
   height: 100vh;
   pointer-events: none; /* Allow map interaction */
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Dynamic layout states */
+#UI-container.panel-open {
+  transform: translateX(0);
+}
+
+#UI-container.saved-locations-open {
+  transform: translateX(0);
+}
+
+#UI-container.directions-open {
+  transform: translateX(0);
 }
 
 sidebar {
@@ -229,12 +243,54 @@ sidebar img:hover {
   pointer-events: none;
 }
 
-/* Move search bar when saved locations panel is active */
+/* Move search bar dynamically based on open panels */
 #UI-container.panel-open #locationNav {
-  left: 390px; /* 70px (sidebar) + 300px (panel width) + 20px (margin) */
+  left: 410px; /* 70px (sidebar) + 320px (panel width) + 20px (margin) */
 }
 
-input[type="text"] {
+#UI-container.saved-locations-open #locationNav {
+  left: 410px; /* Account for saved locations panel */
+}
+
+#UI-container.directions-open:not(.saved-locations-open) #locationNav {
+  left: 110px; /* Just account for sidebar when only directions is open */
+}
+
+#UI-container.saved-locations-open.directions-open #locationNav {
+  left: 410px; /* When both panels are open, prioritize saved locations positioning */
+}
+
+/* General input styles for search filter and other inputs */
+.search-filter input[type="text"],
+.form-input {
+  height: 44px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  border: 2px solid var(--border-color);
+  outline: none;
+  box-shadow: none;
+  background-color: var(--background-white);
+  color: var(--text-primary);
+  font-weight: 500;
+  transition: all 0.2s ease;
+  width: 100%;
+}
+
+.search-filter input[type="text"]:focus,
+.form-input:focus {
+  background-color: var(--background-white);
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.search-filter input[type="text"]::placeholder,
+.form-input::placeholder {
+  color: var(--text-secondary);
+  font-weight: 400;
+}
+
+#locationNav input[type="text"] {
   height: 48px; /* Increased from 40px for better accessibility */
   width: 360px;
   padding: 0 16px; /* Increased padding for better usability */
@@ -250,13 +306,13 @@ input[type="text"] {
   min-height: 44px; /* WCAG 2.1 minimum touch target size */
 }
 
-input[type="text"]:focus {
+#locationNav input[type="text"]:focus {
   background-color: var(--background-white);
   border-color: var(--primary-color);
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
-input[type="text"]::placeholder {
+#locationNav input[type="text"]::placeholder {
   color: var(--text-secondary);
   font-weight: 400;
 }
@@ -623,31 +679,94 @@ input[type="text"]::placeholder {
   margin-left: 2px;
 }
 
-.delete-btn {
-  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+.edit-btn {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
   color: white;
-  box-shadow: 0 2px 4px rgba(245, 158, 11, 0.2);
+  min-width: 70px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
+}
+
+.edit-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+  transition: left 0.3s ease;
+}
+
+.edit-btn:hover::before {
+  left: 100%;
+}
+
+.edit-btn:hover {
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.3);
+}
+
+.edit-btn::after {
+  content: '✏️';
+  margin-left: 4px;
+  font-size: 12px;
+}
+
+.delete-btn {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: white;
+  min-width: 70px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.2);
+}
+
+.delete-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+  transition: left 0.3s ease;
+}
+
+.delete-btn:hover::before {
+  left: 100%;
 }
 
 .delete-btn:hover {
-  background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(245, 158, 11, 0.3);
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(239, 68, 68, 0.3);
 }
 
 .delete-btn::after {
   content: '🗑️';
-  margin-left: 2px;
-}
-
-.edit-btn {
-  background: #2196F3;
-  color: white;
-  min-width: 30px;
-}
-
-.edit-btn:hover {
-  background: #1976D2;
+  margin-left: 4px;
+  font-size: 12px;
 }
 
 .location-coords {
@@ -1186,13 +1305,16 @@ sidebar img.active {
   z-index: 1000;
   min-width: 320px;
   max-width: 380px;
-  transition: right 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   border: 1px solid rgba(0,0,0,0.08);
 }
 
-/* Keep transport controls on right side when saved locations panel is open */
-#UI-container.panel-open .transport-controls {
+/* Keep transport controls fixed on the right side - no movement */
+#UI-container.panel-open .transport-controls,
+#UI-container.saved-locations-open .transport-controls,
+#UI-container.directions-open .transport-controls {
   right: 20px;
+  transform: none;
 }
 
 .transport-controls .control-group {
@@ -1255,76 +1377,87 @@ sidebar img.active {
   box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
 
-/* Enhanced Route Points Section - Smaller inputs */
+/* Enhanced Route Points Section - Improved styling */
 .route-point {
-  margin-bottom: 16px;
+  margin-bottom: 18px;
 }
 
 .route-point label {
   display: block;
-  margin-bottom: 6px;
-  font-size: 13px;
+  margin-bottom: 8px;
+  font-size: 14px;
   font-weight: 600;
-  color: #2c3e50;
+  color: #1f2937;
   letter-spacing: -0.01em;
 }
 
 .input-group {
   display: flex;
   align-items: stretch;
-  border: 2px solid #e1e5e9;
-  border-radius: 8px;
+  border: 2px solid #d1d5db;
+  border-radius: 10px;
   background: white;
   overflow: hidden;
   transition: all 0.3s ease;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.04);
-  height: 40px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  height: 44px;
 }
 
 .input-group:focus-within {
-  border-color: #667eea;
-  box-shadow: 0 4px 16px rgba(102, 126, 234, 0.15);
+  border-color: #3b82f6;
+  box-shadow: 0 4px 20px rgba(59, 130, 246, 0.15);
   transform: translateY(-1px);
 }
 
-.input-group input {
+.input-group:hover {
+  border-color: #9ca3af;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+.input-group input[type="text"] {
   flex: 1;
-  padding: 10px 12px;
-  border: none;
-  font-size: 14px;
+  padding: 0 16px !important;
+  border: none !important;
+  font-size: 14px !important;
   outline: none;
-  background: transparent;
-  color: #2c3e50;
+  background: transparent !important;
+  color: #1f2937 !important;
   font-weight: 500;
   letter-spacing: -0.01em;
-  text-align: left; /* Default alignment for typed text */
-  line-height: 20px; /* Match the available height for vertical centering */
-  height: 20px; /* Explicit height for consistent vertical alignment */
-}
-
-.input-group input:placeholder-shown {
-  text-align: left; /* Keep text left aligned when showing placeholder */
-}
-
-.input-group input::placeholder {
-  color: #8492a6;
-  font-weight: 400;
-  font-size: 13px;
+  line-height: 44px;
+  height: 44px !important;
+  width: auto !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  min-height: auto !important;
   text-align: left;
-  line-height: 20px; /* Match input line-height for perfect vertical alignment */
+  vertical-align: middle;
+}
+
+.input-group input[type="text"]::placeholder {
+  color: #9ca3af !important;
+  font-weight: 400;
+  font-size: 14px !important;
+}
+
+.input-group input[type="text"]:focus {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
 }
 
 .location-btn {
   background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
   color: white;
   border: none;
-  padding: 10px 12px;
+  padding: 12px 16px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: all 0.3s ease;
   border-left: 1px solid rgba(255,255,255,0.2);
+  min-width: 48px;
 }
 
 .location-btn:hover {
@@ -1336,9 +1469,9 @@ sidebar img.active {
   background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
   color: white;
   border: none;
-  padding: 10px 12px;
+  padding: 12px 16px;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 600;
   line-height: 1;
   display: flex;
@@ -1346,6 +1479,7 @@ sidebar img.active {
   justify-content: center;
   transition: all 0.3s ease;
   border-left: 1px solid rgba(255,255,255,0.2);
+  min-width: 48px;
 }
 
 .clear-btn:hover {
@@ -1355,30 +1489,32 @@ sidebar img.active {
 
 .route-btn {
   width: 100%;
-  padding: 12px 18px;
+  padding: 14px 20px;
   border: none;
-  border-radius: 8px;
+  border-radius: 10px;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 600;
-  margin-top: 12px;
-  background: #d1d5db;
-  color: #6b7280;
+  margin-top: 16px;
+  background: #e5e7eb;
+  color: #9ca3af;
   transition: all 0.3s ease;
   letter-spacing: -0.01em;
-  height: 40px;
+  height: 48px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.04);
 }
 
 .route-btn:enabled {
   background: linear-gradient(135deg, #10b981 0%, #059669 100%);
   color: white;
   transform: translateY(0);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
 }
 
 .route-btn:enabled:hover {
   background: linear-gradient(135deg, #059669 0%, #047857 100%);
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.3);
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.35);
 }
 
 /* Enhanced Directions Container - Positioned on left side with smart spacing */
@@ -1395,14 +1531,43 @@ sidebar img.active {
   max-height: calc(100vh - 40px);
   overflow: hidden;
   border: 1px solid rgba(0,0,0,0.08);
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
   flex-direction: column;
 }
 
-/* Move directions panel to the right when saved locations panel is open */
+/* Dynamic positioning for directions container based on open panels */
+#UI-container.saved-locations-open .directions-container {
+  left: 410px; /* 70px (sidebar) + 320px (panel width) + 20px (margin) */
+}
+
 #UI-container.panel-open .directions-container {
-  left: 390px; /* 70px (sidebar) + 300px (panel width) + 20px (margin) */
+  left: 410px; /* Maintain consistency with saved-locations-open class */
+}
+
+/* User Info Panel Dynamic Positioning */
+#userInfo {
+  position: fixed !important;
+  top: 20px !important;
+  left: 580px !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  z-index: 1000 !important;
+}
+
+/* Adjust user info position when saved locations panel is open */
+#UI-container.saved-locations-open ~ #userInfo,
+#UI-container.panel-open ~ #userInfo {
+  left: 900px !important; /* Move right to avoid saved locations panel */
+}
+
+/* Adjust user info position when directions panel is open (but not saved locations) */
+#UI-container.directions-open:not(.saved-locations-open) ~ #userInfo {
+  left: 580px !important; /* Keep original position since directions is on left */
+}
+
+/* Adjust user info position when both panels are open */
+#UI-container.saved-locations-open.directions-open ~ #userInfo {
+  left: 900px !important; /* Prioritize avoiding saved locations panel */
 }
 
 /* Inner scroll wrapper for better scrollbar control */
@@ -1521,38 +1686,111 @@ sidebar img.active {
   font-weight: 500;
 }
 
+/* Route action buttons container */
+.route-actions-container {
+  display: flex;
+  gap: 12px;
+  margin-top: 16px;
+  flex-wrap: wrap;
+}
+
 .save-route-btn, .clear-route-btn {
-  padding: 12px 20px;
-  margin: 6px 8px 6px 0;
+  padding: 14px 24px;
+  margin: 0;
   border: none;
-  border-radius: 8px;
+  border-radius: 10px;
   cursor: pointer;
   font-size: 14px;
   font-weight: 600;
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   letter-spacing: -0.01em;
+  position: relative;
+  overflow: hidden;
+  flex: 1;
+  min-width: 140px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+/* Mobile responsive design for route buttons */
+@media (max-width: 768px) {
+  .route-actions-container {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .save-route-btn, .clear-route-btn {
+    min-width: auto;
+    width: 100%;
+    padding: 12px 20px;
+    font-size: 13px;
+  }
+}
+
+.save-route-btn::before,
+.clear-route-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+  transition: left 0.4s ease;
+}
+
+.save-route-btn:hover::before,
+.clear-route-btn:hover::before {
+  left: 100%;
 }
 
 .save-route-btn {
   background: linear-gradient(135deg, #10b981 0%, #059669 100%);
   color: white;
+  border: 2px solid transparent;
 }
 
 .save-route-btn:hover {
   background: linear-gradient(135deg, #059669 0%, #047857 100%);
-  transform: translateY(-1px);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4);
+  border-color: rgba(255,255,255,0.2);
+}
+
+.save-route-btn:active {
+  transform: translateY(0);
   box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.save-route-btn::after {
+  content: '💾';
+  font-size: 16px;
 }
 
 .clear-route-btn {
   background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
   color: white;
+  border: 2px solid transparent;
 }
 
 .clear-route-btn:hover {
   background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
-  transform: translateY(-1px);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(239, 68, 68, 0.4);
+  border-color: rgba(255,255,255,0.2);
+}
+
+.clear-route-btn:active {
+  transform: translateY(0);
   box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+.clear-route-btn::after {
+  content: '🗑️';
+  font-size: 16px;
 }
 
 .saved-routes-list {
@@ -1611,63 +1849,150 @@ sidebar img.active {
 
 .saved-route-item {
   display: flex;
-  align-items: center;
-  padding: 16px;
-  margin-bottom: 12px;
-  border: 1px solid #e2e8f0;
-  border-radius: 10px;
-  transition: all 0.3s ease;
-  background: white;
+  align-items: stretch;
+  padding: 0;
+  margin-bottom: 16px;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
 }
 
 .saved-route-item:hover {
-  background-color: #f8fafc;
-  border-color: #cbd5e1;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border-color: #3b82f6;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(59, 130, 246, 0.15);
 }
 
 .route-info {
   flex: 1;
   cursor: pointer;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .route-actions {
   display: flex;
-  gap: 6px;
-  margin-left: 12px;
+  flex-direction: column;
+  gap: 8px;
+  margin: 16px;
+  flex-shrink: 0;
+}
+
+/* Mobile responsive design for saved route items */
+@media (max-width: 768px) {
+  .saved-route-item {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .route-info {
+    padding: 16px;
+  }
+  
+  .route-actions {
+    flex-direction: row;
+    margin: 0 16px 16px 16px;
+    gap: 12px;
+  }
+  
+  .edit-btn, .delete-btn {
+    flex: 1;
+    min-width: auto;
+  }
 }
 
 .saved-route-item h5 {
-  margin: 0 0 8px 0;
+  margin: 0;
   color: #1e293b;
-  font-size: 15px;
-  font-weight: 600;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.saved-route-item h5::before {
+  content: '🗺️';
+  font-size: 18px;
 }
 
 .saved-route-item p {
-  margin: 0 0 4px 0;
+  margin: 0;
   color: #64748b;
   font-size: 13px;
   font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.saved-route-item p:first-of-type::before {
+  content: '📍';
+  font-size: 12px;
+  color: #10b981;
+}
+
+.saved-route-item p:last-of-type::before {
+  content: '🎯';
+  font-size: 12px;
+  color: #ef4444;
 }
 
 .saved-route-item small {
   color: #94a3b8;
   font-size: 12px;
   font-weight: 400;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.saved-route-item small::before {
+  content: '📅';
+  font-size: 11px;
 }
 
 .no-routes {
-  color: #94a3b8;
-  font-style: italic;
+  color: #64748b;
   text-align: center;
-  padding: 30px 20px;
+  padding: 40px 20px;
   font-size: 14px;
   background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-  border-radius: 8px;
-  margin: 10px;
-  border: 1px dashed #cbd5e1;
+  border-radius: 12px;
+  margin: 16px;
+  border: 2px dashed #cbd5e1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.no-routes::before {
+  content: '🗺️';
+  font-size: 48px;
+  opacity: 0.7;
+}
+
+.no-routes h4 {
+  margin: 0;
+  color: #374151;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.no-routes p {
+  margin: 0;
+  color: #6b7280;
+  font-size: 13px;
+  line-height: 1.5;
 }
 
 /* Enhanced autocomplete styling for all search inputs */
@@ -1822,5 +2147,176 @@ sidebar img.active {
 @keyframes spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
+}
+
+/* Error and Empty State Messages */
+.error-message {
+  padding: 24px;
+  text-align: center;
+  color: var(--text-primary);
+  background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+  border: 1px solid #fecaca;
+  border-radius: 12px;
+  margin: 16px;
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.1);
+}
+
+.error-message .error-icon {
+  font-size: 32px;
+  margin-bottom: 12px;
+  display: block;
+}
+
+.error-message strong {
+  color: var(--error-color);
+  font-size: 16px;
+  font-weight: 600;
+  display: block;
+  margin-bottom: 8px;
+}
+
+.error-message p {
+  color: var(--text-secondary);
+  font-size: 14px;
+  line-height: 1.5;
+  margin: 8px 0;
+}
+
+.no-locations {
+  padding: 32px 24px;
+  text-align: center;
+  color: var(--text-primary);
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  margin: 16px;
+  box-shadow: var(--shadow-light);
+}
+
+.no-locations .empty-state-icon {
+  display: block;
+  margin-bottom: 16px;
+  opacity: 0.8;
+}
+
+.no-locations h4 {
+  color: var(--text-primary);
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0 0 8px 0;
+}
+
+.no-locations p {
+  color: var(--text-secondary);
+  font-size: 14px;
+  line-height: 1.5;
+  margin: 0 0 16px 0;
+}
+
+/* Button hover effects for error/empty states */
+.error-message button:hover,
+.no-locations button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+/* Loading states */
+.loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
+  color: var(--text-secondary);
+  background: var(--background-light);
+  border-radius: 12px;
+  margin: 16px;
+}
+
+.loading-spinner {
+  width: 24px;
+  height: 24px;
+  border: 3px solid #e2e8f0;
+  border-top: 3px solid var(--primary-color);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 16px;
+}
+
+.loading p {
+  margin: 0;
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+/* Responsive design for error messages */
+@media (max-width: 768px) {
+  .error-message,
+  .no-locations {
+    margin: 12px;
+    padding: 20px 16px;
+  }
+  
+  .no-locations {
+    padding: 24px 16px;
+  }
+  
+  .error-message .error-icon,
+  .no-locations .empty-state-icon {
+    font-size: 28px;
+    margin-bottom: 12px;
+  }
+  
+  .no-locations h4 {
+    font-size: 16px;
+  }
+  
+  .error-message p,
+  .no-locations p {
+    font-size: 13px;
+  }
+}
+
+/* Responsive Design for User Info Panel */
+@media (max-width: 1400px) {
+  #userInfo {
+    left: 480px !important;
+  }
+  
+  #UI-container.saved-locations-open ~ #userInfo,
+  #UI-container.panel-open ~ #userInfo {
+    left: 800px !important;
+  }
+}
+
+@media (max-width: 1200px) {
+  #userInfo {
+    left: 380px !important;
+    max-width: 240px !important;
+  }
+  
+  #UI-container.saved-locations-open ~ #userInfo,
+  #UI-container.panel-open ~ #userInfo {
+    left: 700px !important;
+  }
+}
+
+@media (max-width: 768px) {
+  #userInfo {
+    left: 20px !important;
+    top: 80px !important;
+    max-width: 200px !important;
+    font-size: 12px !important;
+  }
+  
+  #UI-container.saved-locations-open ~ #userInfo,
+  #UI-container.panel-open ~ #userInfo {
+    left: 20px !important;
+    top: 140px !important;
+  }
+  
+  #UI-container.directions-open ~ #userInfo {
+    top: 200px !important;
+  }
 }
 

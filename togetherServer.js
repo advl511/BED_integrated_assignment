@@ -131,9 +131,9 @@ app.use((req, res, next) => {
 // PAGE ROUTING
 // ===============================
 
-// Main route - redirect to map for map server functionality
+// Main route - serve home page
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'pages', 'map.html'));
+  res.sendFile(path.join(__dirname, 'pages', 'home.html'));
 });
 
 // Serve authentication pages

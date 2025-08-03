@@ -416,6 +416,97 @@ CREATE INDEX IX_Appointments_AppointmentDate ON Appointments(AppointmentDate);
 CREATE INDEX IX_Appointments_BookingReference ON Appointments(BookingReference);
 CREATE INDEX IX_Doctors_PolyclinicID ON Doctors(PolyclinicID);
 
+IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='statuses' AND xtype='U')
+BEGIN
+    CREATE TABLE statuses (
+        status_id INT IDENTITY(1,1) PRIMARY KEY,
+        user_id INT NOT NULL,
+        content NVARCHAR(MAX) NOT NULL,
+        attachments NVARCHAR(MAX), -- JSON string for file attachments
+        created_at DATETIME2 DEFAULT GETDATE(),
+        updated_at DATETIME2 DEFAULT GETDATE(),
+        FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
+    );
+END
+
+-- Create friendships table if it doesn't exist
+IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='friendships' AND xtype='U')
+BEGIN
+    CREATE TABLE friendships (
+        friendship_id INT IDENTITY(1,1) PRIMARY KEY,
+        user_id INT NOT NULL,
+        friend_user_id INT NOT NULL,
+        status NVARCHAR(20) DEFAULT 'pending', -- 'pending', 'accepted', 'rejected'
+        created_at DATETIME2 DEFAULT GETDATE(),
+        updated_at DATETIME2 DEFAULT GETDATE(),
+        FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
+        FOREIGN KEY (friend_user_id) REFERENCES users(user_id),
+        UNIQUE(user_id, friend_user_id)
+    );
+END
+-- Create profiles table if it doesn't exist (matching your existing structure)
+IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='profiles' AND xtype='U')
+BEGIN
+    CREATE TABLE profiles (
+        profile_id INT IDENTITY(1,1) PRIMARY KEY,
+        user_id INT NOT NULL,
+        bio NVARCHAR(MAX),
+        location NVARCHAR(100),
+        website NVARCHAR(255),
+        birthday DATE,
+        privacy_settings NVARCHAR(MAX), -- JSON string
+        profile_picture_url NVARCHAR(255),
+        created_at DATETIME2 DEFAULT GETDATE(),
+        updated_at DATETIME2 DEFAULT GETDATE(),
+        FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
+    );
+END
+
+-- Create indexes for better performance
+IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_statuses_user_id')
+    CREATE INDEX IX_statuses_user_id ON statuses(user_id);
+
+IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_statuses_created_at')
+    CREATE INDEX IX_statuses_created_at ON statuses(created_at DESC);
+
+IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_friendships_user_id')
+    CREATE INDEX IX_friendships_user_id ON friendships(user_id);
+
+IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_friendships_friend_user_id')
+    CREATE INDEX IX_friendships_friend_user_id ON friendships(friend_user_id);
+
+PRINT 'Database setup completed successfully!';
+-- SQL Script to create user_tokens table
+-- Run this in your SQL Server Management Studio or equivalent
+
+CREATE TABLE user_tokens (
+    token_id INT IDENTITY(1,1) PRIMARY KEY,
+    user_id INT NOT NULL,
+    token NVARCHAR(500) NOT NULL,
+    expires_at DATETIME NOT NULL,
+    is_active BIT DEFAULT 1,
+    created_at DATETIME DEFAULT GETDATE(),
+    updated_at DATETIME DEFAULT GETDATE(),
+
+    -- Foreign key constraint (uncomment if you have proper foreign key setup)
+    -- CONSTRAINT FK_user_tokens_users FOREIGN KEY (user_id) REFERENCES users(user_id)
+);
+
+-- Create index for better performance
+CREATE INDEX IX_user_tokens_token ON user_tokens(token);
+CREATE INDEX IX_user_tokens_user_id ON user_tokens(user_id);
+CREATE INDEX IX_user_tokens_expires_at ON user_tokens(expires_at);
+
+-- Batch separator required before CREATE PROCEDURE
+GO
+
+-- Optional: Create a stored procedure for cleanup
+CREATE PROCEDURE CleanupExpiredTokens
+AS
+BEGIN
+    DELETE FROM user_tokens 
+    WHERE expires_at < GETDATE() OR is_active = 0;
+END;
 -- Sample query to get doctors for a specific polyclinic
 -- SELECT d.DoctorName, d.Specialization, p.PolyclinicName 
 -- FROM Doctors d 

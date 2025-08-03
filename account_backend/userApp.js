@@ -1,8 +1,8 @@
 const express = require('express');
 const cookieParser = require('cookie-parser');
 const app = express();
-const userController = require('./userController');
-const { validateSignup, validateLogin } = require('./validateInput');
+const userController = require('../Controller/userController');
+const { validateSignup, validateLogin } = require('../Middleware/userMiddleware');
 const { verifyToken } = userController;
 const sql = require('mssql');
 
@@ -39,6 +39,8 @@ app.use(cookieParser());
 
 // Serve static files from the Public directory
 app.use(express.static('../Public'));
+// Serve static files from the pages directory  
+app.use(express.static('../pages'));
 
 // Add request logging for debugging
 app.use((req, res, next) => {
@@ -50,7 +52,7 @@ app.use((req, res, next) => {
 });
 
 app.get('/', (req, res) => {
-  // Redirect to signin page or serve index.html
+  // Redirect to signin page in pages folder
   res.redirect('/signin.html');
 });
 

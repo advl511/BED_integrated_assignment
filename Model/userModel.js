@@ -1,6 +1,6 @@
 const sql = require('mssql');
 const bcrypt = require('bcrypt');
-const config = require('./dbConfig');
+const config = require('../account_backend/dbConfig');
 
 async function createUser(user) {
   try {

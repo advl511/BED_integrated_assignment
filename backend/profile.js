@@ -435,7 +435,7 @@ function loadProfilePicture(url) {
             console.error('Failed to load profile picture from URL:', url);
             // Keep the default emoji/placeholder
             profilePic.style.backgroundImage = '';
-            profilePic.innerHTML = '👤';
+            profilePic.innerHTML = 'User';
         };
         img.src = url;
     }
@@ -456,7 +456,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     // Show loading state
                     const profilePic = document.getElementById('profilePic');
                     const originalContent = profilePic.innerHTML;
-                    profilePic.innerHTML = '⏳';
+                    profilePic.innerHTML = 'Loading';
                     
                     // Upload the file
                     console.log('Uploading file:', file.name, 'for user:', currentUser.user_id);

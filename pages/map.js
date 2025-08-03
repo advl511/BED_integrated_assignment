@@ -17,7 +17,7 @@ let isAuthenticated = false;
 // Check authentication status on load
 async function checkAuthentication() {
   try {
-    console.log('🔍 Checking authentication...');
+    console.log('Checking authentication...');
     console.log('Making request to:', `${apiBaseUrl}/auth/me`);
     
     // Prepare headers for the request
@@ -29,7 +29,7 @@ async function checkAuthentication() {
     const localToken = localStorage.getItem('auth_token');
     if (localToken) {
       headers['Authorization'] = `Bearer ${localToken}`;
-      console.log('🔑 Using token from localStorage for authentication');
+      console.log('Using token from localStorage for authentication');
     }
     
     const response = await fetch(`${apiBaseUrl}/auth/me`, {
@@ -38,30 +38,30 @@ async function checkAuthentication() {
       headers: headers
     });
     
-    console.log('📡 Auth response status:', response.status);
-    console.log('📡 Auth response headers:', response.headers);
+    console.log('Auth response status:', response.status);
+    console.log('Auth response headers:', response.headers);
     
     if (response.ok) {
       const data = await response.json();
       currentUser = data.user;
       isAuthenticated = true;
-      console.log('✅ Authenticated user:', currentUser);
+      console.log('Authenticated user:', currentUser);
       updateUserInterface();
       return true;
     } else {
       const errorData = await response.text();
-      console.log('❌ Authentication failed:', response.status, errorData);
+      console.log('Authentication failed:', response.status, errorData);
       // Not authenticated, allow guest access
-      console.log('👤 User not authenticated, allowing guest access');
+      console.log('User not authenticated, allowing guest access');
       currentUser = { user_id: null, username: "Guest User" };
       isAuthenticated = false;
       updateUserInterface();
       return false;
     }
   } catch (error) {
-    console.error('🚨 Authentication check failed:', error);
+    console.error('Authentication check failed:', error);
     // Allow guest access
-    console.log('👤 Authentication failed, allowing guest access');
+    console.log('Authentication failed, allowing guest access');
     currentUser = { user_id: null, username: "Guest User" };
     isAuthenticated = false;
     updateUserInterface();
@@ -114,7 +114,7 @@ function updateUserInterface() {
   
   if (isAuthenticated) {
     dragHandle.innerHTML = `
-      <span>👤 ${currentUser.username}</span>
+      <span>User: ${currentUser.username}</span>
       <span style="cursor: pointer; opacity: 0.7;">⋮⋮</span>
     `;
     contentArea.innerHTML = `
@@ -125,7 +125,7 @@ function updateUserInterface() {
     `;
   } else {
     dragHandle.innerHTML = `
-      <span>👤 Guest Mode</span>
+      <span>Guest Mode</span>
       <span style="cursor: pointer; opacity: 0.7;">⋮⋮</span>
     `;
     contentArea.innerHTML = `
@@ -266,7 +266,7 @@ async function logout() {
     localStorage.removeItem('user_id');
     localStorage.removeItem('username');
     localStorage.removeItem('email');
-    console.log('🗑️ Cleared localStorage data');
+    console.log('Cleared localStorage data');
     
     window.location.href = 'home.html';
   } catch (error) {
@@ -277,7 +277,7 @@ async function logout() {
     localStorage.removeItem('user_id');
     localStorage.removeItem('username');
     localStorage.removeItem('email');
-    console.log('🗑️ Cleared localStorage data after error');
+    console.log('Cleared localStorage data after error');
     
     window.location.href = 'home.html';
   }
@@ -556,7 +556,7 @@ async function initMap() {
   
   // Show helpful tip about saving locations
   setTimeout(() => {
-    showNotification('💡 Tip: Double-click anywhere on the map to save that location!', 'info');
+    showNotification('Tip: Double-click anywhere on the map to save that location!', 'info');
   }, 3000);
 }
 
@@ -903,7 +903,7 @@ async function handleSaveLocationSubmit(event) {
   
   // Disable save button and show loading
   saveBtn.disabled = true;
-  saveBtn.innerHTML = '<span class="btn-icon">⏳</span> Saving...';
+  saveBtn.innerHTML = '<span class="btn-icon">Loading</span> Saving...';
   
   try {
     const locationData = {
@@ -922,7 +922,7 @@ async function handleSaveLocationSubmit(event) {
   } finally {
     // Reset save button
     saveBtn.disabled = false;
-    saveBtn.innerHTML = '<span class="btn-icon">💾</span> Save Location';
+    saveBtn.innerHTML = '<span class="btn-icon">Save</span> Save Location';
   }
 }
 
@@ -1516,7 +1516,7 @@ function showGuestSavePrompt() {
   `;
   
   content.innerHTML = `
-    <div style="font-size: 48px; margin-bottom: 16px;">🔒</div>
+    <div style="font-size: 48px; margin-bottom: 16px;">Lock</div>
     <h2 style="margin: 0 0 16px 0; color: #1f2937; font-size: 24px; font-weight: 600;">Save Your Locations</h2>
     <p style="margin: 0 0 24px 0; color: #6b7280; font-size: 16px; line-height: 1.5;">
       To save locations and routes, you need to create an account. Join our community to keep track of your favorite places!
@@ -1782,7 +1782,7 @@ function handleLocationFilter(event) {
       noResultsMsg.className = 'no-filter-results';
       noResultsMsg.innerHTML = `
         <div style="text-align: center; padding: 30px 20px; color: #64748b;">
-          <div style="font-size: 32px; margin-bottom: 12px;">🔍</div>
+          <div style="font-size: 32px; margin-bottom: 12px;">Search</div>
           <h4 style="margin: 0 0 8px 0; color: #374151;">No locations found</h4>
           <p style="margin: 0; font-size: 13px;">Try searching with different keywords</p>
         </div>

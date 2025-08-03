@@ -74,7 +74,7 @@ async function handleSignin(event) {
             // Store token in localStorage if provided (for Live Server)
             if (data.token) {
                 localStorage.setItem('auth_token', data.token);
-                console.log('✅ Token stored in localStorage for Live Server');
+                console.log('Token stored in localStorage for Live Server');
             }
             
             showSuccess('Login successful! Redirecting...');

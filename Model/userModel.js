@@ -4,17 +4,32 @@ const config = require('../dbConfig');
 
 async function createUser(user) {
   try {
+    console.log('🔧 UserModel: Connecting to database...');
     await sql.connect(config);
+    console.log('🔧 UserModel: Generating password hash...');
     const salt = bcrypt.genSaltSync(10);
     const hash = bcrypt.hashSync(user.password, salt);
 
+    console.log('🔧 UserModel: Inserting user into database...');
+    console.log('🔧 UserModel: User data:', { ...user, password: '[HIDDEN]' });
+    
     const result = await sql.query`
       INSERT INTO users (username, email, password_hash, salt, phone_number, race, age, first_name, last_name, gender, date_of_birth, nationality)
       OUTPUT INSERTED.user_id
       VALUES (${user.username}, ${user.email}, ${hash}, ${salt}, ${user.phone_number}, ${user.race}, ${user.age}, ${user.first_name}, ${user.last_name}, ${user.gender}, ${user.date_of_birth}, ${user.nationality})
     `;
-    return result.recordset[0].user_id; // Return the actual user ID
+    
+    console.log('🔧 UserModel: Insert result:', result);
+    console.log('🔧 UserModel: Recordset:', result.recordset);
+    
+    const userId = result.recordset[0].user_id;
+    console.log('🔧 UserModel: User created with ID:', userId);
+    
+    return userId; // Return the actual user ID
   } catch (err) {
+    console.error('💥 UserModel: Create user error:', err);
+    console.error('💥 UserModel: Error details:', err.message);
+    console.error('💥 UserModel: Error stack:', err.stack);
     throw err;
   }
 }

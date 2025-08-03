@@ -64,18 +64,32 @@ function verifyToken(req, res, next) {
   }
 }
 
+// Helper function to determine if request is from Live Server
+function isLiveServerOrigin(req) {
+  const origin = req.headers.origin;
+  return origin && (origin.includes('127.0.0.1:5500') || origin.includes('localhost:5500'));
+}
+
 async function registerUser(req, res) {
   try {
-    console.log('Registration request received:', req.body);
+    console.log('📝 Registration request received:', req.body);
     const { username, email, password } = req.body;
     
     // Check if email already exists
+    console.log('🔍 Checking if email exists:', email);
     const existingEmail = await userModel.findUserByEmail(email);
-    if (existingEmail) return res.status(400).json({ error: 'Email already exists' });
+    if (existingEmail) {
+      console.log('❌ Email already exists:', email);
+      return res.status(400).json({ error: 'Email already exists' });
+    }
     
     // Check if username already exists
+    console.log('🔍 Checking if username exists:', username);
     const existingUsername = await userModel.findUserByUsername(username);
-    if (existingUsername) return res.status(400).json({ error: 'Username already exists' });
+    if (existingUsername) {
+      console.log('❌ Username already exists:', username);
+      return res.status(400).json({ error: 'Username already exists' });
+    }
 
     const newUser = {
       username: username,
@@ -90,7 +104,10 @@ async function registerUser(req, res) {
       date_of_birth: '2000-01-01',
       nationality: 'N/A'
     };
+    
+    console.log('👤 Creating user with data:', { ...newUser, password: '[HIDDEN]' });
     const newUserId = await userModel.createUser(newUser);
+    console.log('✅ User created successfully with ID:', newUserId);
     
     // Generate JWT token for the new user
     const token = generateToken({
@@ -100,27 +117,45 @@ async function registerUser(req, res) {
     });
     
     // Store token in database
+    console.log('🔑 Storing token for user:', newUserId);
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours from now
     await userModel.storeUserToken(newUserId, token, expiresAt);
+    console.log('✅ Token stored successfully');
     
-    // Set HTTP-only cookie instead of returning token
-    res.cookie('auth_token', token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: 24 * 60 * 60 * 1000 // 24 hours
-    });
-    
-    res.status(201).json({ 
-      message: 'User registered successfully',
-      user: {
-        user_id: newUserId,
-        username: username,
-        email: email
-      }
-    });
+    // Check if request is from Live Server - if so, return token in response
+    if (isLiveServerOrigin(req)) {
+      console.log('🌐 Live Server detected - returning token in response');
+      res.status(201).json({ 
+        message: 'User registered successfully',
+        token: token, // Include token for Live Server
+        user: {
+          user_id: newUserId,
+          username: username,
+          email: email
+        }
+      });
+    } else {
+      // Set HTTP-only cookie for same-origin requests
+      res.cookie('auth_token', token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
+        maxAge: 24 * 60 * 60 * 1000 // 24 hours
+      });
+      
+      console.log('🎉 Registration completed successfully for user:', username);
+      res.status(201).json({ 
+        message: 'User registered successfully',
+        user: {
+          user_id: newUserId,
+          username: username,
+          email: email
+        }
+      });
+    }
   } catch (err) {
-    console.error('Registration error:', err);
+    console.error('💥 Registration error:', err);
+    console.error('💥 Error stack:', err.stack);
     res.status(500).json({ error: err.message });
   }
 }
@@ -173,22 +208,36 @@ async function loginUser(req, res) {
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours from now
     await userModel.storeUserToken(user.user_id, token, expiresAt);
 
-    // Set HTTP-only cookie instead of returning token
-    res.cookie('auth_token', token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: 24 * 60 * 60 * 1000 // 24 hours
-    });
+    // Check if request is from Live Server - if so, return token in response
+    if (isLiveServerOrigin(req)) {
+      console.log('🌐 Live Server detected - returning token in response for login');
+      res.status(200).json({ 
+        message: 'Login successful',
+        token: token, // Include token for Live Server
+        user: {
+          user_id: user.user_id,
+          username: user.username,
+          email: user.email
+        }
+      });
+    } else {
+      // Set HTTP-only cookie for same-origin requests
+      res.cookie('auth_token', token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
+        maxAge: 24 * 60 * 60 * 1000 // 24 hours
+      });
 
-    res.status(200).json({ 
-      message: 'Login successful',
-      user: {
-        user_id: user.user_id,
-        username: user.username,
-        email: user.email
-      }
-    });
+      res.status(200).json({ 
+        message: 'Login successful',
+        user: {
+          user_id: user.user_id,
+          username: user.username,
+          email: user.email
+        }
+      });
+    }
   } catch (err) {
     console.error('Login error:', err);
     res.status(500).json({ error: err.message });
@@ -272,7 +321,7 @@ async function refreshToken(req, res) {
     res.cookie('auth_token', newToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
       maxAge: 24 * 60 * 60 * 1000
     });
     

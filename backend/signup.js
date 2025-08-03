@@ -52,7 +52,7 @@ async function handleSignup(e) {
         submitButton.textContent = 'Creating Account...';
         submitButton.disabled = true;
 
-        const res = await fetch('http://localhost:3000/api/users/signup', {
+        const res = await fetch('http://localhost:3000/auth/register', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -69,7 +69,15 @@ async function handleSignup(e) {
         const data = await res.json();
         
         if (res.ok) {
-            // No localStorage - token is handled server-side
+            // Store token in localStorage if provided (for Live Server)
+            if (data.token) {
+                localStorage.setItem('auth_token', data.token);
+                localStorage.setItem('user_id', data.user.user_id);
+                localStorage.setItem('username', data.user.username);
+                localStorage.setItem('email', data.user.email);
+                console.log('✅ Token stored in localStorage for Live Server');
+            }
+            
             showSuccess(data.message);
             e.target.reset();
             
@@ -165,10 +173,10 @@ async function checkEmailAvailability() {
         
         if (response.ok) {
             if (data.exists) {
-                validationDiv.textContent = '❌ Email already exists';
+                validationDiv.textContent = 'Email already exists';
                 validationDiv.className = 'validation-message error';
             } else {
-                validationDiv.textContent = '✅ Email available';
+                validationDiv.textContent = 'Email available';
                 validationDiv.className = 'validation-message success';
             }
         } else {

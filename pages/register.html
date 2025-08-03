@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - Map Application</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem 0;
+        }
+
+        .register-container {
+            background: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
+            margin: 1rem;
+        }
+
+        .register-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .register-header h1 {
+            color: #333;
+            margin-bottom: 0.5rem;
+        }
+
+        .register-header p {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #e1e1e1;
+            border-radius: 5px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .form-group input.valid {
+            border-color: #28a745;
+        }
+
+        .form-group input.invalid {
+            border-color: #dc3545;
+        }
+
+        .form-feedback {
+            font-size: 0.8rem;
+            margin-top: 0.25rem;
+        }
+
+        .form-feedback.valid {
+            color: #28a745;
+        }
+
+        .form-feedback.invalid {
+            color: #dc3545;
+        }
+
+        .register-btn {
+            width: 100%;
+            padding: 0.75rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .register-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+        }
+
+        .register-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .login-link {
+            text-align: center;
+            margin-top: 1.5rem;
+            color: #666;
+        }
+
+        .login-link a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .login-link a:hover {
+            text-decoration: underline;
+        }
+
+        .error-message {
+            background: #fee;
+            color: #c33;
+            padding: 0.75rem;
+            border-radius: 5px;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+        }
+
+        .success-message {
+            background: #efe;
+            color: #393;
+            padding: 0.75rem;
+            border-radius: 5px;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="register-container">
+        <div class="register-header">
+            <h1>Create Account</h1>
+            <p>Join us to save and manage your locations</p>
+        </div>
+
+        <div id="messageContainer"></div>
+
+        <form id="registerForm">
+            <div class="form-group">
+                <label for="username">Username</label>
+                <input type="text" id="username" name="username" required minlength="3" maxlength="20">
+                <div class="form-feedback" id="usernameFeedback"></div>
+            </div>
+
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" required>
+                <div class="form-feedback" id="emailFeedback"></div>
+            </div>
+
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" required minlength="6">
+                <div class="form-feedback" id="passwordFeedback"></div>
+            </div>
+
+            <div class="form-group">
+                <label for="confirmPassword">Confirm Password</label>
+                <input type="password" id="confirmPassword" name="confirmPassword" required>
+                <div class="form-feedback" id="confirmPasswordFeedback"></div>
+            </div>
+
+            <button type="submit" class="register-btn" id="registerBtn" disabled>Create Account</button>
+        </form>
+
+        <div class="login-link">
+            Already have an account? <a href="login.html">Sign in here</a>
+        </div>
+    </div>
+
+    <script>
+        const registerForm = document.getElementById('registerForm');
+        const registerBtn = document.getElementById('registerBtn');
+        const messageContainer = document.getElementById('messageContainer');
+
+        const username = document.getElementById('username');
+        const email = document.getElementById('email');
+        const password = document.getElementById('password');
+        const confirmPassword = document.getElementById('confirmPassword');
+
+        const usernameFeedback = document.getElementById('usernameFeedback');
+        const emailFeedback = document.getElementById('emailFeedback');
+        const passwordFeedback = document.getElementById('passwordFeedback');
+        const confirmPasswordFeedback = document.getElementById('confirmPasswordFeedback');
+
+        let validationState = {
+            username: false,
+            email: false,
+            password: false,
+            confirmPassword: false
+        };
+
+        function showMessage(message, type = 'error') {
+            messageContainer.innerHTML = `<div class="${type}-message">${message}</div>`;
+        }
+
+        function clearMessage() {
+            messageContainer.innerHTML = '';
+        }
+
+        function updateSubmitButton() {
+            const allValid = Object.values(validationState).every(valid => valid);
+            registerBtn.disabled = !allValid;
+        }
+
+        function setFieldValidation(field, feedback, isValid, message) {
+            field.className = isValid ? 'valid' : 'invalid';
+            feedback.className = `form-feedback ${isValid ? 'valid' : 'invalid'}`;
+            feedback.textContent = message;
+            updateSubmitButton();
+        }
+
+        // Username validation
+        let usernameTimeout;
+        username.addEventListener('input', () => {
+            clearTimeout(usernameTimeout);
+            const value = username.value.trim();
+
+            if (value.length < 3) {
+                validationState.username = false;
+                setFieldValidation(username, usernameFeedback, false, 'Username must be at least 3 characters');
+                return;
+            }
+
+            if (value.length > 20) {
+                validationState.username = false;
+                setFieldValidation(username, usernameFeedback, false, 'Username must be less than 20 characters');
+                return;
+            }
+
+            if (!/^[a-zA-Z0-9_]+$/.test(value)) {
+                validationState.username = false;
+                setFieldValidation(username, usernameFeedback, false, 'Username can only contain letters, numbers, and underscores');
+                return;
+            }
+
+            usernameFeedback.textContent = 'Checking availability...';
+            usernameTimeout = setTimeout(async () => {
+                try {
+                    const response = await fetch(`/auth/check-username/${value}`);
+                    const data = await response.json();
+                    
+                    if (data.exists) {
+                        validationState.username = false;
+                        setFieldValidation(username, usernameFeedback, false, 'Username already taken');
+                    } else {
+                        validationState.username = true;
+                        setFieldValidation(username, usernameFeedback, true, 'Username available');
+                    }
+                } catch (error) {
+                    validationState.username = false;
+                    setFieldValidation(username, usernameFeedback, false, 'Error checking username');
+                }
+            }, 500);
+        });
+
+        // Email validation
+        let emailTimeout;
+        email.addEventListener('input', () => {
+            clearTimeout(emailTimeout);
+            const value = email.value.trim();
+
+            if (!value) {
+                validationState.email = false;
+                setFieldValidation(email, emailFeedback, false, 'Email is required');
+                return;
+            }
+
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(value)) {
+                validationState.email = false;
+                setFieldValidation(email, emailFeedback, false, 'Please enter a valid email');
+                return;
+            }
+
+            emailFeedback.textContent = 'Checking availability...';
+            emailTimeout = setTimeout(async () => {
+                try {
+                    const response = await fetch(`/auth/check-email/${value}`);
+                    const data = await response.json();
+                    
+                    if (data.exists) {
+                        validationState.email = false;
+                        setFieldValidation(email, emailFeedback, false, 'Email already registered');
+                    } else {
+                        validationState.email = true;
+                        setFieldValidation(email, emailFeedback, true, 'Email available');
+                    }
+                } catch (error) {
+                    validationState.email = false;
+                    setFieldValidation(email, emailFeedback, false, 'Error checking email');
+                }
+            }, 500);
+        });
+
+        // Password validation
+        password.addEventListener('input', () => {
+            const value = password.value;
+
+            if (value.length < 6) {
+                validationState.password = false;
+                setFieldValidation(password, passwordFeedback, false, 'Password must be at least 6 characters');
+            } else {
+                validationState.password = true;
+                setFieldValidation(password, passwordFeedback, true, 'Password strength: Good');
+            }
+
+            // Re-validate confirm password if it has a value
+            if (confirmPassword.value) {
+                validateConfirmPassword();
+            }
+        });
+
+        // Confirm password validation
+        function validateConfirmPassword() {
+            const value = confirmPassword.value;
+            const passwordValue = password.value;
+
+            if (!value) {
+                validationState.confirmPassword = false;
+                setFieldValidation(confirmPassword, confirmPasswordFeedback, false, 'Please confirm your password');
+            } else if (value !== passwordValue) {
+                validationState.confirmPassword = false;
+                setFieldValidation(confirmPassword, confirmPasswordFeedback, false, 'Passwords do not match');
+            } else {
+                validationState.confirmPassword = true;
+                setFieldValidation(confirmPassword, confirmPasswordFeedback, true, 'Passwords match');
+            }
+        }
+
+        confirmPassword.addEventListener('input', validateConfirmPassword);
+
+        // Form submission
+        registerForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            clearMessage();
+
+            if (!Object.values(validationState).every(valid => valid)) {
+                showMessage('Please fix all validation errors');
+                return;
+            }
+
+            registerBtn.disabled = true;
+            registerBtn.textContent = 'Creating Account...';
+
+            try {
+                const response = await fetch('/auth/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        username: username.value.trim(),
+                        email: email.value.trim(),
+                        password: password.value
+                    }),
+                    credentials: 'include'
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showMessage('Account created successfully! Redirecting to sign in...', 'success');
+                    setTimeout(() => {
+                        window.location.href = 'signin.html';
+                    }, 1000);
+                } else {
+                    showMessage(data.error || 'Registration failed');
+                }
+            } catch (error) {
+                showMessage('Network error. Please try again.');
+            } finally {
+                registerBtn.disabled = false;
+                registerBtn.textContent = 'Create Account';
+            }
+        });
+    </script>
+</body>
+</html>

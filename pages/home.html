@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Community Hub - Home</title>
+    <link rel="stylesheet" href="../styles/homestyles.css">
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">Community Hub</div>
+            <div class="time-display">
+                <div id="current-time">10:30 AM</div>
+                <div class="date" id="current-date">Thursday, July 10, 2025</div>
+            </div>
+        </div>
+    </header>
+
+    <nav class="nav">
+        <button class="mobile-nav-toggle" id="mobile-nav-toggle">
+            Navigation Menu
+        </button>
+        <div class="nav-content">
+            <a href="#" class="nav-item active" data-tab="home">Home</a>
+            <a href="#" class="nav-item" data-tab="events">Nearby Events</a>
+            <a href="map.html" class="nav-item" data-tab="map">Map</a>
+            <a href="#" class="nav-item" data-tab="calendar">Calendar</a>
+            <a href="#" class="nav-item" data-tab="notifications">Notifications</a>
+            <a href="#" class="nav-item" data-tab="profile">Profile</a>
+            <a href="#" class="nav-item" data-tab="settings">Settings</a>
+        </div>
+        <div class="nav-dropdown" id="nav-dropdown">
+            <a href="#" class="nav-item active" data-tab="home">Home</a>
+            <a href="#" class="nav-item" data-tab="events">Nearby Events</a>
+            <a href="map.html" class="nav-item" data-tab="map">Map</a>
+            <a href="#" class="nav-item" data-tab="calendar">Calendar</a>
+            <a href="#" class="nav-item" data-tab="notifications">Notifications</a>
+            <a href="#" class="nav-item" data-tab="profile">Profile</a>
+            <a href="#" class="nav-item" data-tab="settings">Settings</a>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        <!-- Home Tab Content -->
+        <div class="tab-content active" id="home-tab">
+            <section class="welcome-section">
+                <h1 class="welcome-title">Welcome Back!</h1>
+                <p class="welcome-message">
+                    Good morning! Here's what's happening in your community today. 
+                    Stay connected with local events, important announcements, and helpful resources.
+                </p>
+            </section>
+
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon" style="background-color: var(--cultural-event);">📅</div>
+                    <h2 class="card-title">Today's Events</h2>
+                </div>
+                <div class="card-content">
+                    <div class="event-item">
+                        <div class="event-time">10:00 AM</div>
+                        <div class="event-name">Morning Tai Chi at Community Center</div>
+                    </div>
+                    <div class="event-item">
+                        <div class="event-time">2:00 PM</div>
+                        <div class="event-name">Book Club Meeting</div>
+                    </div>
+                    <div class="event-item">
+                        <div class="event-time">4:30 PM</div>
+                        <div class="event-name">Health Screening at Clinic</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon" style="background-color: var(--prayer-time);">🌤️</div>
+                    <h2 class="card-title">Weather & Prayer Times</h2>
+                </div>
+                <div class="card-content">
+                    <p style="font-size: 20px; margin-bottom: 1rem;">
+                        <strong>Today:</strong> Partly Cloudy, 28°C<br>
+                        <span style="color: var(--text-secondary);">Perfect weather for outdoor activities!</span>
+                    </p>
+                    <div style="background-color: var(--primary-bg); padding: 1rem; border-radius: 8px;">
+                        <strong>Next Prayer:</strong> Maghrib at 6:45 PM
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon" style="background-color: var(--success-color);">💊</div>
+                    <h2 class="card-title">Health Reminders</h2>
+                </div>
+                <div class="card-content">
+                    <p style="margin-bottom: 1rem;">Don't forget to take your medication:</p>
+                    <ul style="list-style: none; padding-left: 0;">
+                        <li style="margin-bottom: 0.5rem;">✓ Morning vitamins - Completed</li>
+                        <li style="margin-bottom: 0.5rem;">⏰ Afternoon medication - 2:00 PM</li>
+                        <li style="margin-bottom: 0.5rem;">⏰ Evening medication - 7:00 PM</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon" style="background-color: var(--warning-color);">📢</div>
+                    <h2 class="card-title">Recent Announcements</h2>
+                </div>
+                <div class="card-content">
+                    <p style="margin-bottom: 1rem;">
+                        <strong>Road Closure:</strong> Woodlands Avenue 1 will be closed for maintenance this weekend.
+                    </p>
+                    <p style="margin-bottom: 1rem;">
+                        <strong>New Activity:</strong> Senior Swimming classes starting next Monday at 9 AM.
+                    </p>
+                    <p>
+                        <strong>Health Talk:</strong> Free diabetes screening next Friday at the community center.
+                    </p>
+                </div>
+            </div>
+
+            <div class="quick-actions">
+                <a href="#" class="action-btn">📞 Call Family</a>
+                <a href="#" class="action-btn">🚌 Transport Schedule</a>
+                <a href="#" class="action-btn">🏥 Health Services</a>
+                <a href="#" class="action-btn emergency">🚨 Emergency Help</a>
+            </div>
+        </div>
+
+        <!-- Profile Tab Content -->
+        <div class="tab-content" id="profile-tab">
+            <div class="profile-header">
+                <div class="profile-avatar" id="profile-avatar">👤</div>
+                <div class="profile-name" id="profile-name">Loading...</div>
+                <div class="profile-subtitle" id="profile-subtitle">Community Member</div>
+            </div>
+
+            <div class="profile-grid">
+                <div class="profile-section">
+                    <h3>📋 Personal Information</h3>
+                    <div class="profile-field">
+                        <span class="profile-label">Full Name:</span>
+                        <span class="profile-value" id="display-name">Loading...</span>
+                        <button class="edit-btn" onclick="editField('name')">Edit</button>
+                    </div>
+                    <div class="profile-field">
+                        <span class="profile-label">Age:</span>
+                        <span class="profile-value" id="display-age">Loading...</span>
+                        <button class="edit-btn" onclick="editField('age')">Edit</button>
+                    </div>
+                    <div class="profile-field">
+                        <span class="profile-label">Phone:</span>
+                        <span class="profile-value" id="display-phone">Loading...</span>
+                        <button class="edit-btn" onclick="editField('phone')">Edit</button>
+                    </div>
+                    <div class="profile-field">
+                        <span class="profile-label">Address:</span>
+                        <span class="profile-value" id="display-address">Loading...</span>
+                        <button class="edit-btn" onclick="editField('address')">Edit</button>
+                    </div>
+                </div>
+
+                <div class="profile-section">
+                    <h3>⚙️ Preferences</h3>
+                    <div class="profile-field">
+                        <span class="profile-label">Font Size:</span>
+                        <select class="profile-input" id="font-size" onchange="updateSetting('fontSize', this.value)">
+                            <option value="small">Small (14px)</option>
+                            <option value="medium" selected>Medium (16px)</option>
+                            <option value="large">Large (18px)</option>
+                            <option value="extra-large">Extra Large (22px)</option>
+                        </select>
+                    </div>
+                    <div class="profile-field">
+                        <span class="profile-label">Notifications:</span>
+                        <select class="profile-input" id="notifications" onchange="updateSetting('notifications', this.value)">
+                            <option value="all" selected>All Notifications</option>
+                            <option value="important">Important Only</option>
+                            <option value="none">None</option>
+                        </select>
+                    </div>
+                    <div class="profile-field">
+                        <span class="profile-label">Language:</span>
+                        <select class="profile-input" id="language" onchange="updateSetting('language', this.value)">
+                            <option value="en" selected>English</option>
+                            <option value="ms">Bahasa Malaysia</option>
+                            <option value="zh">中文</option>
+                            <option value="ta">தமிழ்</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="profile-section">
+                <h3>🏥 Health Information</h3>
+                <div class="profile-field">
+                    <span class="profile-label">Emergency Contact:</span>
+                    <span class="profile-value" id="display-emergency">Loading...</span>
+                    <button class="edit-btn" onclick="editField('emergency')">Edit</button>
+                </div>
+                <div class="profile-field">
+                    <span class="profile-label">Medical Notes:</span>
+                    <span class="profile-value" id="display-medical">Loading...</span>
+                    <button class="edit-btn" onclick="editField('medical')">Edit</button>
+                </div>
+                <div class="profile-field">
+                    <span class="profile-label">Allergies:</span>
+                    <span class="profile-value" id="display-allergies">Loading...</span>
+                    <button class="edit-btn" onclick="editField('allergies')">Edit</button>
+                </div>
+            </div>
+
+            <div id="status-message"></div>
+        </div>
+
+        <!-- Other Tab Placeholders -->
+        <div class="tab-content" id="events-tab">
+            <section class="welcome-section">
+                <h1 class="welcome-title">Nearby Events</h1>
+                <p class="welcome-message">Find local events and activities in your area.</p>
+            </section>
+        </div>
+
+        <div class="tab-content" id="map-tab">
+            <section class="welcome-section">
+                <h1 class="welcome-title">Community Map</h1>
+                <p class="welcome-message">Navigate your neighborhood with our interactive map.</p>
+            </section>
+        </div>
+
+        <div class="tab-content" id="calendar-tab">
+            <section class="welcome-section">
+                <h1 class="welcome-title">Calendar</h1>
+                <p class="welcome-message">Keep track of your appointments and events.</p>
+            </section>
+        </div>
+
+        <div class="tab-content" id="notifications-tab">
+            <section class="welcome-section">
+                <h1 class="welcome-title">Notifications</h1>
+                <p class="welcome-message">Stay updated with important announcements.</p>
+            </section>
+        </div>
+
+        <div class="tab-content" id="settings-tab">
+            <section class="welcome-section">
+                <h1 class="welcome-title">Settings</h1>
+                <p class="welcome-message">Customize your experience and preferences.</p>
+            </section>
+        </div>
+    </main>
+
+    <script src="script.js"></script>
+</body>
+</html>

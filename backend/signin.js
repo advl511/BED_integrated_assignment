@@ -57,6 +57,7 @@ async function handleSignin(event) {
             localStorage.removeItem('user_id');
             localStorage.removeItem('username');
             localStorage.removeItem('email');
+            localStorage.removeItem('auth_token');
             
             // Set new user data in localStorage
             if (data.user) {
@@ -70,18 +71,24 @@ async function handleSignin(event) {
                 });
             }
             
+            // Store token in localStorage if provided (for Live Server)
+            if (data.token) {
+                localStorage.setItem('auth_token', data.token);
+                console.log('✅ Token stored in localStorage for Live Server');
+            }
+            
             showSuccess('Login successful! Redirecting...');
             
             // Reduce the timeout to make redirect faster
             setTimeout(() => {
-                console.log('Attempting redirect to profile.html');
+                console.log('Attempting redirect to home.html');
                 console.log('Current localStorage after login:', {
                     user_id: localStorage.getItem('user_id'),
                     username: localStorage.getItem('username'),
                     email: localStorage.getItem('email')
                 });
-                // Redirect to profile page
-                window.location.href = 'profile.html';
+                // Redirect to home page
+                window.location.href = 'home.html';
             }, 500);  // Reduced from 1000ms to 500ms
             
         } else {

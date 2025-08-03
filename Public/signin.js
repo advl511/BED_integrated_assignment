@@ -55,8 +55,8 @@ async function handleSignin(event) {
             showSuccess('Login successful! Redirecting...');
             
             setTimeout(() => {
-                // need change url
-                window.location.href = '/dashboard.html';
+                // Redirect to main page or create a dashboard.html in Public folder
+                window.location.href = '/profile.html';
             }, 1000);
             
         } else {

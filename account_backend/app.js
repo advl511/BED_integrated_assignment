@@ -37,6 +37,9 @@ app.use((req, res, next) => {
 app.use(express.json());
 app.use(cookieParser());
 
+// Serve static files from the Public directory
+app.use(express.static('../Public'));
+
 // Add request logging for debugging
 app.use((req, res, next) => {
   console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
@@ -47,7 +50,8 @@ app.use((req, res, next) => {
 });
 
 app.get('/', (req, res) => {
-  res.json({ message: 'Server is running!' });
+  // Redirect to signin page or serve index.html
+  res.redirect('/signin.html');
 });
 
 // Public routes (no authentication required)

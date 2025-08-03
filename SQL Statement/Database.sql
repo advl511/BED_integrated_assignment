@@ -416,6 +416,145 @@ CREATE INDEX IX_Appointments_AppointmentDate ON Appointments(AppointmentDate);
 CREATE INDEX IX_Appointments_BookingReference ON Appointments(BookingReference);
 CREATE INDEX IX_Doctors_PolyclinicID ON Doctors(PolyclinicID);
 
+IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='statuses' AND xtype='U')
+BEGIN
+    CREATE TABLE statuses (
+        status_id INT IDENTITY(1,1) PRIMARY KEY,
+        user_id INT NOT NULL,
+        content NVARCHAR(MAX) NOT NULL,
+        attachments NVARCHAR(MAX), -- JSON string for file attachments
+        created_at DATETIME2 DEFAULT GETDATE(),
+        updated_at DATETIME2 DEFAULT GETDATE(),
+        FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
+    );
+END
+
+-- Create friendships table if it doesn't exist
+IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='friendships' AND xtype='U')
+BEGIN
+    CREATE TABLE friendships (
+        friendship_id INT IDENTITY(1,1) PRIMARY KEY,
+        user_id INT NOT NULL,
+        friend_user_id INT NOT NULL,
+        status NVARCHAR(20) DEFAULT 'pending', -- 'pending', 'accepted', 'rejected'
+        created_at DATETIME2 DEFAULT GETDATE(),
+        updated_at DATETIME2 DEFAULT GETDATE(),
+        FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
+        FOREIGN KEY (friend_user_id) REFERENCES users(user_id),
+        UNIQUE(user_id, friend_user_id)
+    );
+END
+-- Create profiles table if it doesn't exist (matching your existing structure)
+IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='profiles' AND xtype='U')
+BEGIN
+    CREATE TABLE profiles (
+        profile_id INT IDENTITY(1,1) PRIMARY KEY,
+        user_id INT NOT NULL,
+        bio NVARCHAR(MAX),
+        location NVARCHAR(100),
+        website NVARCHAR(255),
+        birthday DATE,
+        privacy_settings NVARCHAR(MAX), -- JSON string
+        profile_picture_url NVARCHAR(255),
+        created_at DATETIME2 DEFAULT GETDATE(),
+        updated_at DATETIME2 DEFAULT GETDATE(),
+        FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
+    );
+END
+
+-- Create indexes for better performance
+IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_statuses_user_id')
+    CREATE INDEX IX_statuses_user_id ON statuses(user_id);
+
+IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_statuses_created_at')
+    CREATE INDEX IX_statuses_created_at ON statuses(created_at DESC);
+
+IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_friendships_user_id')
+    CREATE INDEX IX_friendships_user_id ON friendships(user_id);
+
+IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_friendships_friend_user_id')
+    CREATE INDEX IX_friendships_friend_user_id ON friendships(friend_user_id);
+
+PRINT 'Database setup completed successfully!';
+-- SQL Script to create user_tokens table
+-- Run this in your SQL Server Management Studio or equivalent
+
+CREATE TABLE user_tokens (
+    token_id INT IDENTITY(1,1) PRIMARY KEY,
+    user_id INT NOT NULL,
+    token NVARCHAR(500) NOT NULL,
+    expires_at DATETIME NOT NULL,
+    is_active BIT DEFAULT 1,
+    created_at DATETIME DEFAULT GETDATE(),
+    updated_at DATETIME DEFAULT GETDATE(),
+
+    -- Foreign key constraint (uncomment if you have proper foreign key setup)
+    -- CONSTRAINT FK_user_tokens_users FOREIGN KEY (user_id) REFERENCES users(user_id)
+);
+
+-- Create index for better performance
+CREATE INDEX IX_user_tokens_token ON user_tokens(token);
+CREATE INDEX IX_user_tokens_user_id ON user_tokens(user_id);
+CREATE INDEX IX_user_tokens_expires_at ON user_tokens(expires_at);
+
+-- Batch separator required before CREATE PROCEDURE
+GO
+
+-- Optional: Create a stored procedure for cleanup
+CREATE PROCEDURE CleanupExpiredTokens
+AS
+BEGIN
+    DELETE FROM user_tokens 
+    WHERE expires_at < GETDATE() OR is_active = 0;
+END;
+
+-- Matchmaking Queue Tables
+CREATE TABLE matchmaking_queues (
+    queue_id INT IDENTITY(1,1) PRIMARY KEY,
+    queue_name NVARCHAR(100) NOT NULL,
+    team_size INT NOT NULL DEFAULT 2,
+    max_teams INT NOT NULL DEFAULT 2,
+    status NVARCHAR(20) DEFAULT 'waiting' CHECK (status IN ('waiting', 'matching', 'in_progress', 'completed')),
+    created_at DATETIME2 DEFAULT GETDATE(),
+    started_at DATETIME2 NULL,
+    ended_at DATETIME2 NULL
+);
+
+CREATE TABLE queue_participants (
+    participant_id INT IDENTITY(1,1) PRIMARY KEY,
+    queue_id INT NOT NULL,
+    user_id INT NOT NULL,
+    joined_at DATETIME2 DEFAULT GETDATE(),
+    status NVARCHAR(20) DEFAULT 'waiting' CHECK (status IN ('waiting', 'matched', 'left')),
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
+    FOREIGN KEY (queue_id) REFERENCES matchmaking_queues(queue_id) ON DELETE CASCADE
+);
+
+CREATE TABLE match_teams (
+    match_id INT IDENTITY(1,1) PRIMARY KEY,
+    queue_id INT NOT NULL,
+    team_number INT NOT NULL,
+    created_at DATETIME2 DEFAULT GETDATE(),
+    status NVARCHAR(20) DEFAULT 'waiting' CHECK (status IN ('waiting', 'in_progress', 'completed')),
+    FOREIGN KEY (queue_id) REFERENCES matchmaking_queues(queue_id) ON DELETE CASCADE
+);
+
+CREATE TABLE team_members (
+    team_member_id INT IDENTITY(1,1) PRIMARY KEY,
+    match_id INT NOT NULL,
+    user_id INT NOT NULL,
+    team_number INT NOT NULL,
+    FOREIGN KEY (match_id) REFERENCES match_teams(match_id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
+);
+
+-- Indexes for better performance
+CREATE INDEX idx_queue_participants_queue_id ON queue_participants(queue_id);
+CREATE INDEX idx_queue_participants_user_id ON queue_participants(user_id);
+CREATE INDEX idx_match_teams_queue_id ON match_teams(queue_id);
+CREATE INDEX idx_team_members_match_id ON team_members(match_id);
+CREATE INDEX idx_team_members_user_id ON team_members(user_id);
+
 -- Sample query to get doctors for a specific polyclinic
 -- SELECT d.DoctorName, d.Specialization, p.PolyclinicName 
 -- FROM Doctors d 
@@ -425,3 +564,24 @@ CREATE INDEX IX_Doctors_PolyclinicID ON Doctors(PolyclinicID);
 -- Sample query to insert a new appointment
 -- INSERT INTO Appointments (UserID, PolyclinicID, DoctorID, AppointmentDate, AppointmentTime, Reason, BookingReference)
 -- VALUES (1, 1, 1, '2024-01-15', '09:00:00', 'General checkup', 'APT-ABC123');
+
+CREATE TABLE TranslationHistory (
+    id INT PRIMARY KEY IDENTITY(1,1),
+    originalText NVARCHAR(MAX),
+    translatedText NVARCHAR(MAX),
+    sourceLang NVARCHAR(10),
+    targetLang NVARCHAR(10),
+    createdAt DATETIME DEFAULT GETDATE()
+);
+
+
+CREATE TABLE Settings (
+  userId INT PRIMARY KEY,
+  language NVARCHAR(10),
+  direction NVARCHAR(20),
+  fontSize NVARCHAR(10),
+  timestamps BIT,
+  sound BIT,
+  theme NVARCHAR(20),
+  timeFormat NVARCHAR(10)
+);

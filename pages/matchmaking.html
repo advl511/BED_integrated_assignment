@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Matchmaking - Community Hub</title>
+    <link rel="stylesheet" href="../styles/matchmaking.css">
+</head>
+<body>
+    <div class="matchmaking-container">
+        <header>
+            <h1>Matchmaking</h1>
+            <p>Find teammates and start playing together!</p>
+        </header>
+
+        <div class="queue-section">
+            <div class="queue-controls">
+                <div class="form-group">
+                    <label for="queueName">Queue Name:</label>
+                    <select id="queueName">
+                        <option value="casual">Casual</option>
+                        <option value="ranked">Ranked</option>
+                        <option value="tournament">Tournament</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="teamSize">Team Size:</label>
+                    <select id="teamSize">
+                        <option value="1">1v1</option>
+                        <option value="2" selected>2v2</option>
+                        <option value="3">3v3</option>
+                        <option value="4">4v4</option>
+                        <option value="5">5v5</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="maxTeams">Teams:</label>
+                    <select id="maxTeams">
+                        <option value="2" selected>2 Teams</option>
+                        <option value="3">3 Teams</option>
+                        <option value="4">4 Teams</option>
+                    </select>
+                </div>
+                
+                <button id="joinQueueBtn" class="btn btn-primary">Join Queue</button>
+                <button id="leaveQueueBtn" class="btn btn-danger" style="display: none;">Leave Queue</button>
+            </div>
+            
+            <div class="queue-status">
+                <h3>Queue Status</h3>
+                <div id="queueInfo">
+                    <p>Not in queue. Select options and click "Join Queue".</p>
+                </div>
+                <div class="players-waiting">
+                    <h4>Players in Queue:</h4>
+                    <div id="playersList" class="players-list">
+                        <!-- Players will be added here dynamically -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="matchFoundSection" class="match-found" style="display: none;">
+            <h2>Match Found!</h2>
+            <div id="teamsContainer" class="teams-container">
+                <!-- Teams will be added here dynamically -->
+            </div>
+            <button id="startGameBtn" class="btn btn-success">Start Game</button>
+        </div>
+
+        <div class="recent-matches">
+            <h3>Recent Matches</h3>
+            <div id="recentMatchesList" class="matches-list">
+                <!-- Recent matches will be added here dynamically -->
+                <p>No recent matches found.</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="matchmaking.js"></script>
+</body>
+</html>

@@ -1,0 +1,21 @@
+{
+  "settings": "设置",
+  "preferredLanguage": "首选语言",
+  "textSize": "文字大小",
+  "appTheme": "应用主题",
+  "clockFormat": "时钟格式",
+  "saveSettings": "保存设置",
+  "reset": "重置",
+  "backToHome": "返回主页",
+  "home": "主页",
+  "welcome": "欢迎",
+  "small": "小",
+  "medium": "中",
+  "large": "大",
+  "extraLarge": "特大",
+  "light": "浅色",
+  "dark": "深色",
+  "followDevice": "跟随设备",
+  "24hour": "24小时制",
+  "12hour": "12小时制 (上午/下午)"
+}

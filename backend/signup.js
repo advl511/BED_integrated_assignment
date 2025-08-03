@@ -75,7 +75,7 @@ async function handleSignup(e) {
                 localStorage.setItem('user_id', data.user.user_id);
                 localStorage.setItem('username', data.user.username);
                 localStorage.setItem('email', data.user.email);
-                console.log('✅ Token stored in localStorage for Live Server');
+                console.log('Token stored in localStorage for Live Server');
             }
             
             showSuccess(data.message);
@@ -222,10 +222,10 @@ async function checkUsernameAvailability() {
         
         if (response.ok) {
             if (data.exists) {
-                validationDiv.textContent = '❌ Username already taken';
+                validationDiv.textContent = 'Username already taken';
                 validationDiv.className = 'validation-message error';
             } else {
-                validationDiv.textContent = '✅ Username available';
+                validationDiv.textContent = 'Username available';
                 validationDiv.className = 'validation-message success';
             }
         } else {

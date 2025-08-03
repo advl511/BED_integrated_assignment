@@ -72,22 +72,22 @@ function isLiveServerOrigin(req) {
 
 async function registerUser(req, res) {
   try {
-    console.log('📝 Registration request received:', req.body);
+    console.log('Registration request received:', req.body);
     const { username, email, password } = req.body;
     
     // Check if email already exists
-    console.log('🔍 Checking if email exists:', email);
+    console.log('Checking if email exists:', email);
     const existingEmail = await userModel.findUserByEmail(email);
     if (existingEmail) {
-      console.log('❌ Email already exists:', email);
+      console.log('Email already exists:', email);
       return res.status(400).json({ error: 'Email already exists' });
     }
     
     // Check if username already exists
-    console.log('🔍 Checking if username exists:', username);
+    console.log('Checking if username exists:', username);
     const existingUsername = await userModel.findUserByUsername(username);
     if (existingUsername) {
-      console.log('❌ Username already exists:', username);
+      console.log('Username already exists:', username);
       return res.status(400).json({ error: 'Username already exists' });
     }
 
@@ -105,9 +105,9 @@ async function registerUser(req, res) {
       nationality: 'N/A'
     };
     
-    console.log('👤 Creating user with data:', { ...newUser, password: '[HIDDEN]' });
+    console.log('Creating user with data:', { ...newUser, password: '[HIDDEN]' });
     const newUserId = await userModel.createUser(newUser);
-    console.log('✅ User created successfully with ID:', newUserId);
+    console.log('User created successfully with ID:', newUserId);
     
     // Generate JWT token for the new user
     const token = generateToken({
@@ -117,10 +117,10 @@ async function registerUser(req, res) {
     });
     
     // Store token in database
-    console.log('🔑 Storing token for user:', newUserId);
+    console.log('Storing token for user:', newUserId);
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours from now
     await userModel.storeUserToken(newUserId, token, expiresAt);
-    console.log('✅ Token stored successfully');
+    console.log('Token stored successfully');
     
     // Check if request is from Live Server - if so, return token in response
     if (isLiveServerOrigin(req)) {

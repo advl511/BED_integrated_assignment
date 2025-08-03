@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enhanced Calendar for Elderly Users</title>
+    <link rel="stylesheet" href="/BED_integrated_assignment/styles/styles.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div>
+                <h1>My Calendar</h1>
+                <p>Stay organized with cultural events, prayer times, and appointments</p>
+            </div>
+            <div class="settings-panel">
+                <div class="setting-group">
+                    <label>Font Size</label>
+                    <select id="fontSizeSelect">
+                        <option value="font-small">Small</option>
+                        <option value="font-medium" selected>Medium</option>
+                        <option value="font-large">Large</option>
+                        <option value="font-extra-large">Extra Large</option>
+                    </select>
+                </div>
+                <div class="setting-group">
+                    <label>Show Prayer Times</label>
+                    <button class="toggle-switch" id="prayerToggle" type="button"> </button>
+                </div>
+                <div class="setting-group">
+                    <label>Location</label>
+                    <select id="locationSelect">
+                        <option value="Singapore">Singapore</option>
+                        <option value="Kuala Lumpur">Kuala Lumpur</option>
+                        <option value="Jakarta">Jakarta</option>
+                        <option value="Bangkok">Bangkok</option>
+                        <option value="Manila">Manila</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="calendar-container">
+            <div class="calendar-nav">
+                <button id="prevMonth">← Previous</button>
+                <div class="current-month" id="currentMonth">January 2025</div>
+                <button id="nextMonth">Next →</button>
+            </div>
+
+            <div class="calendar-grid" id="calendarGrid">
+                <div class="calendar-header">Sunday</div>
+                <div class="calendar-header">Monday</div>
+                <div class="calendar-header">Tuesday</div>
+                <div class="calendar-header">Wednesday</div>
+                <div class="calendar-header">Thursday</div>
+                <div class="calendar-header">Friday</div>
+                <div class="calendar-header">Saturday</div>
+            </div>
+
+            <div class="legend">
+                <div class="legend-item">
+                    <div class="legend-color cultural-event"></div>
+                    <span>Cultural Events</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color prayer-time"></div>
+                    <span>Prayer Times</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color appointment"></div>
+                    <span>Medical Appointments</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="dayModal" class="modal">
+        <div class="modal-content">
+            <span class="close" id="closeModal">&times;</span>
+            <h2 id="modalDate">January 1, 2025</h2>
+            
+            <div id="culturalEvents">
+                <h3>Cultural Events</h3>
+                <div id="eventsList"></div>
+            </div>
+
+            <div id="prayerTimesSection" style="display: none;">
+                <h3>Prayer Times</h3>
+                <div class="prayer-times" id="prayerTimes"></div>
+            </div>
+
+            <div class="appointment-section">
+                <h3>Medical Appointments</h3>
+                <p>Book your medical appointment through the Ministry of Health portal</p>
+                <button class="appointment-btn" onclick="bookAppointment()">
+                    Book Medical Appointment
+                </button>
+                <div id="appointmentsList"></div>
+            </div>
+        </div>
+    </div>
+     <div id="appointmentModal" class="modal" style="display:none;">
+        <div class="modal-content">
+            <span class="close" id="closeAppointmentModal">&times;</span>
+            <h3 id="appointmentModalTitle">Book Appointment</h3>
+            <form id="appointmentForm">
+                <label for="appointmentType">Type:</label>
+                <select id="appointmentType" name="type" required>
+                    <option value="Consultation">Consultation</option>
+                    <option value="Check-up">Check-up</option>
+                    <option value="Follow-up">Follow-up</option>
+                </select>
+
+                <label for="appointmentTime">Time:</label>
+                <input type="time" id="appointmentTime" name="time" required>
+                
+                <label for="appointmentDoctor">Doctor:</label>
+                <select id="appointmentDoctor" name="doctor" required>
+                    <option value="Dr. Lim">Dr. Lim</option>
+                    <option value="Dr. Tan">Dr. Tan</option>
+                    <option value="Dr. Wong">Dr. Wong</option>
+                </select>
+
+                <button type="submit" id="saveAppointmentBtn">Save</button>
+            </form>
+        </div>
+    </div>
+    <div id="apiStatus" class="api-status" style="display: none;"></div>
+
+    <script src="../Model/CalendarModel.js"></script>
+    <script src="../Middleware/CalendarMiddleware.js"></script>
+    <script src="../Controller/CalendarController.js"></script>
+</body>
+</html>

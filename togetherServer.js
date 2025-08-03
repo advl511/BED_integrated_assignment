@@ -16,6 +16,7 @@ const profileController = require('./Controller/profileController');
 const statusController = require('./Controller/statusController');
 const friendsController = require('./Controller/friendsController');
 const mapController = require("./Controller/mapController");
+const matchmakingController = require('./Controller/matchmakingController');
 
 const { validateSignup, validateLogin } = require('./Middleware/userMiddleware');
 const mapMiddleware = require("./Middleware/mapMiddleware");
@@ -173,6 +174,11 @@ app.get('/test', (req, res) => {
   res.json({ message: 'Together Server is working', timestamp: new Date().toISOString() });
 });
 
+// Serve matchmaking page
+app.get('/matchmaking', (req, res) => {
+  res.sendFile(path.join(__dirname, 'pages', 'matchmaking.html'));
+});
+
 // ===============================
 // MAP API ROUTES
 // ===============================
@@ -207,6 +213,14 @@ app.post("/auth/register", userController.registerUser);
 app.post("/auth/login", userController.loginUser);
 app.post("/auth/logout", userController.verifyToken, userController.logoutUser);
 app.post("/auth/logout-all", userController.verifyToken, userController.logoutAllSessions);
+// Matchmaking Routes
+app.post("/api/matchmaking/join", userController.verifyToken, matchmakingController.joinQueue);
+app.post("/api/matchmaking/leave/:queueId", userController.verifyToken, matchmakingController.leaveQueue);
+app.get("/api/matchmaking/status/:queueId", userController.verifyToken, matchmakingController.getQueueStatus);
+app.get("/api/matchmaking/current-match", userController.verifyToken, matchmakingController.getCurrentMatch);
+app.post("/api/matchmaking/start-match/:matchId", userController.verifyToken, matchmakingController.startMatch);
+app.get("/api/matchmaking/recent-matches", userController.verifyToken, matchmakingController.getRecentMatches);
+
 app.post("/auth/refresh", userController.verifyToken, userController.refreshToken);
 app.get("/auth/check-email/:email", userController.checkEmailExists);
 app.get("/auth/check-username/:username", userController.checkUsernameExists);

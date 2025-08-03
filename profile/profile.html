@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Social Profile App</title>
+    <link rel="stylesheet" href="profile.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Navigation Tabs -->
+        <div class="nav-tabs">
+            <button class="nav-tab active" onclick="showTab('profile')">Profile</button>
+            <button class="nav-tab" onclick="showTab('friends')">Friends</button>
+            <button class="nav-tab" onclick="showTab('status')">Status</button>
+        </div>
+
+        <!-- Profile Tab -->
+        <div id="profile" class="tab-content active">
+            <div class="profile-section">
+                <div class="profile-header">
+                    <div class="profile-pic-container">
+                        <div class="profile-pic" id="profilePic">👤</div>
+                        <button class="upload-btn" onclick="uploadProfilePic()">📷</button>
+                        <input type="file" id="profilePicInput" accept="image/*" style="display: none;">
+                    </div>
+                    <div class="profile-info">
+                        <h1 id="username">Loading...</h1>
+                        <div class="status-indicator">
+                            <div class="status-dot"></div>
+                            <span class="status-text" id="currentStatus">Available</span>
+                        </div>
+                        <button class="edit-profile-btn" onclick="openEditProfileModal()">Edit Profile</button>
+                    </div>
+                </div>
+                
+                <!-- Profile Details -->
+                <div class="profile-details">
+                    <h3>Profile Information</h3>
+                    <div class="profile-details-grid">
+                        <div class="detail-item">
+                            <span class="detail-label">Name:</span>
+                            <span class="detail-value" id="fullName">Not set</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Phone:</span>
+                            <span class="detail-value" id="phoneNumber">Not set</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Age:</span>
+                            <span class="detail-value" id="age">Not set</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Gender:</span>
+                            <span class="detail-value" id="gender">Not set</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Birthday:</span>
+                            <span class="detail-value" id="birthday">Not set</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Race:</span>
+                            <span class="detail-value" id="race">Not set</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Nationality:</span>
+                            <span class="detail-value" id="nationality">Not set</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Font Size Controls -->
+                <div class="font-controls">
+                    <label>Font Size:</label>
+                    <button onclick="adjustFontSize(-0.1)">A-</button>
+                    <button onclick="adjustFontSize(0.1)">A+</button>
+                    <button onclick="resetFontSize()">Reset</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Friends Tab -->
+        <div id="friends" class="tab-content">
+            <div class="friends-section">
+                <div class="section-header">
+                    <h2 class="section-title">Friends <span id="friendCount">0</span></h2>
+                    <button class="add-friend-btn" onclick="openAddFriendModal()">+ Add Friend</button>
+                </div>
+                
+                <!-- Friend Requests Section -->
+                <div class="friend-requests-section" id="friendRequestsSection" style="margin-bottom: 20px; display: none;">
+                    <h3 style="color: #666; margin-bottom: 15px;">Friend Requests <span id="requestCount">0</span></h3>
+                    <div class="friend-requests-list" id="friendRequestsList">
+                        <!-- Friend requests will be populated here -->
+                    </div>
+                </div>
+                
+                <div class="friends-grid" id="friendsList">
+                    <!-- Friends will be populated here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Status Tab -->
+        <div id="status" class="tab-content">
+            <div class="status-page">
+                <div class="status-composer">
+                    <h2>What's on your mind?</h2>
+                    <textarea class="status-input" id="statusInput" placeholder="Share your thoughts..."></textarea>
+                    <div class="status-actions">
+                        <button class="add-friend-btn" onclick="addPhotos()">📷 Add Photos</button>
+                        <button class="post-btn" onclick="postStatus()">Post</button>
+                    </div>
+                </div>
+                
+                <div class="recent-updates">
+                    <h2 class="section-title">Recent Updates</h2>
+                    <div id="statusList">
+                        <!-- Status updates will be populated here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Friend Modal -->
+    <div id="addFriendModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeAddFriendModal()">&times;</span>
+            <h2>Add New Friend</h2>
+            <input type="text" id="friendName" placeholder="Friend's name">
+            <input type="text" id="friendStatus" placeholder="Friend's status">
+            <button onclick="addFriend()">Add Friend</button>
+            <button onclick="closeAddFriendModal()">Cancel</button>
+        </div>
+    </div>
+
+    <!-- Edit Profile Modal -->
+    <div id="editProfileModal" class="modal">
+        <div class="modal-content profile-modal">
+            <span class="close" onclick="closeEditProfileModal()">&times;</span>
+            <h2>Edit Profile</h2>
+            <form id="editProfileForm" class="profile-form">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="editFirstName">First Name</label>
+                        <input type="text" id="editFirstName" name="first_name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editLastName">Last Name</label>
+                        <input type="text" id="editLastName" name="last_name" required>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="editPhoneNumber">Phone Number</label>
+                        <input type="tel" id="editPhoneNumber" name="phone_number" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editAge">Age</label>
+                        <input type="number" id="editAge" name="age" min="1" max="120" required>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="editGender">Gender</label>
+                        <select id="editGender" name="gender" required>
+                            <option value="">Select Gender</option>
+                            <option value="Male">Male</option>
+                            <option value="Female">Female</option>
+                            <option value="Non-binary">Non-binary</option>
+                            <option value="Prefer not to say">Prefer not to say</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="editDateOfBirth">Date of Birth</label>
+                        <input type="date" id="editDateOfBirth" name="date_of_birth" required>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="editRace">Race</label>
+                        <input type="text" id="editRace" name="race" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editNationality">Nationality</label>
+                        <input type="text" id="editNationality" name="nationality" required>
+                    </div>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="button" onclick="closeEditProfileModal()" class="cancel-btn">Cancel</button>
+                    <button type="submit" class="save-btn">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Friend Profile Modal -->
+    <div id="friendProfileModal" class="modal">
+        <div class="modal-content friend-profile-modal">
+            <div class="modal-header">
+                <h2>Friend Profile</h2>
+                <span class="close" onclick="closeFriendProfileModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="friend-profile-container">
+                    <div class="friend-profile-header">
+                        <div class="friend-profile-pic" id="friendProfilePic">👤</div>
+                        <div class="friend-profile-info">
+                            <h3 id="friendUsername">Loading...</h3>
+                            <div class="friend-status-indicator">
+                                <div class="status-dot" id="friendStatusDot"></div>
+                                <span class="status-text" id="friendCurrentStatus">Available</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="friend-profile-details">
+                        <h4>Profile Information</h4>
+                        <div class="friend-details-grid">
+                            <div class="detail-item">
+                                <span class="detail-label">Name:</span>
+                                <span class="detail-value" id="friendFullName">Not set</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Email:</span>
+                                <span class="detail-value" id="friendEmail">Not set</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Phone:</span>
+                                <span class="detail-value" id="friendPhoneNumber">Not set</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Age:</span>
+                                <span class="detail-value" id="friendAge">Not set</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Gender:</span>
+                                <span class="detail-value" id="friendGender">Not set</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Birthday:</span>
+                                <span class="detail-value" id="friendBirthday">Not set</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Race:</span>
+                                <span class="detail-value" id="friendRace">Not set</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Nationality:</span>
+                                <span class="detail-value" id="friendNationality">Not set</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="friend-profile-actions">
+                        <button class="action-btn message-btn" onclick="messageFriend()">💬 Message</button>
+                        <button class="action-btn remove-btn" onclick="removeFriendFromModal()">🗑️ Remove Friend</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="profile.js"></script>
+    <script src="friends.js"></script>
+    <script src="status/status.js"></script>
+    <script>
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeProfile();
+        });
+    </script>
+</body>
+</html>

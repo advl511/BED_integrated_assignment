@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book Your Appointment</title>
+    <link rel="stylesheet" href="/BED_integrated_assignment/styles/appstyles.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Book Your Medical Appointment</h1>
+            <p>Please provide the following information to schedule your visit</p>
+        </div>
+        
+        <div class="form-container">
+            <a href="#" class="back-link" onclick="goBack()">Back to Calendar</a>
+            
+            <div class="error-message" id="errorMessage">
+                Please fill in all required fields before booking your appointment.
+            </div>
+            
+            <div class="loading-message" id="loadingMessage">
+                Loading polyclinics...
+            </div>
+            
+            <form id="appointmentForm">
+                <div class="form-group">
+                    <label for="polyclinic">Where would you like to schedule your appointment?</label>
+                    <select id="polyclinic" name="polyclinic" required disabled>
+                        <option value="">Loading polyclinics...</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="appointment-time">When would you prefer your appointment time?</label>
+                    <div class="time-grid">
+                        <div class="time-slot" data-time="09:00">9:00 AM</div>
+                        <div class="time-slot" data-time="09:30">9:30 AM</div>
+                        <div class="time-slot" data-time="10:00">10:00 AM</div>
+                        <div class="time-slot" data-time="10:30">10:30 AM</div>
+                        <div class="time-slot" data-time="11:00">11:00 AM</div>
+                        <div class="time-slot" data-time="11:30">11:30 AM</div>
+                        <div class="time-slot" data-time="14:00">2:00 PM</div>
+                        <div class="time-slot" data-time="14:30">2:30 PM</div>
+                        <div class="time-slot" data-time="15:00">3:00 PM</div>
+                        <div class="time-slot" data-time="15:30">3:30 PM</div>
+                        <div class="time-slot" data-time="16:00">4:00 PM</div>
+                        <div class="time-slot" data-time="16:30">4:30 PM</div>
+                    </div>
+                    <input type="hidden" id="selectedTime" name="appointmentTime" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="reason">What is the reason for your visit today?</label>
+                    <textarea id="reason" name="reason" placeholder="Please describe your symptoms, concerns, or the purpose of your visit. This information helps us prepare for your appointment and ensure you receive the best possible care." required></textarea>
+                </div>
+
+                <button type="submit" class="submit-btn">Book Appointment</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Booking Confirmation Popup -->
+    <div id="confirmationPopup" class="popup-overlay">
+        <div class="popup-content">
+            <div class="popup-header">
+                <h2>Appointment Confirmed!</h2>
+                <span class="close-btn" onclick="closePopup()">&times;</span>
+            </div>
+            <div class="popup-body">
+                <div class="confirmation-icon">✓</div>
+                <div class="booking-details">
+                    <h3>Your Appointment Details:</h3>
+                    <div class="detail-item">
+                        <strong>Location:</strong> <span id="confirmedLocation"></span>
+                    </div>
+                    <div class="detail-item">
+                        <strong>Date:</strong> <span id="confirmedDate"></span>
+                    </div>
+                    <div class="detail-item">
+                        <strong>Time:</strong> <span id="confirmedTime"></span>
+                    </div>
+                    <div class="detail-item">
+                        <strong>Reason:</strong> <span id="confirmedReason"></span>
+                    </div>
+                    <div class="detail-item">
+                        <strong>Assigned Doctor:</strong> <span id="assignedDoctor"></span>
+                    </div>
+                    <div class="detail-item">
+                        <strong>Booking Reference:</strong> <span id="bookingReference"></span>
+                    </div>
+                </div>
+                <div class="popup-actions">
+                    <button class="btn-primary" onclick="closePopup()">Close</button>
+                    <button class="btn-secondary" onclick="goBack()">Return to Calendar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/BED_integrated_assignment/src/appointment.js"></script>
+</body>
+</html>

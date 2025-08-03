@@ -143,7 +143,8 @@ function checkUserAuthentication() {
 
 async function verifyTokenWithServer(token) {
     try {
-        const response = await fetch('/api/users/verify-token', {
+        const apiBaseUrl = "http://localhost:3000";
+        const response = await fetch(`${apiBaseUrl}/auth/me`, {
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${token}`,
@@ -155,6 +156,11 @@ async function verifyTokenWithServer(token) {
         if (!response.ok) {
             console.log('Token verification failed, clearing localStorage');
             clearUserData();
+        } else {
+            const data = await response.json();
+            console.log('Token verified successfully:', data.user);
+            // Update UI with verified user data if needed
+            updateLoginSection(data.user.username);
         }
     } catch (error) {
         console.error('Token verification error:', error);

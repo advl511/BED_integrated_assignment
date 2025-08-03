@@ -173,6 +173,16 @@ app.get('/test', (req, res) => {
   res.json({ message: 'Together Server is working', timestamp: new Date().toISOString() });
 });
 
+// Health check endpoint for monitoring server status
+app.get('/health', (req, res) => {
+  res.status(200).json({ 
+    status: 'ok', 
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    message: 'Server is healthy'
+  });
+});
+
 // ===============================
 // MAP API ROUTES
 // ===============================

@@ -1,6 +1,7 @@
 const axios = require("axios");
 const { sql, config } = require("../db");
-const translationModel = require("../models/translationModel");
+
+const translationModel = require("../Model/translationModel")
 
 // Detect language using multiple methods
 async function detectLanguage(text) {

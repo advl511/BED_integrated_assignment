@@ -1,5 +1,7 @@
-const { translateText } = require("../models/ttsModel");
-const historyModel = require("../models/translationModel");
+
+const { translateText } = require("../Model/ttsModel");
+const historyModel = require("../Model/translationModel");
+
 
 async function handleTranslation(req, res) {
   try {

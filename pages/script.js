@@ -59,9 +59,10 @@ function setupNavigation() {
             const tabName = this.getAttribute('data-tab');
             
             // Special handling for map tab - navigate directly to map.html
-            if (tabName === 'map') {
+            if (tabName === 'map' || tabName === 'settings' || tabName === 'tts' || tabName === 'calendar') {
                 return; // Let the default link behavior happen
             }
+
             
             // For other tabs, prevent default and switch tab
             e.preventDefault();
@@ -70,6 +71,8 @@ function setupNavigation() {
             }
         });
     });
+
+
     
     // Mobile navigation toggle
     const mobileNavToggle = document.getElementById('mobile-nav-toggle');

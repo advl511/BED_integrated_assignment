@@ -1,0 +1,21 @@
+{
+  "settings": "Settings",
+  "preferredLanguage": "Preferred Language",
+  "textSize": "Text Size",
+  "appTheme": "App Theme",
+  "clockFormat": "Clock Format",
+  "saveSettings": "Save Settings",
+  "reset": "Reset",
+  "backToHome": "Back to Home",
+  "home": "Home",
+  "welcome": "Welcome",
+  "small": "Small",
+  "medium": "Medium",
+  "large": "Large",
+  "extraLarge": "Extra Large",
+  "light": "Light",
+  "dark": "Dark",
+  "followDevice": "Follow Device",
+  "24hour": "24-Hour",
+  "12hour": "12-Hour (AM/PM)"
+}

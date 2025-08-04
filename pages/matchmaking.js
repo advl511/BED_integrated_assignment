@@ -9,6 +9,7 @@ class MatchmakingSystem {
         this.initializeElements();
         this.bindEvents();
         this.checkCurrentStatus();
+        this.startQueueCountPolling();
     }
 
     // Get or generate user ID from localStorage
@@ -26,7 +27,7 @@ class MatchmakingSystem {
         this.elements = {
             // Queue section
             playerName: document.getElementById('playerName'),
-            skillLevel: document.getElementById('skillLevel'),
+            queueCount: document.getElementById('queueCount'),
             joinQueueBtn: document.getElementById('joinQueueBtn'),
             leaveQueueBtn: document.getElementById('leaveQueueBtn'),
             queueSection: document.getElementById('queueSection'),
@@ -96,6 +97,9 @@ class MatchmakingSystem {
     // Check current status on page load
     async checkCurrentStatus() {
         try {
+            // Update queue count first
+            await this.updateQueueCount();
+
             // Check if user has an ongoing match
             const matchResponse = await fetch(`/api/matchmaking/current-match/${this.userId}`);
             const matchData = await matchResponse.json();
@@ -124,7 +128,6 @@ class MatchmakingSystem {
     // Join the matchmaking queue
     async joinQueue() {
         const playerName = this.elements.playerName.value.trim();
-        const skillLevel = this.elements.skillLevel.value;
 
         if (!playerName) {
             alert('Please enter your name');
@@ -143,7 +146,7 @@ class MatchmakingSystem {
                 body: JSON.stringify({
                     userId: this.userId,
                     playerName: playerName,
-                    skillLevel: skillLevel
+                    skillLevel: 'general'
                 })
             });
 
@@ -356,6 +359,47 @@ class MatchmakingSystem {
         if (this.matchCheckInterval) {
             clearInterval(this.matchCheckInterval);
             this.matchCheckInterval = null;
+        }
+    }
+
+    // Start polling for queue count updates
+    startQueueCountPolling() {
+        this.stopQueueCountPolling(); // Clear any existing interval
+        this.queueCountInterval = setInterval(async () => {
+            await this.updateQueueCount();
+        }, 3000); // Update every 3 seconds
+    }
+
+    // Stop queue count polling
+    stopQueueCountPolling() {
+        if (this.queueCountInterval) {
+            clearInterval(this.queueCountInterval);
+            this.queueCountInterval = null;
+        }
+    }
+
+    // Update queue count display
+    async updateQueueCount() {
+        try {
+            // Get total number of players in queue by making a request to get queue status
+            // We'll use a dummy user ID to get general queue info
+            const response = await fetch('/api/matchmaking/queue-count');
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success) {
+                    this.elements.queueCount.textContent = data.count || 0;
+                }
+            } else {
+                // Fallback: try to get queue info from status endpoint
+                const statusResponse = await fetch(`/api/matchmaking/status/${this.userId}`);
+                const statusData = await statusResponse.json();
+                if (statusData.success && statusData.totalInQueue !== undefined) {
+                    this.elements.queueCount.textContent = statusData.totalInQueue;
+                }
+            }
+        } catch (error) {
+            console.error('Error updating queue count:', error);
+            // Don't show error to user, just keep the current count
         }
     }
 

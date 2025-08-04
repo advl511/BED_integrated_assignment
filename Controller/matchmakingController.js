@@ -137,7 +137,7 @@ class MatchmakingController {
                 });
             }
 
-            const queuePosition = await this.getQueuePosition(pool, userId);
+            const queuePosition = await MatchmakingController.getQueuePosition(pool, userId);
             const totalInQueue = await pool.request()
                 .query('SELECT COUNT(*) as count FROM matchmaking_queue WHERE status = \'waiting\'');
 
@@ -337,6 +337,28 @@ class MatchmakingController {
 
         } catch (error) {
             console.error('Error voting for winner:', error);
+            res.status(500).json({ 
+                success: false, 
+                message: 'Internal server error' 
+            });
+        }
+    }
+
+    // Get total queue count
+    static async getQueueCount(req, res) {
+        try {
+            const pool = await sql.connect(dbConfig);
+
+            const result = await pool.request()
+                .query('SELECT COUNT(*) as count FROM matchmaking_queue WHERE status = \'waiting\'');
+
+            res.json({ 
+                success: true, 
+                count: result.recordset[0].count 
+            });
+
+        } catch (error) {
+            console.error('Error getting queue count:', error);
             res.status(500).json({ 
                 success: false, 
                 message: 'Internal server error' 

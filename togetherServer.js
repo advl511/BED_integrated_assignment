@@ -255,6 +255,7 @@ app.post('/api/matchmaking/join', matchmakingController.joinQueue);
 app.post('/api/matchmaking/leave', matchmakingController.leaveQueue);
 app.get('/api/matchmaking/status/:userId', matchmakingController.getQueueStatus);
 app.get('/api/matchmaking/current-match/:userId', matchmakingController.getCurrentMatch);
+app.get('/api/matchmaking/queue-count', matchmakingController.getQueueCount);
 app.post('/api/matchmaking/start-voting', matchmakingController.startVoting);
 app.post('/api/matchmaking/vote', matchmakingController.voteWinner);
 app.get('/api/matchmaking/history/:userId', matchmakingController.getMatchHistory);

@@ -18,11 +18,10 @@
             <div class="queue-controls">
                 <div class="player-info">
                     <input type="text" id="playerName" placeholder="Enter your name" required>
-                    <select id="skillLevel">
-                        <option value="beginner">Beginner</option>
-                        <option value="intermediate">Intermediate</option>
-                        <option value="advanced">Advanced</option>
-                    </select>
+                </div>
+                <div class="queue-indicator">
+                    <span class="queue-count" id="queueCount">0</span>
+                    <span class="queue-label">players in queue</span>
                 </div>
                 <button id="joinQueueBtn" class="btn btn-primary">Join Queue</button>
                 <button id="leaveQueueBtn" class="btn btn-secondary" style="display: none;">Leave Queue</button>

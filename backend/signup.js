@@ -52,7 +52,7 @@ async function handleSignup(e) {
         submitButton.textContent = 'Creating Account...';
         submitButton.disabled = true;
 
-        const res = await fetch('http://localhost:3000/auth/register', {
+        const res = await fetch('http://localhost:3000/api/users/signup', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'

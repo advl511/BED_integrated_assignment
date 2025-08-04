@@ -508,45 +508,69 @@ BEGIN
     WHERE expires_at < GETDATE() OR is_active = 0;
 END;
 
--- Matchmaking Queue Tables
-CREATE TABLE matchmaking_queues (
+-- ===============================
+-- MATCHMAKING SYSTEM TABLES
+-- ===============================
+
+-- Sports facilities table with locations
+CREATE TABLE sports_facilities (
+    facility_id INT IDENTITY(1,1) PRIMARY KEY,
+    facility_name NVARCHAR(255) NOT NULL,
+    address NVARCHAR(500),
+    latitude DECIMAL(10, 8) NOT NULL,
+    longitude DECIMAL(11, 8) NOT NULL,
+    sport_type NVARCHAR(100) DEFAULT 'pickleball',
+    is_active BIT DEFAULT 1,
+    created_at DATETIME2 DEFAULT GETDATE()
+);
+
+-- Matchmaking queue for players waiting to be matched
+CREATE TABLE matchmaking_queue (
     queue_id INT IDENTITY(1,1) PRIMARY KEY,
-    queue_name NVARCHAR(100) NOT NULL,
-    team_size INT NOT NULL DEFAULT 2,
-    max_teams INT NOT NULL DEFAULT 2,
-    status NVARCHAR(20) DEFAULT 'waiting' CHECK (status IN ('waiting', 'matching', 'in_progress', 'completed')),
-    created_at DATETIME2 DEFAULT GETDATE(),
-    started_at DATETIME2 NULL,
-    ended_at DATETIME2 NULL
-);
-
-CREATE TABLE queue_participants (
-    participant_id INT IDENTITY(1,1) PRIMARY KEY,
-    queue_id INT NOT NULL,
-    user_id INT NOT NULL,
+    user_id NVARCHAR(100) NOT NULL, -- Using client-side user ID
+    player_name NVARCHAR(255),
+    skill_level NVARCHAR(50) DEFAULT 'beginner',
     joined_at DATETIME2 DEFAULT GETDATE(),
-    status NVARCHAR(20) DEFAULT 'waiting' CHECK (status IN ('waiting', 'matched', 'left')),
-    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
-    FOREIGN KEY (queue_id) REFERENCES matchmaking_queues(queue_id) ON DELETE CASCADE
+    status NVARCHAR(20) DEFAULT 'waiting' CHECK (status IN ('waiting', 'matched', 'left'))
 );
 
-CREATE TABLE match_teams (
+-- Ongoing games table
+CREATE TABLE ongoing_games (
+    game_id INT IDENTITY(1,1) PRIMARY KEY,
+    facility_id INT NOT NULL,
+    player1_id NVARCHAR(100) NOT NULL,
+    player1_name NVARCHAR(255),
+    player2_id NVARCHAR(100) NOT NULL,
+    player2_name NVARCHAR(255),
+    started_at DATETIME2 DEFAULT GETDATE(),
+    player1_voted BIT DEFAULT 0,
+    player2_voted BIT DEFAULT 0,
+    player1_vote_winner NVARCHAR(100), -- user_id of who player1 thinks won
+    player2_vote_winner NVARCHAR(100), -- user_id of who player2 thinks won
+    status NVARCHAR(20) DEFAULT 'in_progress' CHECK (status IN ('in_progress', 'voting', 'completed')),
+    FOREIGN KEY (facility_id) REFERENCES sports_facilities(facility_id)
+);
+
+-- Match history table
+CREATE TABLE match_history (
     match_id INT IDENTITY(1,1) PRIMARY KEY,
-    queue_id INT NOT NULL,
-    team_number INT NOT NULL,
-    created_at DATETIME2 DEFAULT GETDATE(),
-    status NVARCHAR(20) DEFAULT 'waiting' CHECK (status IN ('waiting', 'in_progress', 'completed')),
-    FOREIGN KEY (queue_id) REFERENCES matchmaking_queues(queue_id) ON DELETE CASCADE
+    facility_id INT NOT NULL,
+    winner_id NVARCHAR(100) NOT NULL,
+    winner_name NVARCHAR(255),
+    loser_id NVARCHAR(100) NOT NULL,
+    loser_name NVARCHAR(255),
+    played_at DATETIME2,
+    completed_at DATETIME2 DEFAULT GETDATE(),
+    FOREIGN KEY (facility_id) REFERENCES sports_facilities(facility_id)
 );
 
-CREATE TABLE team_members (
-    team_member_id INT IDENTITY(1,1) PRIMARY KEY,
-    match_id INT NOT NULL,
-    user_id INT NOT NULL,
-    team_number INT NOT NULL,
-    FOREIGN KEY (match_id) REFERENCES match_teams(match_id) ON DELETE CASCADE,
-    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
-);
+-- Insert sample sports facilities
+INSERT INTO sports_facilities (facility_name, address, latitude, longitude, sport_type) VALUES
+('Downtown Sports Complex', '123 Main St, Singapore', 1.290270, 103.851959, 'pickleball'),
+('Marina Bay Sports Hub', '1 Stadium Dr, Singapore', 1.302830, 103.874370, 'pickleball'),
+('East Coast Recreation Centre', '930 E Coast Pkwy, Singapore', 1.301436, 103.912720, 'pickleball'),
+('Jurong Sports Complex', '21 Jurong East St 31, Singapore', 1.333460, 103.730950, 'pickleball'),
+('Tampines Sports Hub', '1 Tampines St 11, Singapore', 1.352083, 103.944167, 'pickleball');
 
 -- Indexes for better performance
 CREATE INDEX idx_queue_participants_queue_id ON queue_participants(queue_id);

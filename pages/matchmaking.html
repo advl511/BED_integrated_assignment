@@ -8,73 +8,100 @@
 </head>
 <body>
     <div class="matchmaking-container">
-        <header>
-            <h1>Matchmaking</h1>
-            <p>Find teammates and start playing together!</p>
+        <header class="matchmaking-header">
+            <h1>Pickleball Matchmaking</h1>
+            <p>Find opponents and play at local sports facilities</p>
         </header>
 
-        <div class="queue-section">
+        <!-- Queue Section -->
+        <div class="queue-section" id="queueSection">
             <div class="queue-controls">
-                <div class="form-group">
-                    <label for="queueName">Queue Name:</label>
-                    <select id="queueName">
-                        <option value="casual">Casual</option>
-                        <option value="ranked">Ranked</option>
-                        <option value="tournament">Tournament</option>
+                <div class="player-info">
+                    <input type="text" id="playerName" placeholder="Enter your name" required>
+                    <select id="skillLevel">
+                        <option value="beginner">Beginner</option>
+                        <option value="intermediate">Intermediate</option>
+                        <option value="advanced">Advanced</option>
                     </select>
                 </div>
-                
-                <div class="form-group">
-                    <label for="teamSize">Team Size:</label>
-                    <select id="teamSize">
-                        <option value="1">1v1</option>
-                        <option value="2" selected>2v2</option>
-                        <option value="3">3v3</option>
-                        <option value="4">4v4</option>
-                        <option value="5">5v5</option>
-                    </select>
-                </div>
-                
-                <div class="form-group">
-                    <label for="maxTeams">Teams:</label>
-                    <select id="maxTeams">
-                        <option value="2" selected>2 Teams</option>
-                        <option value="3">3 Teams</option>
-                        <option value="4">4 Teams</option>
-                    </select>
-                </div>
-                
                 <button id="joinQueueBtn" class="btn btn-primary">Join Queue</button>
-                <button id="leaveQueueBtn" class="btn btn-danger" style="display: none;">Leave Queue</button>
+                <button id="leaveQueueBtn" class="btn btn-secondary" style="display: none;">Leave Queue</button>
             </div>
-            
-            <div class="queue-status">
+
+            <div class="queue-status" id="queueStatus" style="display: none;">
                 <h3>Queue Status</h3>
-                <div id="queueInfo">
-                    <p>Not in queue. Select options and click "Join Queue".</p>
+                <div class="status-info">
+                    <p>Position in queue: <span id="queuePosition">-</span></p>
+                    <p>Total players waiting: <span id="totalInQueue">-</span></p>
+                    <p>Joined at: <span id="joinedAt">-</span></p>
                 </div>
-                <div class="players-waiting">
-                    <h4>Players in Queue:</h4>
-                    <div id="playersList" class="players-list">
-                        <!-- Players will be added here dynamically -->
+                <div class="loading-spinner">
+                    <div class="spinner"></div>
+                    <p>Looking for opponents...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Match Found Section -->
+        <div class="match-found" id="matchFoundSection" style="display: none;">
+            <h2>Match Found!</h2>
+            <div class="match-details">
+                <div class="opponent-info">
+                    <h3>Your Opponent</h3>
+                    <p id="opponentName">-</p>
+                </div>
+                
+                <div class="facility-info">
+                    <h3>Sports Facility</h3>
+                    <div class="facility-details">
+                        <p class="facility-name" id="facilityName">-</p>
+                        <p class="facility-address" id="facilityAddress">-</p>
+                        <button id="viewMapBtn" class="btn btn-secondary">View on Map</button>
                     </div>
                 </div>
+
+                <div class="match-actions">
+                    <p class="match-instruction">Head to the facility and play your match!</p>
+                    <button id="startVotingBtn" class="btn btn-primary">Finished Playing - Start Voting</button>
+                </div>
             </div>
         </div>
 
-        <div id="matchFoundSection" class="match-found" style="display: none;">
-            <h2>Match Found!</h2>
-            <div id="teamsContainer" class="teams-container">
-                <!-- Teams will be added here dynamically -->
+        <!-- Voting Section -->
+        <div class="voting-section" id="votingSection" style="display: none;">
+            <h2>Vote for Match Winner</h2>
+            <div class="voting-options">
+                <p>Who won the match?</p>
+                <button id="voteForSelfBtn" class="btn btn-success vote-btn">I Won</button>
+                <button id="voteForOpponentBtn" class="btn btn-danger vote-btn">Opponent Won</button>
             </div>
-            <button id="startGameBtn" class="btn btn-success">Start Game</button>
+            <div class="voting-status" id="votingStatus" style="display: none;">
+                <p>Vote submitted! Waiting for opponent's vote...</p>
+                <div class="loading-spinner">
+                    <div class="spinner"></div>
+                </div>
+            </div>
         </div>
 
-        <div class="recent-matches">
+        <!-- Match History Section -->
+        <div class="match-history" id="matchHistorySection">
             <h3>Recent Matches</h3>
-            <div id="recentMatchesList" class="matches-list">
-                <!-- Recent matches will be added here dynamically -->
-                <p>No recent matches found.</p>
+            <div class="matches-list" id="matchesList">
+                <p class="no-matches">No matches played yet</p>
+            </div>
+            <button id="loadHistoryBtn" class="btn btn-secondary">Load Match History</button>
+        </div>
+
+        <!-- Map Modal -->
+        <div class="modal" id="mapModal" style="display: none;">
+            <div class="modal-content">
+                <span class="close" id="closeMapModal">&times;</span>
+                <h3>Facility Location</h3>
+                <div id="facilityMap" class="facility-map"></div>
+                <div class="map-info">
+                    <p><strong>Address:</strong> <span id="modalFacilityAddress">-</span></p>
+                    <button id="getDirectionsBtn" class="btn btn-primary">Get Directions</button>
+                </div>
             </div>
         </div>
     </div>

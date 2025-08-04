@@ -1,326 +1,486 @@
-// Matchmaking functionality
+// Matchmaking System Frontend
 class MatchmakingSystem {
     constructor() {
+        this.userId = this.getUserId();
+        this.currentMatch = null;
         this.queueCheckInterval = null;
         this.matchCheckInterval = null;
-        this.currentQueueId = null;
-        this.currentUserId = localStorage.getItem('user_id');
         
-        // DOM Elements
-        this.joinQueueBtn = document.getElementById('joinQueueBtn');
-        this.leaveQueueBtn = document.getElementById('leaveQueueBtn');
-        this.queueInfo = document.getElementById('queueInfo');
-        this.playersList = document.getElementById('playersList');
-        this.matchFoundSection = document.getElementById('matchFoundSection');
-        this.teamsContainer = document.getElementById('teamsContainer');
-        this.startGameBtn = document.getElementById('startGameBtn');
-        this.recentMatchesList = document.getElementById('recentMatchesList');
-        
-        // Form elements
-        this.queueName = document.getElementById('queueName');
-        this.teamSize = document.getElementById('teamSize');
-        this.maxTeams = document.getElementById('maxTeams');
-        
-        // Initialize
-        this.initEventListeners();
-        this.checkCurrentMatch();
-        this.loadRecentMatches();
+        this.initializeElements();
+        this.bindEvents();
+        this.checkCurrentStatus();
     }
-    
-    initEventListeners() {
-        // Join queue button
-        this.joinQueueBtn.addEventListener('click', () => this.joinQueue());
-        
-        // Leave queue button
-        this.leaveQueueBtn.addEventListener('click', () => this.leaveQueue());
-        
-        // Start game button
-        this.startGameBtn.addEventListener('click', () => this.startGame());
+
+    // Get or generate user ID from localStorage
+    getUserId() {
+        let userId = localStorage.getItem('matchmaking_user_id');
+        if (!userId) {
+            userId = 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+            localStorage.setItem('matchmaking_user_id', userId);
+        }
+        return userId;
     }
-    
+
+    // Initialize DOM elements
+    initializeElements() {
+        this.elements = {
+            // Queue section
+            playerName: document.getElementById('playerName'),
+            skillLevel: document.getElementById('skillLevel'),
+            joinQueueBtn: document.getElementById('joinQueueBtn'),
+            leaveQueueBtn: document.getElementById('leaveQueueBtn'),
+            queueSection: document.getElementById('queueSection'),
+            queueStatus: document.getElementById('queueStatus'),
+            queuePosition: document.getElementById('queuePosition'),
+            totalInQueue: document.getElementById('totalInQueue'),
+            joinedAt: document.getElementById('joinedAt'),
+
+            // Match found section
+            matchFoundSection: document.getElementById('matchFoundSection'),
+            opponentName: document.getElementById('opponentName'),
+            facilityName: document.getElementById('facilityName'),
+            facilityAddress: document.getElementById('facilityAddress'),
+            viewMapBtn: document.getElementById('viewMapBtn'),
+            startVotingBtn: document.getElementById('startVotingBtn'),
+
+            // Voting section
+            votingSection: document.getElementById('votingSection'),
+            voteForSelfBtn: document.getElementById('voteForSelfBtn'),
+            voteForOpponentBtn: document.getElementById('voteForOpponentBtn'),
+            votingStatus: document.getElementById('votingStatus'),
+
+            // Match history
+            matchHistorySection: document.getElementById('matchHistorySection'),
+            matchesList: document.getElementById('matchesList'),
+            loadHistoryBtn: document.getElementById('loadHistoryBtn'),
+
+            // Map modal
+            mapModal: document.getElementById('mapModal'),
+            closeMapModal: document.getElementById('closeMapModal'),
+            modalFacilityAddress: document.getElementById('modalFacilityAddress'),
+            getDirectionsBtn: document.getElementById('getDirectionsBtn')
+        };
+
+        // Load saved player name
+        const savedName = localStorage.getItem('player_name');
+        if (savedName) {
+            this.elements.playerName.value = savedName;
+        }
+    }
+
+    // Bind event listeners
+    bindEvents() {
+        this.elements.joinQueueBtn.addEventListener('click', () => this.joinQueue());
+        this.elements.leaveQueueBtn.addEventListener('click', () => this.leaveQueue());
+        this.elements.startVotingBtn.addEventListener('click', () => this.startVoting());
+        this.elements.voteForSelfBtn.addEventListener('click', () => this.voteForWinner(this.userId));
+        this.elements.voteForOpponentBtn.addEventListener('click', () => this.voteForWinner(this.currentMatch?.opponent?.id));
+        this.elements.loadHistoryBtn.addEventListener('click', () => this.loadMatchHistory());
+        this.elements.viewMapBtn.addEventListener('click', () => this.showMap());
+        this.elements.closeMapModal.addEventListener('click', () => this.hideMap());
+        this.elements.getDirectionsBtn.addEventListener('click', () => this.getDirections());
+
+        // Close modal when clicking outside
+        this.elements.mapModal.addEventListener('click', (e) => {
+            if (e.target === this.elements.mapModal) {
+                this.hideMap();
+            }
+        });
+
+        // Save player name on change
+        this.elements.playerName.addEventListener('change', () => {
+            localStorage.setItem('player_name', this.elements.playerName.value);
+        });
+    }
+
+    // Check current status on page load
+    async checkCurrentStatus() {
+        try {
+            // Check if user has an ongoing match
+            const matchResponse = await fetch(`/api/matchmaking/current-match/${this.userId}`);
+            const matchData = await matchResponse.json();
+
+            if (matchData.success && matchData.hasMatch) {
+                this.currentMatch = matchData.match;
+                this.showMatchFound();
+                this.startMatchPolling();
+                return;
+            }
+
+            // Check if user is in queue
+            const queueResponse = await fetch(`/api/matchmaking/status/${this.userId}`);
+            const queueData = await queueResponse.json();
+
+            if (queueData.success && queueData.inQueue) {
+                this.showQueueStatus(queueData);
+                this.startQueuePolling();
+            }
+
+        } catch (error) {
+            console.error('Error checking current status:', error);
+        }
+    }
+
+    // Join the matchmaking queue
     async joinQueue() {
-        if (!this.currentUserId) {
-            this.showError('Please log in to join the queue');
+        const playerName = this.elements.playerName.value.trim();
+        const skillLevel = this.elements.skillLevel.value;
+
+        if (!playerName) {
+            alert('Please enter your name');
             return;
         }
-        
-        const queueData = {
-            queueName: this.queueName.value,
-            teamSize: parseInt(this.teamSize.value),
-            maxTeams: parseInt(this.maxTeams.value)
-        };
-        
+
         try {
+            this.elements.joinQueueBtn.disabled = true;
+            this.elements.joinQueueBtn.textContent = 'Joining...';
+
             const response = await fetch('/api/matchmaking/join', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    'Content-Type': 'application/json'
                 },
-                body: JSON.stringify(queueData)
+                body: JSON.stringify({
+                    userId: this.userId,
+                    playerName: playerName,
+                    skillLevel: skillLevel
+                })
             });
-            
+
             const data = await response.json();
-            
-            if (!response.ok) {
-                throw new Error(data.error || 'Failed to join queue');
+
+            if (data.success) {
+                this.showQueueStatus({
+                    inQueue: true,
+                    queuePosition: data.queuePosition,
+                    totalInQueue: data.queuePosition,
+                    joinedAt: new Date().toISOString()
+                });
+                this.startQueuePolling();
+            } else {
+                alert(data.message || 'Failed to join queue');
+                this.elements.joinQueueBtn.disabled = false;
+                this.elements.joinQueueBtn.textContent = 'Join Queue';
             }
-            
-            this.currentQueueId = data.queueId;
-            this.updateQueueUI(data);
-            this.startQueueCheck();
-            
-            // Show leave button and hide join button
-            this.joinQueueBtn.style.display = 'none';
-            this.leaveQueueBtn.style.display = 'inline-block';
-            
+
         } catch (error) {
             console.error('Error joining queue:', error);
-            this.showError(error.message);
+            alert('Failed to join queue. Please try again.');
+            this.elements.joinQueueBtn.disabled = false;
+            this.elements.joinQueueBtn.textContent = 'Join Queue';
         }
     }
-    
+
+    // Leave the matchmaking queue
     async leaveQueue() {
-        if (!this.currentQueueId) return;
-        
         try {
-            const response = await fetch(`/api/matchmaking/leave/${this.currentQueueId}`, {
+            this.elements.leaveQueueBtn.disabled = true;
+            this.elements.leaveQueueBtn.textContent = 'Leaving...';
+
+            const response = await fetch('/api/matchmaking/leave', {
                 method: 'POST',
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                }
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    userId: this.userId
+                })
             });
-            
-            if (!response.ok) {
-                const data = await response.json();
-                throw new Error(data.error || 'Failed to leave queue');
+
+            const data = await response.json();
+
+            if (data.success) {
+                this.hideQueueStatus();
+                this.stopQueuePolling();
+            } else {
+                alert(data.message || 'Failed to leave queue');
             }
-            
-            this.resetQueueUI();
-            
+
         } catch (error) {
             console.error('Error leaving queue:', error);
-            this.showError(error.message);
+            alert('Failed to leave queue. Please try again.');
+        } finally {
+            this.elements.leaveQueueBtn.disabled = false;
+            this.elements.leaveQueueBtn.textContent = 'Leave Queue';
         }
     }
-    
-    async checkQueueStatus() {
-        if (!this.currentQueueId) return;
-        
+
+    // Start voting phase
+    async startVoting() {
+        if (!this.currentMatch) return;
+
         try {
-            const response = await fetch(`/api/matchmaking/status/${this.currentQueueId}`, {
+            this.elements.startVotingBtn.disabled = true;
+            this.elements.startVotingBtn.textContent = 'Starting Voting...';
+
+            const response = await fetch('/api/matchmaking/start-voting', {
+                method: 'POST',
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                }
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    gameId: this.currentMatch.gameId,
+                    userId: this.userId
+                })
             });
-            
-            if (!response.ok) {
-                throw new Error('Failed to check queue status');
-            }
-            
+
             const data = await response.json();
-            this.updateQueueUI(data);
-            
-        } catch (error) {
-            console.error('Error checking queue status:', error);
-            this.stopQueueCheck();
-        }
-    }
-    
-    async checkCurrentMatch() {
-        try {
-            const response = await fetch('/api/matchmaking/current-match', {
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                }
-            });
-            
-            if (response.status === 200) {
-                const matchData = await response.json();
-                this.showMatchFound(matchData);
+
+            if (data.success) {
+                this.showVoting();
+            } else {
+                alert(data.message || 'Failed to start voting');
             }
-            
+
         } catch (error) {
-            console.error('Error checking current match:', error);
+            console.error('Error starting voting:', error);
+            alert('Failed to start voting. Please try again.');
+        } finally {
+            this.elements.startVotingBtn.disabled = false;
+            this.elements.startVotingBtn.textContent = 'Finished Playing - Start Voting';
         }
     }
-    
-    async loadRecentMatches() {
+
+    // Vote for match winner
+    async voteForWinner(winnerId) {
+        if (!this.currentMatch || !winnerId) return;
+
         try {
-            const response = await fetch('/api/matchmaking/recent-matches', {
+            const response = await fetch('/api/matchmaking/vote', {
+                method: 'POST',
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                }
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    gameId: this.currentMatch.gameId,
+                    userId: this.userId,
+                    winnerId: winnerId
+                })
             });
-            
-            if (response.ok) {
+
+            const data = await response.json();
+
+            if (data.success) {
+                this.showVotingStatus();
+                // Continue polling to check if match is completed
+                this.startMatchPolling();
+            } else {
+                alert(data.message || 'Failed to submit vote');
+            }
+
+        } catch (error) {
+            console.error('Error voting:', error);
+            alert('Failed to submit vote. Please try again.');
+        }
+    }
+
+    // Load match history
+    async loadMatchHistory() {
+        try {
+            this.elements.loadHistoryBtn.disabled = true;
+            this.elements.loadHistoryBtn.textContent = 'Loading...';
+
+            const response = await fetch(`/api/matchmaking/history/${this.userId}`);
+            const data = await response.json();
+
+            if (data.success) {
+                this.displayMatchHistory(data.matches);
+            } else {
+                alert(data.message || 'Failed to load match history');
+            }
+
+        } catch (error) {
+            console.error('Error loading match history:', error);
+            alert('Failed to load match history. Please try again.');
+        } finally {
+            this.elements.loadHistoryBtn.disabled = false;
+            this.elements.loadHistoryBtn.textContent = 'Load Match History';
+        }
+    }
+
+    // Start polling for queue updates
+    startQueuePolling() {
+        this.stopQueuePolling(); // Clear any existing interval
+        this.queueCheckInterval = setInterval(async () => {
+            try {
+                const response = await fetch(`/api/matchmaking/status/${this.userId}`);
                 const data = await response.json();
-                this.displayRecentMatches(data);
+
+                if (data.success && data.inQueue) {
+                    this.updateQueueStatus(data);
+                } else {
+                    // User is no longer in queue, check for match
+                    this.stopQueuePolling();
+                    this.checkForMatch();
+                }
+            } catch (error) {
+                console.error('Error checking queue status:', error);
             }
-            
-        } catch (error) {
-            console.error('Error loading recent matches:', error);
-        }
+        }, 2000); // Check every 2 seconds
     }
-    
-    startQueueCheck() {
-        // Clear any existing interval
-        this.stopQueueCheck();
-        
-        // Check immediately
-        this.checkQueueStatus();
-        
-        // Then check every 5 seconds
-        this.queueCheckInterval = setInterval(() => {
-            this.checkQueueStatus();
-        }, 5000);
-    }
-    
-    stopQueueCheck() {
+
+    // Stop queue polling
+    stopQueuePolling() {
         if (this.queueCheckInterval) {
             clearInterval(this.queueCheckInterval);
             this.queueCheckInterval = null;
         }
     }
-    
-    updateQueueUI(data) {
-        // Update queue info
-        this.queueInfo.innerHTML = `
-            <p><strong>Queue:</strong> ${data.queueName || 'Casual'}</p>
-            <p><strong>Players in queue:</strong> ${data.totalPlayers || 0} / ${data.playersNeeded || 0}</p>
-            <p><strong>Waiting for ${(data.playersNeeded || 0) - (data.totalPlayers || 0)} more players...</strong></p>
-        `;
-        
-        // Update players list
-        this.playersList.innerHTML = '';
-        
-        if (data.participants && data.participants.length > 0) {
-            data.participants.forEach(player => {
-                const playerElement = document.createElement('div');
-                playerElement.className = 'player-card';
-                playerElement.innerHTML = `
-                    <img src="${player.profile_picture_url || 'images/default-avatar.png'}" 
-                         alt="${player.username}" 
-                         class="player-avatar">
-                    <span>${player.username}</span>
-                `;
-                this.playersList.appendChild(playerElement);
-            });
-        } else {
-            this.playersList.innerHTML = '<p>No players in queue yet.</p>';
-        }
-    }
-    
-    showMatchFound(matchData) {
-        // Hide queue section
-        document.querySelector('.queue-section').style.display = 'none';
-        
-        // Show match found section
-        this.matchFoundSection.style.display = 'block';
-        
-        // Clear previous teams
-        this.teamsContainer.innerHTML = '';
-        
-        // Add teams to the container
-        Object.entries(matchData.teams || {}).forEach(([teamNumber, members]) => {
-            const teamElement = document.createElement('div');
-            teamElement.className = 'team';
-            teamElement.innerHTML = `
-                <h3>Team ${teamNumber}</h3>
-                <div class="team-members">
-                    ${members.map(member => `
-                        <div class="team-member">
-                            <img src="${member.profilePicture || 'images/default-avatar.png'}" 
-                                 alt="${member.username}" 
-                                 class="player-avatar">
-                            <span>${member.username}</span>
-                        </div>
-                    `).join('')}
-                </div>
-            `;
-            this.teamsContainer.appendChild(teamElement);
-        });
-        
-        // Store match ID for starting the game
-        this.currentMatchId = matchData.matchId;
-    }
-    
-    async startGame() {
-        if (!this.currentMatchId) return;
-        
-        try {
-            const response = await fetch(`/api/matchmaking/start-match/${this.currentMatchId}`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                }
-            });
-            
-            if (!response.ok) {
+
+    // Start polling for match updates
+    startMatchPolling() {
+        this.stopMatchPolling(); // Clear any existing interval
+        this.matchCheckInterval = setInterval(async () => {
+            try {
+                const response = await fetch(`/api/matchmaking/current-match/${this.userId}`);
                 const data = await response.json();
-                throw new Error(data.error || 'Failed to start game');
+
+                if (data.success && data.hasMatch) {
+                    this.currentMatch = data.match;
+                    if (data.match.status === 'voting' && data.match.canVote && !data.match.hasVoted) {
+                        this.showVoting();
+                    }
+                } else {
+                    // Match completed, refresh page or show completion message
+                    this.stopMatchPolling();
+                    this.showMatchCompleted();
+                }
+            } catch (error) {
+                console.error('Error checking match status:', error);
             }
-            
-            // Redirect to game page or show game UI
-            alert('Game is starting!');
-            // window.location.href = `/game.html?matchId=${this.currentMatchId}`;
-            
-        } catch (error) {
-            console.error('Error starting game:', error);
-            this.showError(error.message);
+        }, 3000); // Check every 3 seconds
+    }
+
+    // Stop match polling
+    stopMatchPolling() {
+        if (this.matchCheckInterval) {
+            clearInterval(this.matchCheckInterval);
+            this.matchCheckInterval = null;
         }
     }
-    
-    displayRecentMatches(matches) {
+
+    // Check for match after leaving queue
+    async checkForMatch() {
+        try {
+            const response = await fetch(`/api/matchmaking/current-match/${this.userId}`);
+            const data = await response.json();
+
+            if (data.success && data.hasMatch) {
+                this.currentMatch = data.match;
+                this.showMatchFound();
+                this.startMatchPolling();
+            }
+        } catch (error) {
+            console.error('Error checking for match:', error);
+        }
+    }
+
+    // UI Methods
+    showQueueStatus(data) {
+        this.elements.joinQueueBtn.style.display = 'none';
+        this.elements.leaveQueueBtn.style.display = 'block';
+        this.elements.queueStatus.style.display = 'block';
+        this.updateQueueStatus(data);
+    }
+
+    updateQueueStatus(data) {
+        this.elements.queuePosition.textContent = data.queuePosition || '-';
+        this.elements.totalInQueue.textContent = data.totalInQueue || '-';
+        this.elements.joinedAt.textContent = data.joinedAt ? 
+            new Date(data.joinedAt).toLocaleTimeString() : '-';
+    }
+
+    hideQueueStatus() {
+        this.elements.joinQueueBtn.style.display = 'block';
+        this.elements.leaveQueueBtn.style.display = 'none';
+        this.elements.queueStatus.style.display = 'none';
+        this.elements.joinQueueBtn.disabled = false;
+        this.elements.joinQueueBtn.textContent = 'Join Queue';
+    }
+
+    showMatchFound() {
+        this.hideQueueStatus();
+        this.elements.matchFoundSection.style.display = 'block';
+        this.elements.votingSection.style.display = 'none';
+
+        if (this.currentMatch) {
+            this.elements.opponentName.textContent = this.currentMatch.opponent.name;
+            this.elements.facilityName.textContent = this.currentMatch.facility.name;
+            this.elements.facilityAddress.textContent = this.currentMatch.facility.address;
+        }
+    }
+
+    showVoting() {
+        this.elements.matchFoundSection.style.display = 'none';
+        this.elements.votingSection.style.display = 'block';
+        this.elements.votingStatus.style.display = 'none';
+    }
+
+    showVotingStatus() {
+        this.elements.votingSection.style.display = 'block';
+        this.elements.votingStatus.style.display = 'block';
+        // Hide voting buttons
+        document.querySelector('.voting-options').style.display = 'none';
+    }
+
+    showMatchCompleted() {
+        this.elements.matchFoundSection.style.display = 'none';
+        this.elements.votingSection.style.display = 'none';
+        this.currentMatch = null;
+        this.loadMatchHistory(); // Refresh match history
+        alert('Match completed! Check your match history for results.');
+    }
+
+    displayMatchHistory(matches) {
         if (!matches || matches.length === 0) {
-            this.recentMatchesList.innerHTML = '<p>No recent matches found.</p>';
+            this.elements.matchesList.innerHTML = '<p class="no-matches">No matches played yet</p>';
             return;
         }
-        
-        this.recentMatchesList.innerHTML = '';
-        
-        matches.forEach(match => {
-            const matchElement = document.createElement('div');
-            matchElement.className = 'match-card';
-            
-            // Determine match result for the current user
-            let resultClass = '';
-            let resultText = 'Draw';
-            
-            if (match.winnerTeamId !== null) {
-                const isWinner = match.winnerTeamId === match.userTeamId;
-                resultClass = isWinner ? 'match-won' : 'match-lost';
-                resultText = isWinner ? 'Victory' : 'Defeat';
-            } else {
-                resultClass = 'match-draw';
-            }
-            
-            matchElement.innerHTML = `
-                <div class="match-teams">
-                    <span>${match.team1Name} vs ${match.team2Name}</span>
+
+        const matchesHtml = matches.map(match => `
+            <div class="match-card">
+                <div class="match-info">
+                    <div class="match-opponent">vs ${match.opponent.name}</div>
+                    <div class="match-facility">${match.facility.name}</div>
+                    <div class="match-date">${new Date(match.completedAt).toLocaleDateString()}</div>
                 </div>
-                <div class="match-result ${resultClass}">${resultText}</div>
-                <div class="match-time">${new Date(match.endedAt).toLocaleString()}</div>
-            `;
-            
-            this.recentMatchesList.appendChild(matchElement);
-        });
+                <div class="match-result match-${match.result}">${match.result.toUpperCase()}</div>
+            </div>
+        `).join('');
+
+        this.elements.matchesList.innerHTML = matchesHtml;
     }
-    
-    resetQueueUI() {
-        this.stopQueueCheck();
-        this.currentQueueId = null;
+
+    showMap() {
+        if (!this.currentMatch) return;
         
-        // Reset UI elements
-        this.queueInfo.innerHTML = '<p>Not in queue. Select options and click "Join Queue".</p>';
-        this.playersList.innerHTML = '';
-        this.joinQueueBtn.style.display = 'inline-block';
-        this.leaveQueueBtn.style.display = 'none';
+        this.elements.modalFacilityAddress.textContent = this.currentMatch.facility.address;
+        this.elements.mapModal.style.display = 'flex';
+        
+        // Simple map placeholder - you can integrate with Google Maps API here
+        const mapDiv = document.getElementById('facilityMap');
+        mapDiv.innerHTML = `
+            <div style="text-align: center; padding: 20px;">
+                <p><strong>${this.currentMatch.facility.name}</strong></p>
+                <p>Latitude: ${this.currentMatch.facility.latitude}</p>
+                <p>Longitude: ${this.currentMatch.facility.longitude}</p>
+                <p style="margin-top: 15px; color: #666;">
+                    Click "Get Directions" to open in your maps app
+                </p>
+            </div>
+        `;
     }
-    
-    showError(message) {
-        // You can implement a more sophisticated error display
-        alert(`Error: ${message}`);
+
+    hideMap() {
+        this.elements.mapModal.style.display = 'none';
+    }
+
+    getDirections() {
+        if (!this.currentMatch) return;
+        
+        const { latitude, longitude } = this.currentMatch.facility;
+        const url = `https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}`;
+        window.open(url, '_blank');
     }
 }
 

@@ -25,7 +25,32 @@ async function getProfileByUserId(userId) {
       RIGHT JOIN users u ON p.user_id = u.user_id
       WHERE u.user_id = ${userId}
     `;
-    return result.recordset[0];
+    
+    const profile = result.recordset[0];
+    
+    // If no profile exists (profile fields are null), create a default one
+    if (profile && !profile.profile_id) {
+      console.log('No profile found for user, creating default profile');
+      await createProfile(userId, {
+        bio: '',
+        location: '',
+        website: '',
+        birthday: null,
+        privacy_settings: {},
+        profile_picture_url: null
+      });
+      
+      // Fetch the profile again with the newly created profile
+      const newResult = await sql.query`
+        SELECT p.*, u.username, u.email, u.first_name, u.last_name, u.phone_number, u.age, u.gender, u.race, u.nationality, u.date_of_birth
+        FROM profiles p
+        RIGHT JOIN users u ON p.user_id = u.user_id
+        WHERE u.user_id = ${userId}
+      `;
+      return newResult.recordset[0];
+    }
+    
+    return profile;
   } catch (err) {
     throw err;
   }

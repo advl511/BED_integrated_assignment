@@ -56,14 +56,32 @@ function setupNavigation() {
     // Handle navigation clicks
     document.querySelectorAll('.nav-item').forEach(item => {
         item.addEventListener('click', function(e) {
+            const href = this.getAttribute('href');
             const tabName = this.getAttribute('data-tab');
             
-            // Special handling for map tab - navigate directly to map.html
-            if (tabName === 'map') {
+            // If it's a direct link to another page, let the browser handle it
+            if (href && href !== '#' && !href.startsWith('javascript:')) {
                 return; // Let the default link behavior happen
             }
             
-            // For other tabs, prevent default and switch tab
+            // Special handling for specific pages
+            if (tabName === 'map' || href === 'map.html') {
+                return; // Let the default link behavior happen
+            }
+            
+            if (tabName === 'friends' || href === 'friends.html') {
+                return; // Let the default link behavior happen
+            }
+            
+            if (tabName === 'profile' || href === 'profile.html') {
+                return; // Let the default link behavior happen
+            }
+            
+            if (tabName === 'calendar' || href === 'Calendar.html') {
+                return; // Let the default link behavior happen
+            }
+            
+            // For other tabs, prevent default and switch tab (only for home page tabs)
             e.preventDefault();
             if (tabName) {
                 switchTab(tabName);

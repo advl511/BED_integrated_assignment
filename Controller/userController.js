@@ -67,7 +67,16 @@ function verifyToken(req, res, next) {
 // Helper function to determine if request is from Live Server
 function isLiveServerOrigin(req) {
   const origin = req.headers.origin;
-  return origin && (origin.includes('127.0.0.1:5500') || origin.includes('localhost:5500'));
+  return origin && (
+    origin.includes('127.0.0.1:5500') || 
+    origin.includes('localhost:5500') ||
+    origin.includes('127.0.0.1:5501') || 
+    origin.includes('localhost:5501') ||
+    origin.includes('127.0.0.1:5502') || 
+    origin.includes('localhost:5502') ||
+    origin.includes('127.0.0.1:5503') || 
+    origin.includes('localhost:5503')
+  );
 }
 
 async function registerUser(req, res) {

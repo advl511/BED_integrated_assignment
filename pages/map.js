@@ -2517,13 +2517,6 @@ window.addEventListener('beforeunload', () => {
   stopServerHealthMonitoring();
 });
 
-// Handle browser close or tab close
-window.addEventListener('unload', () => {
-  // Optional: Clear tokens when browser/tab closes (if you want immediate cleanup)
-  // Uncomment the line below if you want tokens cleared when browser closes
-  // clearAuthenticationData();
-});
-
 // Start monitoring when page loads
 window.addEventListener('load', () => {
   startServerHealthMonitoring();

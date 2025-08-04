@@ -507,6 +507,54 @@ BEGIN
     DELETE FROM user_tokens 
     WHERE expires_at < GETDATE() OR is_active = 0;
 END;
+
+-- Matchmaking Queue Tables
+CREATE TABLE matchmaking_queues (
+    queue_id INT IDENTITY(1,1) PRIMARY KEY,
+    queue_name NVARCHAR(100) NOT NULL,
+    team_size INT NOT NULL DEFAULT 2,
+    max_teams INT NOT NULL DEFAULT 2,
+    status NVARCHAR(20) DEFAULT 'waiting' CHECK (status IN ('waiting', 'matching', 'in_progress', 'completed')),
+    created_at DATETIME2 DEFAULT GETDATE(),
+    started_at DATETIME2 NULL,
+    ended_at DATETIME2 NULL
+);
+
+CREATE TABLE queue_participants (
+    participant_id INT IDENTITY(1,1) PRIMARY KEY,
+    queue_id INT NOT NULL,
+    user_id INT NOT NULL,
+    joined_at DATETIME2 DEFAULT GETDATE(),
+    status NVARCHAR(20) DEFAULT 'waiting' CHECK (status IN ('waiting', 'matched', 'left')),
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
+    FOREIGN KEY (queue_id) REFERENCES matchmaking_queues(queue_id) ON DELETE CASCADE
+);
+
+CREATE TABLE match_teams (
+    match_id INT IDENTITY(1,1) PRIMARY KEY,
+    queue_id INT NOT NULL,
+    team_number INT NOT NULL,
+    created_at DATETIME2 DEFAULT GETDATE(),
+    status NVARCHAR(20) DEFAULT 'waiting' CHECK (status IN ('waiting', 'in_progress', 'completed')),
+    FOREIGN KEY (queue_id) REFERENCES matchmaking_queues(queue_id) ON DELETE CASCADE
+);
+
+CREATE TABLE team_members (
+    team_member_id INT IDENTITY(1,1) PRIMARY KEY,
+    match_id INT NOT NULL,
+    user_id INT NOT NULL,
+    team_number INT NOT NULL,
+    FOREIGN KEY (match_id) REFERENCES match_teams(match_id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
+);
+
+-- Indexes for better performance
+CREATE INDEX idx_queue_participants_queue_id ON queue_participants(queue_id);
+CREATE INDEX idx_queue_participants_user_id ON queue_participants(user_id);
+CREATE INDEX idx_match_teams_queue_id ON match_teams(queue_id);
+CREATE INDEX idx_team_members_match_id ON team_members(match_id);
+CREATE INDEX idx_team_members_user_id ON team_members(user_id);
+
 -- Sample query to get doctors for a specific polyclinic
 -- SELECT d.DoctorName, d.Specialization, p.PolyclinicName 
 -- FROM Doctors d 
@@ -516,3 +564,24 @@ END;
 -- Sample query to insert a new appointment
 -- INSERT INTO Appointments (UserID, PolyclinicID, DoctorID, AppointmentDate, AppointmentTime, Reason, BookingReference)
 -- VALUES (1, 1, 1, '2024-01-15', '09:00:00', 'General checkup', 'APT-ABC123');
+
+CREATE TABLE TranslationHistory (
+    id INT PRIMARY KEY IDENTITY(1,1),
+    originalText NVARCHAR(MAX),
+    translatedText NVARCHAR(MAX),
+    sourceLang NVARCHAR(10),
+    targetLang NVARCHAR(10),
+    createdAt DATETIME DEFAULT GETDATE()
+);
+
+
+CREATE TABLE Settings (
+  userId INT PRIMARY KEY,
+  language NVARCHAR(10),
+  direction NVARCHAR(20),
+  fontSize NVARCHAR(10),
+  timestamps BIT,
+  sound BIT,
+  theme NVARCHAR(20),
+  timeFormat NVARCHAR(10)
+);

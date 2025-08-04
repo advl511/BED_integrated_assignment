@@ -59,27 +59,11 @@ function setupNavigation() {
             const href = this.getAttribute('href');
             const tabName = this.getAttribute('data-tab');
             
-            // If it's a direct link to another page, let the browser handle it
-            if (href && href !== '#' && !href.startsWith('javascript:')) {
+            // Special handling for map tab - navigate directly to map.html
+            if (tabName === 'map') {
                 return; // Let the default link behavior happen
             }
-            
-            // Special handling for specific pages
-            if (tabName === 'map' || href === 'map.html') {
-                return; // Let the default link behavior happen
-            }
-            
-            if (tabName === 'friends' || href === 'friends.html') {
-                return; // Let the default link behavior happen
-            }
-            
-            if (tabName === 'profile' || href === 'profile.html') {
-                return; // Let the default link behavior happen
-            }
-            
-            if (tabName === 'calendar' || href === 'Calendar.html') {
-                return; // Let the default link behavior happen
-            }
+
             
             // For other tabs, prevent default and switch tab (only for home page tabs)
             e.preventDefault();
@@ -88,6 +72,8 @@ function setupNavigation() {
             }
         });
     });
+
+
     
     // Mobile navigation toggle
     const mobileNavToggle = document.getElementById('mobile-nav-toggle');

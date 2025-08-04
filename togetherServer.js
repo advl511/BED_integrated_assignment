@@ -16,6 +16,7 @@ const profileController = require('./Controller/profileController');
 const statusController = require('./Controller/statusController');
 const friendsController = require('./Controller/friendsController');
 const mapController = require("./Controller/mapController");
+const matchmakingController = require('./Controller/matchmakingController');
 
 const { validateSignup, validateLogin } = require('./Middleware/userMiddleware');
 const mapMiddleware = require("./Middleware/mapMiddleware");
@@ -195,6 +196,11 @@ app.get('/test', (req, res) => {
   res.json({ message: 'Together Server is working', timestamp: new Date().toISOString() });
 });
 
+// Serve matchmaking page
+app.get('/matchmaking', (req, res) => {
+  res.sendFile(path.join(__dirname, 'pages', 'matchmaking.html'));
+});
+
 // Health check endpoint for monitoring server status
 app.get('/health', (req, res) => {
   res.status(200).json({ 
@@ -239,6 +245,13 @@ app.post("/auth/register", userController.registerUser);
 app.post("/auth/login", userController.loginUser);
 app.post("/auth/logout", userController.verifyToken, userController.logoutUser);
 app.post("/auth/logout-all", userController.verifyToken, userController.logoutAllSessions);
+// Simplified 1v1 Pickleball Matchmaking Routes (no authentication required)
+app.post("/api/matchmaking/join", matchmakingController.joinQueue);
+app.post("/api/matchmaking/leave", matchmakingController.leaveQueue);
+app.get("/api/matchmaking/status/:queueId?", matchmakingController.getQueueStatus);
+app.get("/api/matchmaking/current-match", matchmakingController.getCurrentMatch);
+app.get("/api/matchmaking/recent-matches", matchmakingController.getRecentMatches);
+
 app.post("/auth/refresh", userController.verifyToken, userController.refreshToken);
 app.get("/auth/check-email/:email", userController.checkEmailExists);
 app.get("/auth/check-username/:username", userController.checkUsernameExists);

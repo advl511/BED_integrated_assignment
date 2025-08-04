@@ -1,79 +1,77 @@
 const sql = require('mssql');
 const dbConfig = require('../dbConfig');
 
+// Simple in-memory queue for 1v1 pickleball matchmaking
+let pickleballQueue = [];
+let currentMatches = new Map(); // Store active matches
+
 /**
- * Join a matchmaking queue
+ * Join the 1v1 pickleball queue
  * @param {Object} req - Express request object
  * @param {Object} res - Express response object
  */
 const joinQueue = async (req, res) => {
     try {
-        const { queueName = 'default', teamSize = 2, maxTeams = 2 } = req.body;
-        const userId = req.user.user_id; // Assuming user is authenticated
-
+        const { userId, username } = req.body;
+        
         if (!userId) {
-            return res.status(401).json({ error: 'User not authenticated' });
+            return res.status(400).json({ error: 'User ID is required' });
         }
 
-        const pool = await sql.connect(dbConfig);
+        // Check if user is already in queue
+        const existingUser = pickleballQueue.find(player => player.userId === userId);
+        if (existingUser) {
+            return res.status(409).json({ 
+                error: 'Already in queue', 
+                queueId: 'pickleball_1v1',
+                position: pickleballQueue.indexOf(existingUser) + 1,
+                totalPlayers: pickleballQueue.length
+            });
+        }
 
-        // Start transaction
-        const transaction = new sql.Transaction(pool);
-        await transaction.begin(sql.ISOLATION_LEVEL.READ_COMMITTED);
-
-        try {
-            // Find or create a queue
-            let queueResult = await transaction.request()
-                .input('queueName', sql.NVarChar(100), queueName)
-                .input('teamSize', sql.Int, teamSize)
-                .input('maxTeams', sql.Int, maxTeams)
-                .query(`
-                    MERGE INTO matchmaking_queues WITH (HOLDLOCK) AS target
-                    USING (VALUES (@queueName, @teamSize, @maxTeams)) AS source (queue_name, team_size, max_teams)
-                    ON target.queue_name = source.queue_name AND target.status = 'waiting'
-                    WHEN NOT MATCHED THEN
-                        INSERT (queue_name, team_size, max_teams, status)
-                        VALUES (source.queue_name, source.team_size, source.max_teams, 'waiting')
-                    OUTPUT INSERTED.*;
-                `);
-
-            const queue = queueResult.recordset[0];
-            const queueId = queue.queue_id;
-
-            // Add user to queue
-            await transaction.request()
-                .input('queueId', sql.Int, queueId)
-                .input('userId', sql.Int, userId)
-                .query(`
-                    IF NOT EXISTS (
-                        SELECT 1 FROM queue_participants 
-                        WHERE queue_id = @queueId AND user_id = @userId AND status = 'waiting'
-                    )
-                    BEGIN
-                        INSERT INTO queue_participants (queue_id, user_id, status)
-                        VALUES (@queueId, @userId, 'waiting');
-                    END
-                `);
-
-            // Check if we have enough players to start a match
-            const participantsResult = await transaction.request()
-                .input('queueId', sql.Int, queueId)
-                .query('SELECT COUNT(*) as count FROM queue_participants WHERE queue_id = @queueId AND status = \'waiting\'');
+        // Add user to queue
+        const player = {
+            userId,
+            username: username || `Player_${userId.substr(0, 4)}`,
+            joinedAt: new Date()
+        };
+        
+        pickleballQueue.push(player);
+        
+        // Check if we can make a match (need 2 players for 1v1)
+        if (pickleballQueue.length >= 2) {
+            const player1 = pickleballQueue.shift();
+            const player2 = pickleballQueue.shift();
             
-            const totalPlayers = participantsResult.recordset[0].count;
-            const playersNeeded = queue.team_size * queue.max_teams;
-
-            if (totalPlayers >= playersNeeded) {
-                // Start a new match
-                await startMatch(transaction, queue);
-            }
-
-            await transaction.commit();
-            res.json({ message: 'Joined queue successfully', queueId, totalPlayers, playersNeeded });
-        } catch (error) {
-            await transaction.rollback();
-            throw error;
+            const matchId = `match_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+            const match = {
+                matchId,
+                player1,
+                player2,
+                startedAt: new Date(),
+                status: 'in_progress'
+            };
+            
+            currentMatches.set(matchId, match);
+            
+            // Notify both players about the match
+            return res.json({
+                message: 'Match found!',
+                matchFound: true,
+                matchId,
+                opponent: player1.userId === userId ? player2 : player1,
+                queueId: 'pickleball_1v1'
+            });
         }
+        
+        res.json({ 
+            message: 'Joined queue successfully', 
+            queueId: 'pickleball_1v1',
+            position: pickleballQueue.length,
+            totalPlayers: pickleballQueue.length,
+            playersNeeded: 2
+        });
+        
     } catch (error) {
         console.error('Error joining queue:', error);
         res.status(500).json({ error: 'Failed to join queue', details: error.message });
@@ -151,29 +149,23 @@ async function startMatch(transaction, queue) {
 }
 
 /**
- * Leave a matchmaking queue
+ * Leave the 1v1 pickleball queue
  * @param {Object} req - Express request object
  * @param {Object} res - Express response object
  */
 const leaveQueue = async (req, res) => {
     try {
-        const { queueId } = req.params;
-        const userId = req.user.user_id; // Assuming user is authenticated
-
+        const { userId } = req.body;
+        
         if (!userId) {
-            return res.status(401).json({ error: 'User not authenticated' });
+            return res.status(400).json({ error: 'User ID is required' });
         }
 
-        const pool = await sql.connect(dbConfig);
-        
-        await pool.request()
-            .input('queueId', sql.Int, queueId)
-            .input('userId', sql.Int, userId)
-            .query(`
-                UPDATE queue_participants 
-                SET status = 'left' 
-                WHERE queue_id = @queueId AND user_id = @userId AND status = 'waiting';
-            `);
+        // Remove user from queue
+        const userIndex = pickleballQueue.findIndex(player => player.userId === userId);
+        if (userIndex !== -1) {
+            pickleballQueue.splice(userIndex, 1);
+        }
 
         res.json({ message: 'Left queue successfully' });
     } catch (error) {
@@ -183,47 +175,28 @@ const leaveQueue = async (req, res) => {
 };
 
 /**
- * Get current queue status
+ * Get current 1v1 pickleball queue status
  * @param {Object} req - Express request object
  * @param {Object} res - Express response object
  */
 const getQueueStatus = async (req, res) => {
     try {
-        const { queueId } = req.params;
-        const pool = await sql.connect(dbConfig);
+        const queueId = req.params.queueId || 'pickleball_1v1';
         
-        // Get queue details
-        const queueResult = await pool.request()
-            .input('queueId', sql.Int, queueId)
-            .query('SELECT * FROM matchmaking_queues WHERE queue_id = @queueId');
-        
-        if (queueResult.recordset.length === 0) {
+        if (queueId !== 'pickleball_1v1') {
             return res.status(404).json({ error: 'Queue not found' });
         }
         
-        const queue = queueResult.recordset[0];
-        
-        // Get participants
-        const participantsResult = await pool.request()
-            .input('queueId', sql.Int, queueId)
-            .query(`
-                SELECT qp.*, u.username, u.profile_picture_url 
-                FROM queue_participants qp
-                JOIN users u ON qp.user_id = u.user_id
-                WHERE qp.queue_id = @queueId AND qp.status = 'waiting'
-                ORDER BY qp.joined_at ASC
-            `);
-        
-        const participants = participantsResult.recordset;
-        const totalPlayers = participants.length;
-        const playersNeeded = queue.team_size * queue.max_teams;
+        const totalPlayers = pickleballQueue.length;
+        const playersNeeded = 2;
         
         res.json({
-            queue,
-            participants,
+            queueName: '1v1 Pickleball',
+            participants: pickleballQueue,
             totalPlayers,
             playersNeeded,
-            playersRemaining: Math.max(0, playersNeeded - totalPlayers)
+            playersRemaining: Math.max(0, playersNeeded - totalPlayers),
+            matchFound: false
         });
     } catch (error) {
         console.error('Error getting queue status:', error);
@@ -238,63 +211,32 @@ const getQueueStatus = async (req, res) => {
  */
 const getCurrentMatch = async (req, res) => {
     try {
-        const userId = req.user.user_id; // Assuming user is authenticated
-
+        const { userId } = req.query;
+        
         if (!userId) {
-            return res.status(401).json({ error: 'User not authenticated' });
+            return res.status(400).json({ error: 'User ID is required' });
         }
 
-        const pool = await sql.connect(dbConfig);
-        
         // Find user's current match
-        const matchResult = await pool.request()
-            .input('userId', sql.Int, userId)
-            .query(`
-                SELECT mt.*, mq.queue_name, mq.team_size
-                FROM match_teams mt
-                JOIN matchmaking_queues mq ON mt.queue_id = mq.queue_id
-                WHERE mt.match_id IN (
-                    SELECT match_id FROM team_members WHERE user_id = @userId
-                )
-                AND mt.status = 'in_progress'
-            `);
+        let userMatch = null;
+        for (const [matchId, match] of currentMatches.entries()) {
+            if (match.player1.userId === userId || match.player2.userId === userId) {
+                userMatch = match;
+                break;
+            }
+        }
         
-        if (matchResult.recordset.length === 0) {
+        if (!userMatch) {
             return res.status(404).json({ message: 'No active match found' });
         }
         
-        const match = matchResult.recordset[0];
-        
-        // Get team members
-        const teamsResult = await pool.request()
-            .input('matchId', sql.Int, match.match_id)
-            .query(`
-                SELECT tm.team_number, u.user_id, u.username, u.profile_picture_url
-                FROM team_members tm
-                JOIN users u ON tm.user_id = u.user_id
-                WHERE tm.match_id = @matchId
-                ORDER BY tm.team_number, u.username
-            `);
-        
-        // Organize by team
-        const teams = {};
-        teamsResult.recordset.forEach(row => {
-            if (!teams[row.team_number]) {
-                teams[row.team_number] = [];
-            }
-            teams[row.team_number].push({
-                userId: row.user_id,
-                username: row.username,
-                profilePicture: row.profile_picture_url
-            });
-        });
+        const opponent = userMatch.player1.userId === userId ? userMatch.player2 : userMatch.player1;
         
         res.json({
-            matchId: match.match_id,
-            queueName: match.queue_name,
-            teamSize: match.team_size,
-            teams: teams,
-            status: match.status
+            matchId: userMatch.matchId,
+            opponent: opponent,
+            startedAt: userMatch.startedAt,
+            status: userMatch.status
         });
     } catch (error) {
         console.error('Error getting current match:', error);
@@ -305,23 +247,30 @@ const getCurrentMatch = async (req, res) => {
 // Get recent matches for a user
 const getRecentMatches = async (req, res) => {
     try {
-        const userId = req.user.user_id;
-        const pool = await sql.connect(dbConfig);
+        const { userId } = req.query;
+        
+        if (!userId) {
+            return res.status(400).json({ error: 'User ID is required' });
+        }
 
-        const result = await pool.request()
-            .input('userId', sql.Int, userId)
-            .query(`
-                SELECT TOP 10 m.match_id, m.created_at, m.status,
-                       STRING_AGG(u.username, ', ') AS participants
-                FROM match_teams m
-                JOIN team_members tm ON m.match_id = tm.match_id
-                JOIN users u ON tm.user_id = u.user_id
-                WHERE tm.user_id = @userId
-                GROUP BY m.match_id, m.created_at, m.status
-                ORDER BY m.created_at DESC
-            `);
+        // Filter matches where the user participated
+        const userMatches = [];
+        for (const [matchId, match] of currentMatches.entries()) {
+            if (match.player1.userId === userId || match.player2.userId === userId) {
+                const opponent = match.player1.userId === userId ? match.player2 : match.player1;
+                userMatches.push({
+                    matchId: match.matchId,
+                    opponent: opponent.username,
+                    startedAt: match.startedAt,
+                    status: match.status
+                });
+            }
+        }
 
-        res.json({ matches: result.recordset });
+        // Sort by most recent first
+        userMatches.sort((a, b) => new Date(b.startedAt) - new Date(a.startedAt));
+
+        res.json({ matches: userMatches.slice(0, 10) }); // Return last 10 matches
     } catch (error) {
         console.error('Error getting recent matches:', error);
         res.status(500).json({ error: 'Failed to get recent matches', details: error.message });

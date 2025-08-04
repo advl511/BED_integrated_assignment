@@ -223,13 +223,12 @@ app.post("/auth/register", userController.registerUser);
 app.post("/auth/login", userController.loginUser);
 app.post("/auth/logout", userController.verifyToken, userController.logoutUser);
 app.post("/auth/logout-all", userController.verifyToken, userController.logoutAllSessions);
-// Matchmaking Routes
-app.post("/api/matchmaking/join", userController.verifyToken, matchmakingController.joinQueue);
-app.post("/api/matchmaking/leave/:queueId", userController.verifyToken, matchmakingController.leaveQueue);
-app.get("/api/matchmaking/status/:queueId", userController.verifyToken, matchmakingController.getQueueStatus);
-app.get("/api/matchmaking/current-match", userController.verifyToken, matchmakingController.getCurrentMatch);
-app.post("/api/matchmaking/start-match/:matchId", userController.verifyToken, matchmakingController.startMatch);
-app.get("/api/matchmaking/recent-matches", userController.verifyToken, matchmakingController.getRecentMatches);
+// Simplified 1v1 Pickleball Matchmaking Routes (no authentication required)
+app.post("/api/matchmaking/join", matchmakingController.joinQueue);
+app.post("/api/matchmaking/leave", matchmakingController.leaveQueue);
+app.get("/api/matchmaking/status/:queueId?", matchmakingController.getQueueStatus);
+app.get("/api/matchmaking/current-match", matchmakingController.getCurrentMatch);
+app.get("/api/matchmaking/recent-matches", matchmakingController.getRecentMatches);
 
 app.post("/auth/refresh", userController.verifyToken, userController.refreshToken);
 app.get("/auth/check-email/:email", userController.checkEmailExists);

@@ -58,8 +58,8 @@ function setupNavigation() {
         item.addEventListener('click', function(e) {
             const tabName = this.getAttribute('data-tab');
             
-            // Special handling for map tab - navigate directly to map.html
-            if (tabName === 'map' || tabName === 'settings' || tabName === 'tts' || tabName === 'calendar') {
+            // Special handling for external navigation tabs - let them navigate normally
+            if (tabName === 'map' || tabName === 'settings' || tabName === 'tts' || tabName === 'calendar' || tabName === 'matchmaking') {
                 return; // Let the default link behavior happen
             }
 

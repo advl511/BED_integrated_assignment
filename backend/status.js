@@ -17,8 +17,15 @@ async function statusApiRequest(endpoint, options = {}, baseUrl = STATUS_API_BAS
     };
 
     try {
+        console.log('Making API request to:', url);
+        console.log('Config:', config);
+        
         const response = await fetch(url, config);
+        console.log('Response status:', response.status);
+        console.log('Response ok:', response.ok);
+        
         const data = await response.json();
+        console.log('Response data:', data);
         
         if (!response.ok) {
             throw new Error(data.error || `HTTP error! status: ${response.status}`);
@@ -129,19 +136,54 @@ async function getFeed(userId, limit = 20) {
 
 async function loadStatuses() {
     try {
-        const user = currentUser || window.currentUser;
-        if (!user) return;
+        console.log('Starting loadStatuses...');
+        
+        // Get user from global currentUser or construct from localStorage
+        let user = currentUser || window.currentUser;
+        
+        if (!user) {
+            // Try to get user from localStorage
+            const userId = localStorage.getItem('user_id');
+            const username = localStorage.getItem('username');
+            const email = localStorage.getItem('email');
+            
+            console.log('Getting user from localStorage:', { userId, username, email });
+            
+            if (userId && username && email) {
+                user = {
+                    user_id: parseInt(userId),
+                    username: username,
+                    email: email
+                };
+                // Set global user for other functions
+                window.currentUser = user;
+                currentUser = user;
+            }
+        }
+        
+        if (!user) {
+            console.log('No user found, cannot load statuses');
+            return;
+        }
+        
+        console.log('Loading statuses for user:', user);
         
         // Load user's own statuses
+        console.log('Fetching user statuses...');
         statusUpdates = await getStatuses(user.user_id);
+        console.log('User statuses loaded:', statusUpdates);
         
         // Load feed from friends
+        console.log('Fetching feed...');
         feedUpdates = await getFeed(user.user_id);
+        console.log('Feed loaded:', feedUpdates);
         
+        console.log('Rendering status updates...');
         renderStatusUpdates();
+        
     } catch (error) {
         console.error('Error loading statuses:', error);
-        showError('Failed to load status updates');
+        showError('Failed to load status updates: ' + error.message);
         // Fallback to empty arrays
         statusUpdates = [];
         feedUpdates = [];
@@ -186,7 +228,7 @@ function renderStatusUpdates() {
     
     if (allUpdates.length === 0) {
         statusList.innerHTML = `
-            <div style="text-align: center; padding: 40px; color: #666;">
+            <div class="empty-feed">
                 <h3>No status updates yet</h3>
                 <p>Share your first status update or add friends to see their updates!</p>
             </div>
@@ -196,23 +238,23 @@ function renderStatusUpdates() {
     
     allUpdates.forEach(update => {
         const updateItem = document.createElement('div');
-        updateItem.className = 'update-item';
+        updateItem.className = `status-item ${update.isOwn ? 'status-own' : ''}`;
         
         const timeAgo = formatTimeAgo(update.created_at);
         const displayName = update.isOwn ? 'You' : (update.username || 'Friend');
         
         updateItem.innerHTML = `
-            <div class="update-header">
-                <strong>${displayName}</strong>
-                <span class="update-time">${timeAgo}</span>
-                ${update.isOwn ? `
-                    <div style="margin-left: auto;">
-                        <button onclick="deleteStatusUpdate('${update.status_id}')" style="background: none; border: none; color: var(--danger-color); cursor: pointer;">Delete</button>
-                    </div>
-                ` : ''}
+            <div class="status-header-info">
+                <span class="status-user">${displayName}</span>
+                <span class="status-time">${timeAgo}</span>
             </div>
-            <div class="update-content">${update.content}</div>
+            <div class="status-content">${update.content}</div>
             ${update.attachments && update.attachments.length > 0 ? renderAttachments(update.attachments) : ''}
+            ${update.isOwn ? `
+                <div class="status-actions-bar">
+                    <button onclick="deleteStatusUpdate('${update.status_id}')" class="delete-status">🗑️ Delete</button>
+                </div>
+            ` : ''}
         `;
         
         statusList.appendChild(updateItem);
@@ -230,43 +272,81 @@ function renderAttachments(attachments) {
     if (!Array.isArray(parsedAttachments) || parsedAttachments.length === 0) return '';
     
     return `
-        <div class="update-attachments" style="margin-top: 15px;">
-            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px;">
-                ${parsedAttachments.map(attachment => {
-                    if (attachment.type && attachment.type.startsWith('image/')) {
-                        return `
-                            <div class="attachment-item" style="border: 1px solid #ddd; border-radius: 8px; overflow: hidden;">
-                                <img src="${attachment.url}" alt="${attachment.filename}" 
-                                     style="width: 100%; height: 250px; object-fit: cover; cursor: pointer;"
-                                     onclick="window.open('${attachment.url}', '_blank')">
-                                <div style="padding: 8px; font-size: 12px; color: #666;">
-                                    📷 ${attachment.filename}
-                                </div>
+        <div class="status-attachments">
+            ${parsedAttachments.map(attachment => {
+                if (attachment.type && attachment.type.startsWith('image/')) {
+                    return `
+                        <img src="${attachment.url}" alt="${attachment.filename}" 
+                             class="attachment-preview"
+                             onclick="window.open('${attachment.url}', '_blank')">
+                    `;
+                } else {
+                    return `
+                        <div class="attachment-item" style="border: 1px solid var(--border-color); border-radius: 8px; padding: 10px; background: var(--secondary-bg);">
+                            <div style="font-size: 14px; margin-bottom: 5px;">
+                                📎 <a href="${attachment.url}" target="_blank" style="color: var(--accent-color); text-decoration: none;">${attachment.filename}</a>
                             </div>
-                        `;
-                    } else {
-                        return `
-                            <div class="attachment-item" style="border: 1px solid #ddd; border-radius: 8px; padding: 10px;">
-                                <div style="font-size: 14px; margin-bottom: 5px;">
-                                    📎 <a href="${attachment.url}" target="_blank" style="color: #007bff; text-decoration: none;">${attachment.filename}</a>
-                                </div>
-                                <div style="font-size: 12px; color: #666;">
-                                    ${attachment.size ? `(${(attachment.size / 1024).toFixed(1)} KB)` : ''}
-                                </div>
+                            <div style="font-size: 12px; color: var(--text-secondary);">
+                                ${attachment.size ? `(${(attachment.size / 1024).toFixed(1)} KB)` : ''}
                             </div>
-                        `;
-                    }
-                }).join('')}
-            </div>
+                        </div>
+                    `;
+                }
+            }).join('')}
         </div>
     `;
+}
+
+// Utility function to format time ago
+function formatTimeAgo(dateString) {
+    const now = new Date();
+    const date = new Date(dateString);
+    const diffInSeconds = Math.floor((now - date) / 1000);
+
+    if (diffInSeconds < 60) {
+        return 'Just now';
+    } else if (diffInSeconds < 3600) {
+        const minutes = Math.floor(diffInSeconds / 60);
+        return `${minutes} minute${minutes > 1 ? 's' : ''} ago`;
+    } else if (diffInSeconds < 86400) {
+        const hours = Math.floor(diffInSeconds / 3600);
+        return `${hours} hour${hours > 1 ? 's' : ''} ago`;
+    } else if (diffInSeconds < 604800) {
+        const days = Math.floor(diffInSeconds / 86400);
+        return `${days} day${days > 1 ? 's' : ''} ago`;
+    } else {
+        // For older posts, show the actual date
+        return date.toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined
+        });
+    }
 }
 
 async function postStatus() {
     console.log('=== POST STATUS CALLED ===');
     
-    // Get currentUser from global scope or window
-    const user = currentUser || window.currentUser;
+    // Get currentUser from global scope, window, or localStorage
+    let user = currentUser || window.currentUser;
+    
+    if (!user) {
+        // Try to get user from localStorage
+        const userId = localStorage.getItem('user_id');
+        const username = localStorage.getItem('username');
+        const email = localStorage.getItem('email');
+        
+        if (userId && username && email) {
+            user = {
+                user_id: parseInt(userId),
+                username: username,
+                email: email
+            };
+            // Set global user for other functions
+            window.currentUser = user;
+            currentUser = user;
+        }
+    }
     
     console.log('currentUser:', currentUser);
     console.log('window.currentUser:', window.currentUser);
@@ -358,7 +438,27 @@ async function deleteStatusUpdate(statusId) {
     if (!confirm('Are you sure you want to delete this status update?')) return;
     
     try {
-        const user = currentUser || window.currentUser;
+        // Get currentUser from global scope, window, or localStorage
+        let user = currentUser || window.currentUser;
+        
+        if (!user) {
+            // Try to get user from localStorage
+            const userId = localStorage.getItem('user_id');
+            const username = localStorage.getItem('username');
+            const email = localStorage.getItem('email');
+            
+            if (userId && username && email) {
+                user = {
+                    user_id: parseInt(userId),
+                    username: username,
+                    email: email
+                };
+                // Set global user for other functions
+                window.currentUser = user;
+                currentUser = user;
+            }
+        }
+        
         if (!user) {
             showError('Please make sure you are logged in');
             return;
@@ -474,6 +574,110 @@ function stopStatusRefresh() {
     if (statusRefreshInterval) {
         clearInterval(statusRefreshInterval);
         statusRefreshInterval = null;
+    }
+}
+
+// Error and success message functions
+function showError(message) {
+    console.error('Error:', message);
+    
+    // Try to find message container in status page
+    let container = document.getElementById('message-container');
+    
+    // If not found, try to create one or use existing error display
+    if (!container) {
+        // Look for status list and add message there
+        const statusList = document.getElementById('statusList');
+        if (statusList) {
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error-message';
+            errorDiv.style.cssText = `
+                background: #f8d7da;
+                color: #721c24;
+                border: 1px solid #f5c6cb;
+                padding: 10px;
+                border-radius: 4px;
+                margin: 10px 0;
+                text-align: center;
+            `;
+            errorDiv.textContent = message;
+            
+            // Insert at the top of status list
+            statusList.insertBefore(errorDiv, statusList.firstChild);
+            
+            // Remove after 5 seconds
+            setTimeout(() => {
+                if (errorDiv.parentNode) {
+                    errorDiv.remove();
+                }
+            }, 5000);
+            return;
+        }
+    }
+    
+    if (container) {
+        container.innerHTML = '';
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'error-message';
+        errorDiv.textContent = message;
+        container.appendChild(errorDiv);
+        
+        setTimeout(() => {
+            if (errorDiv.parentNode) {
+                errorDiv.remove();
+            }
+        }, 5000);
+    }
+}
+
+function showSuccess(message) {
+    console.log('Success:', message);
+    
+    // Try to find message container in status page
+    let container = document.getElementById('message-container');
+    
+    if (!container) {
+        // Look for status list and add message there
+        const statusList = document.getElementById('statusList');
+        if (statusList) {
+            const successDiv = document.createElement('div');
+            successDiv.className = 'success-message';
+            successDiv.style.cssText = `
+                background: #d4edda;
+                color: #155724;
+                border: 1px solid #c3e6cb;
+                padding: 10px;
+                border-radius: 4px;
+                margin: 10px 0;
+                text-align: center;
+            `;
+            successDiv.textContent = message;
+            
+            // Insert at the top of status list
+            statusList.insertBefore(successDiv, statusList.firstChild);
+            
+            // Remove after 3 seconds
+            setTimeout(() => {
+                if (successDiv.parentNode) {
+                    successDiv.remove();
+                }
+            }, 3000);
+            return;
+        }
+    }
+    
+    if (container) {
+        container.innerHTML = '';
+        const successDiv = document.createElement('div');
+        successDiv.className = 'success-message';
+        successDiv.textContent = message;
+        container.appendChild(successDiv);
+        
+        setTimeout(() => {
+            if (successDiv.parentNode) {
+                successDiv.remove();
+            }
+        }, 3000);
     }
 }
 

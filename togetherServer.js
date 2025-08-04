@@ -191,6 +191,14 @@ app.get('/friends-test.html', (req, res) => {
   res.sendFile(path.join(__dirname, 'pages', 'friends-test.html'));
 });
 
+app.get('/status.html', (req, res) => {
+  res.sendFile(path.join(__dirname, 'pages', 'status.html'));
+});
+
+app.get('/status', (req, res) => {
+  res.sendFile(path.join(__dirname, 'pages', 'status.html'));
+});
+
 // Test route to verify server is working
 app.get('/test', (req, res) => {
   res.json({ message: 'Together Server is working', timestamp: new Date().toISOString() });

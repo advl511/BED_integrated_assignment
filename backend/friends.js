@@ -776,9 +776,11 @@ function updateTimeDisplay() {
 }
 
 function showTab(tabName) {
-    // Remove active class from all tabs
-    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-    document.querySelectorAll('.tab-pane').forEach(pane => pane.classList.remove('active'));
+    console.log('Switching to tab:', tabName);
+    
+    // Remove active class from all tabs (support both modern and legacy)
+    document.querySelectorAll('.tab-btn, .modern-tab-btn').forEach(btn => btn.classList.remove('active'));
+    document.querySelectorAll('.tab-pane, .modern-tab-pane').forEach(pane => pane.classList.remove('active'));
 
     // Add active class to selected tab
     const tabButton = document.querySelector(`[data-tab="${tabName}"]`);
@@ -786,11 +788,50 @@ function showTab(tabName) {
     
     if (tabButton) tabButton.classList.add('active');
     if (tabPane) tabPane.classList.add('active');
+    
+    // Load appropriate data based on tab
+    switch(tabName) {
+        case 'friends':
+            loadFriendsPage();
+            break;
+        case 'pending':
+            loadPendingRequestsPage();
+            break;
+        case 'sent':
+            loadSentRequestsPage();
+            break;
+    }
+}
+
+// Modern interface functions
+function showQuickAdd() {
+    const panel = document.getElementById('quick-search-panel');
+    if (panel) {
+        panel.style.display = 'block';
+        const searchInput = document.getElementById('search-input');
+        if (searchInput) {
+            searchInput.focus();
+        }
+    }
+}
+
+function hideQuickAdd() {
+    const panel = document.getElementById('quick-search-panel');
+    if (panel) {
+        panel.style.display = 'none';
+        const searchResults = document.getElementById('search-results');
+        if (searchResults) {
+            searchResults.innerHTML = '';
+        }
+    }
 }
 
 async function searchUsersPage() {
     const searchInput = document.getElementById('search-input');
-    if (!searchInput) return;
+    if (!searchInput) {
+        console.error('Search input not found');
+        return;
+    }
     
     const searchTerm = searchInput.value.trim();
     if (!searchTerm) {
@@ -799,26 +840,45 @@ async function searchUsersPage() {
     }
 
     const resultsContainer = document.getElementById('search-results');
-    if (!resultsContainer) return;
+    if (!resultsContainer) {
+        console.error('Search results container not found');
+        return;
+    }
     
     resultsContainer.innerHTML = '<div class="loading">Searching...</div>';
 
     try {
+        console.log('Searching for users with term:', searchTerm);
         const response = await fetch(`http://localhost:3000/api/users/search?q=${encodeURIComponent(searchTerm)}`);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
         const users = await response.json();
+        console.log('Search results:', users);
 
         if (users.length === 0) {
-            resultsContainer.innerHTML = '<div class="empty-state"><p>No users found</p></div>';
+            resultsContainer.innerHTML = '<div class="empty-state"><p>No users found matching your search</p></div>';
             return;
         }
 
-        resultsContainer.innerHTML = users.map(user => `
+        // Filter out current user from results
+        const filteredUsers = users.filter(user => user.user_id !== currentUser.user_id);
+        
+        if (filteredUsers.length === 0) {
+            resultsContainer.innerHTML = '<div class="empty-state"><p>No other users found matching your search</p></div>';
+            return;
+        }
+
+        resultsContainer.innerHTML = filteredUsers.map(user => `
             <div class="user-card">
                 <div class="user-info">
-                    <img src="${user.profile_picture || './images/default-avatar.svg'}" alt="${user.username}" class="user-avatar">
+                    <img src="${user.profile_picture_url || '../pages/images/default-avatar.svg'}" alt="${user.username}" class="user-avatar" onerror="this.src='../pages/images/default-avatar.svg'">
                     <div class="user-details">
                         <h4>${user.username}</h4>
-                        <p>${user.email}</p>
+                        <p>${user.first_name ? user.first_name + ' ' + (user.last_name || '') : user.email}</p>
+                        ${user.age ? `<small>Age: ${user.age}</small>` : ''}
                     </div>
                 </div>
                 <button class="btn btn-primary" onclick="sendFriendRequestToUserPage(${user.user_id}, '${user.username}')">
@@ -827,34 +887,45 @@ async function searchUsersPage() {
             </div>
         `).join('');
     } catch (error) {
-        resultsContainer.innerHTML = '<div class="empty-state"><p>Error searching users</p></div>';
-        showMessagePage('Error searching users', 'error');
+        console.error('Error searching users:', error);
+        resultsContainer.innerHTML = '<div class="empty-state"><p>Error searching users. Please try again.</p></div>';
+        showMessagePage('Error searching users: ' + error.message, 'error');
     }
 }
 
 async function sendFriendRequestToUserPage(toUserId, username) {
-    try {
-        const response = await fetch('http://localhost:3000/api/friends/request', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ 
-                fromUserId: currentUser.user_id, 
-                toUserId: toUserId 
-            })
-        });
-        
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.error || 'Failed to send friend request');
+    // Show confirmation modal before sending friend request
+    showConfirmModalPage(
+        'Send Friend Request',
+        `Are you sure you want to send a friend request to ${username}?`,
+        async () => {
+            try {
+                const response = await fetch('http://localhost:3000/api/friends/request', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ 
+                        fromUserId: currentUser.user_id, 
+                        toUserId: toUserId 
+                    })
+                });
+                
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || 'Failed to send friend request');
+                }
+                
+                showMessagePage(`Friend request sent to ${username}!`, 'success');
+                loadSentRequestsPage(); // Refresh sent requests
+                closeModal();
+            } catch (error) {
+                console.error('Error sending friend request:', error);
+                showMessagePage(error.message || 'Failed to send friend request', 'error');
+                closeModal();
+            }
         }
-        
-        showMessagePage(`Friend request sent to ${username}!`, 'success');
-        loadSentRequestsPage(); // Refresh sent requests
-    } catch (error) {
-        showMessagePage(error.message || 'Failed to send friend request', 'error');
-    }
+    );
 }
 
 async function loadFriendsPage() {
@@ -894,14 +965,13 @@ async function loadFriendsPage() {
             console.log('No friends found, showing empty state');
             empty.style.display = 'block';
             empty.innerHTML = `
+                <div class="empty-icon">👥</div>
                 <h3>No friends yet</h3>
-                <p>Start by searching for people to add as friends!</p>
-                <div style="background: #e3f2fd; padding: 15px; border-radius: 8px; margin: 10px 0;">
-                    <strong>🔍 Debug Info:</strong><br>
-                    User ID: ${currentUser.user_id}<br>
-                    API Response: ${JSON.stringify(friends)}<br>
-                    Response Length: ${friends ? friends.length : 'null'}
-                </div>
+                <p>Start building your network by adding friends!</p>
+                <button class="empty-action-btn" onclick="showQuickAdd()">
+                    <i class="btn-icon">➕</i>
+                    Find Friends
+                </button>
             `;
             return;
         }
@@ -910,7 +980,7 @@ async function loadFriendsPage() {
         friendsList.innerHTML = friends.map(friend => `
             <div class="friend-card">
                 <div class="friend-info">
-                    <img src="${friend.profile_picture || './images/default-avatar.svg'}" alt="${friend.username}" class="friend-avatar">
+                    <img src="${friend.profile_picture_url || '../pages/images/default-avatar.svg'}" alt="${friend.username}" class="friend-avatar" onerror="this.src='../pages/images/default-avatar.svg'">
                     <div class="friend-details">
                         <h4>${friend.username}</h4>
                         <p>${friend.email}</p>
@@ -958,6 +1028,7 @@ async function loadPendingRequestsPage() {
         
         const requests = await response.json();
         console.log('Pending requests data received:', requests);
+        console.log('Sample request structure:', requests[0]);
         
         loading.style.display = 'none';
 
@@ -981,13 +1052,21 @@ async function loadPendingRequestsPage() {
         if (requests.length === 0) {
             console.log('No pending requests found');
             empty.style.display = 'block';
+            empty.innerHTML = `
+                <div class="empty-icon">📨</div>
+                <h3>No pending requests</h3>
+                <p>When someone sends you a friend request, it will appear here.</p>
+            `;
             return;
         }
 
-        pendingList.innerHTML = requests.map(request => `
+        console.log('Generating HTML for', requests.length, 'pending requests');
+        const htmlContent = requests.map(request => {
+            console.log('Processing request:', request.username, 'with ID:', request.friendship_id);
+            return `
             <div class="request-card">
                 <div class="request-info">
-                    <img src="${request.profile_picture || './images/default-avatar.svg'}" alt="${request.username}" class="request-avatar">
+                    <img src="${request.profile_picture_url || '../pages/images/default-avatar.svg'}" alt="${request.username}" class="request-avatar" onerror="this.src='../pages/images/default-avatar.svg'">
                     <div class="request-details">
                         <h4>${request.username}</h4>
                         <p>${request.email}</p>
@@ -999,7 +1078,13 @@ async function loadPendingRequestsPage() {
                     <button class="btn btn-danger" onclick="rejectRequestPage(${request.friendship_id})">Reject</button>
                 </div>
             </div>
-        `).join('');
+        `;
+        }).join('');
+        
+        console.log('Generated HTML length:', htmlContent.length);
+        console.log('First 500 chars of HTML:', htmlContent.substring(0, 500));
+        
+        pendingList.innerHTML = htmlContent;
     } catch (error) {
         console.error('Error loading pending requests:', error);
         loading.style.display = 'none';
@@ -1029,7 +1114,7 @@ async function loadSentRequestsPage() {
         sentList.innerHTML = requests.map(request => `
             <div class="request-card">
                 <div class="request-info">
-                    <img src="${request.profile_picture || './images/default-avatar.svg'}" alt="${request.username}" class="request-avatar">
+                    <img src="${request.profile_picture_url || '../pages/images/default-avatar.svg'}" alt="${request.username}" class="request-avatar" onerror="this.src='../pages/images/default-avatar.svg'">
                     <div class="request-details">
                         <h4>${request.username}</h4>
                         <p>${request.email}</p>
@@ -1048,47 +1133,67 @@ async function loadSentRequestsPage() {
 }
 
 async function acceptRequestPage(requestId) {
-    try {
-        const response = await fetch(`http://localhost:3000/api/friends/accept/${requestId}`, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ userId: currentUser.user_id })
-        });
-        
-        if (!response.ok) {
-            throw new Error('Failed to accept request');
+    // Show confirmation modal before accepting
+    showConfirmModalPage(
+        'Accept Friend Request',
+        'Are you sure you want to accept this friend request?',
+        async () => {
+            try {
+                const response = await fetch(`http://localhost:3000/api/friends/accept/${requestId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ userId: currentUser.user_id })
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to accept request');
+                }
+                
+                showMessagePage('Friend request accepted!', 'success');
+                loadPendingRequestsPage();
+                loadFriendsPage();
+                updateFriendCountPage();
+                closeModal();
+            } catch (error) {
+                console.error('Error accepting friend request:', error);
+                showMessagePage('Failed to accept request', 'error');
+                closeModal();
+            }
         }
-        
-        showMessagePage('Friend request accepted!', 'success');
-        loadPendingRequestsPage();
-        loadFriendsPage();
-        updateFriendCountPage();
-    } catch (error) {
-        showMessagePage('Failed to accept request', 'error');
-    }
+    );
 }
 
 async function rejectRequestPage(requestId) {
-    try {
-        const response = await fetch(`http://localhost:3000/api/friends/reject/${requestId}`, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ userId: currentUser.user_id })
-        });
-        
-        if (!response.ok) {
-            throw new Error('Failed to reject request');
+    // Show confirmation modal before rejecting
+    showConfirmModalPage(
+        'Reject Friend Request',
+        'Are you sure you want to reject this friend request?',
+        async () => {
+            try {
+                const response = await fetch(`http://localhost:3000/api/friends/reject/${requestId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ userId: currentUser.user_id })
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to reject request');
+                }
+                
+                showMessagePage('Friend request rejected', 'info');
+                loadPendingRequestsPage();
+                closeModal();
+            } catch (error) {
+                console.error('Error rejecting friend request:', error);
+                showMessagePage('Failed to reject request', 'error');
+                closeModal();
+            }
         }
-        
-        showMessagePage('Friend request rejected', 'info');
-        loadPendingRequestsPage();
-    } catch (error) {
-        showMessagePage('Failed to reject request', 'error');
-    }
+    );
 }
 
 function removeFriendConfirmPage(friendId, username) {
@@ -1131,8 +1236,8 @@ async function updateFriendCountPage() {
 }
 
 function viewProfilePage(userId) {
-    // Navigate to profile page with user ID
-    window.location.href = `profile.html?userId=${userId}`;
+    // Use the existing viewFriendProfile function to show modal
+    viewFriendProfile(userId);
 }
 
 function showConfirmModalPage(title, message, onConfirm) {
@@ -1222,6 +1327,8 @@ window.confirmAction = confirmAction;
 window.showMessage = showMessagePage;
 window.logout = logoutPage;
 window.showTab = showTab;
+window.showQuickAdd = showQuickAdd;
+window.hideQuickAdd = hideQuickAdd;
 
 // Initialize when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {

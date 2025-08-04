@@ -53,43 +53,30 @@ async function handleSignin(event) {
         if (response.ok) {
             console.log('Login successful, received data:', data);
             
-            // Clear any existing localStorage data first
-            localStorage.removeItem('user_id');
-            localStorage.removeItem('username');
-            localStorage.removeItem('email');
-            localStorage.removeItem('auth_token');
-            
-            // Set new user data in localStorage
+            // Store authentication data
             if (data.user) {
                 localStorage.setItem('user_id', data.user.user_id.toString());
                 localStorage.setItem('username', data.user.username);
                 localStorage.setItem('email', data.user.email);
-                console.log('Set localStorage:', {
-                    user_id: data.user.user_id,
-                    username: data.user.username,
-                    email: data.user.email
-                });
+                localStorage.setItem('isLoggedIn', 'true');
             }
             
-            // Store token in localStorage if provided (for Live Server)
             if (data.token) {
                 localStorage.setItem('auth_token', data.token);
-                console.log('Token stored in localStorage for Live Server');
             }
             
             showSuccess('Login successful! Redirecting...');
             
-            // Reduce the timeout to make redirect faster
             setTimeout(() => {
-                console.log('Attempting redirect to home.html');
-                console.log('Current localStorage after login:', {
-                    user_id: localStorage.getItem('user_id'),
-                    username: localStorage.getItem('username'),
-                    email: localStorage.getItem('email')
-                });
-                // Redirect to home page
-                window.location.href = 'home.html';
-            }, 500);  // Reduced from 1000ms to 500ms
+                // Check if user should return to a specific page
+                const returnToPage = localStorage.getItem('returnToPage');
+                if (returnToPage) {
+                    localStorage.removeItem('returnToPage');
+                    window.location.href = returnToPage;
+                } else {
+                    window.location.href = 'home.html';
+                }
+            }, 500);
             
         } else {
             showError(data.error || 'Login failed');

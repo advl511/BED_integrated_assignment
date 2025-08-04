@@ -3,18 +3,53 @@ const API_BASE_URL = 'http://localhost:3000/api';
 // Add user session management
 let currentUser = null;
 
+// Check if user is logged in
+async function checkUserAuthentication() {
+    const token = localStorage.getItem('auth_token');
+    const userId = localStorage.getItem('user_id');
+    const username = localStorage.getItem('username');
+    const email = localStorage.getItem('email');
+    const isLoggedIn = localStorage.getItem('isLoggedIn');
+    
+    // Check multiple indicators of login status
+    if ((token && userId) || (isLoggedIn === 'true' && userId)) {
+        // User appears to be logged in, create user object from localStorage
+        const userData = {
+            user_id: userId,
+            username: username,
+            email: email
+        };
+        
+        console.log('User authenticated from localStorage:', userData);
+        return { isAuthenticated: true, user: userData };
+    } else {
+        console.log('User not authenticated - missing login data');
+        return { isAuthenticated: false, user: null };
+    }
+}
+
+// Clear authentication data
+function clearAuthData() {
+    localStorage.removeItem('auth_token');
+    localStorage.removeItem('user_id');
+    localStorage.removeItem('username');
+    localStorage.removeItem('email');
+    localStorage.removeItem('isLoggedIn');
+    localStorage.removeItem('userData');
+}
+
 // Load user profile data
 async function loadUserProfile() {
     try {
-        // Get user from session/localStorage
-        const userId = localStorage.getItem('userId') || sessionStorage.getItem('userId');
-        if (!userId) {
-            window.location.href = 'signin.html'; // Redirect to login if no user
-            return;
+        // Check if user is authenticated first
+        const authStatus = await checkUserAuthentication();
+        if (!authStatus.isAuthenticated) {
+            console.log('User not authenticated, but allowing calendar access');
+            return; // Don't redirect, just return
         }
         
-        const response = await fetch(`${API_BASE_URL}/user/profile/${userId}`);
-        currentUser = await response.json();
+        // User is authenticated, load their profile
+        currentUser = authStatus.user;
         
         // Apply user settings to calendar
         applyUserSettings();
@@ -59,8 +94,100 @@ async function bookAppointmentWithProfile() {
     window.location.href = `Appointment.html?userId=${currentUser.id}&date=${getSelectedDate()}`;
 }
 
+// Handle appointment booking with authentication check
+async function handleAppointmentBooking() {
+    const authStatus = await checkUserAuthentication();
+    
+    if (!authStatus.isAuthenticated) {
+        // Show login prompt instead of redirecting
+        showLoginPrompt();
+        return;
+    }
+    
+    // User is authenticated, redirect to appointment.html
+    const selectedDate = getSelectedDate();
+    localStorage.setItem('selectedDate', selectedDate);
+    localStorage.setItem('fromCalendar', 'true');
+    window.location.href = `Appointment.html?userId=${authStatus.user.user_id}&date=${selectedDate}`;
+}
+
+// Show a login prompt modal instead of redirecting
+function showLoginPrompt() {
+    // Create login prompt modal
+    const loginModal = document.createElement('div');
+    loginModal.className = 'modal';
+    loginModal.id = 'loginPromptModal';
+    loginModal.innerHTML = `
+        <div class="modal-content" style="max-width: 400px; text-align: center;">
+            <h3>Login Required</h3>
+            <p>You need to log in to book appointments.</p>
+            <div style="margin-top: 20px;">
+                <button onclick="redirectToLogin()" class="appointment-btn" style="margin-right: 10px;">
+                    Go to Login
+                </button>
+                <button onclick="closeLoginPrompt()" class="appointment-btn" style="background-color: #6c757d;">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(loginModal);
+    loginModal.style.display = 'block';
+}
+
+// Redirect to login page
+function redirectToLogin() {
+    // Store the current page URL to return after login
+    localStorage.setItem('returnToPage', window.location.href);
+    window.location.href = 'signin.html';
+}
+
+// Close login prompt
+function closeLoginPrompt() {
+    const modal = document.getElementById('loginPromptModal');
+    if (modal) {
+        modal.remove();
+    }
+}
+
+// Update calendar UI based on authentication status
+function updateCalendarUI(authStatus) {
+    const appointmentBtn = document.querySelector('.appointment-btn');
+    
+    if (authStatus.isAuthenticated) {
+        // User is logged in - enable full functionality
+        if (appointmentBtn) {
+            appointmentBtn.textContent = 'Book Medical Appointment';
+            appointmentBtn.disabled = false;
+        }
+        
+    } else {
+        // User is not logged in - show login prompt
+        if (appointmentBtn) {
+            appointmentBtn.textContent = 'Login to Book Appointment';
+            appointmentBtn.disabled = false;
+        }
+    }
+}
+
 // Initialize with user profile
 document.addEventListener('DOMContentLoaded', async function() {
+    // Check authentication status
+    const authStatus = await checkUserAuthentication();
+    
+    // Update UI based on authentication
+    updateCalendarUI(authStatus);
+    
+    // Set up modal close functionality for appointment modal
+    const closeAppointmentModal = document.getElementById('closeAppointmentModal');
+    if (closeAppointmentModal) {
+        closeAppointmentModal.addEventListener('click', function() {
+            closeAppointmentModalFunction();
+        });
+    }
+    
+    // Load user profile if authenticated (but don't block calendar access)
     await loadUserProfile();
     
     // Add click handlers to calendar days

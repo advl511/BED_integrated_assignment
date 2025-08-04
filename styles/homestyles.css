@@ -1,6 +1,10 @@
 :root {
     --primary-bg: #f8f9fa;
     --secondary-bg: #ffffff;
+    --card-bg: #ffffff;
+    --primary-color: #2c5282;
+    --primary-dark: #2a4e7c;
+    --secondary-color: #4a90e2;
     --accent-color: #2c5282;
     --text-primary: #2d3748;
     --text-secondary: #718096;
@@ -8,6 +12,7 @@
     --hover-bg: #edf2f7;
     --success-color: #38a169;
     --warning-color: #ed8936;
+    --error-color: #e53e3e;
     --cultural-event: #9f7aea;
     --prayer-time: #38b2ac;
     --appointment: #e53e3e;

@@ -82,6 +82,12 @@ app.use((req, res, next) => {
     'http://127.0.0.1:3000', 
     'http://localhost:5500',  // Live Server default
     'http://127.0.0.1:5500',  // Live Server default
+    'http://localhost:5501',  // Live Server alternative port
+    'http://127.0.0.1:5501',  // Live Server alternative port
+    'http://localhost:5502',  // Live Server alternative port
+    'http://127.0.0.1:5502',  // Live Server alternative port
+    'http://localhost:5503',  // Live Server alternative port
+    'http://127.0.0.1:5503',  // Live Server alternative port
     'null'  // For file:// protocol
   ];
   
@@ -168,6 +174,30 @@ app.get('/map', (req, res) => {
 
 app.get('/home.html', (req, res) => {
   res.sendFile(path.join(__dirname, 'pages', 'home.html'));
+});
+
+app.get('/friends.html', (req, res) => {
+  res.sendFile(path.join(__dirname, 'pages', 'friends.html'));
+});
+
+app.get('/friends', (req, res) => {
+  res.sendFile(path.join(__dirname, 'pages', 'friends.html'));
+});
+
+app.get('/friends-test', (req, res) => {
+  res.sendFile(path.join(__dirname, 'pages', 'friends-test.html'));
+});
+
+app.get('/friends-test.html', (req, res) => {
+  res.sendFile(path.join(__dirname, 'pages', 'friends-test.html'));
+});
+
+app.get('/status.html', (req, res) => {
+  res.sendFile(path.join(__dirname, 'pages', 'status.html'));
+});
+
+app.get('/status', (req, res) => {
+  res.sendFile(path.join(__dirname, 'pages', 'status.html'));
 });
 
 // Test route to verify server is working
@@ -279,10 +309,10 @@ app.post('/api/users/refresh-token', verifyToken, userController.refreshToken);
 // ===============================
 
 app.get('/api/profiles/:userId', profileController.getProfile);
-app.post('/api/profiles/:userId', profileController.createProfile);
-app.put('/api/profiles/:userId', profileController.updateProfile);
-app.post('/api/profiles/:userId/picture', upload.single('profilePicture'), profileController.updateProfilePicture);
-app.delete('/api/profiles/:userId', profileController.deleteProfile);
+app.post('/api/profiles/:userId', verifyToken, profileController.createProfile);
+app.put('/api/profiles/:userId', verifyToken, profileController.updateProfile);
+app.post('/api/profiles/:userId/picture', verifyToken, upload.single('profilePicture'), profileController.updateProfilePicture);
+app.delete('/api/profiles/:userId', verifyToken, profileController.deleteProfile);
 app.get('/api/profiles/search', profileController.searchProfiles);
 
 // ===============================

@@ -26,25 +26,27 @@
         </button>
         <div class="nav-content">
             <a href="#" class="nav-item active" data-tab="home">Home</a>
+            <a href="status.html" class="nav-item">Status</a>
             <a href="#" class="nav-item" data-tab="events">Nearby Events</a>
             <a href="map.html" class="nav-item" data-tab="map">Map</a>
             <a href="/matchmaking" class="nav-item" data-tab="matchmaking">Matchmaking</a>
             <a href="#" class="nav-item" data-tab="calendar">Calendar</a>
             <a href="#" class="nav-item" data-tab="notifications">Notifications</a>
             <a href="#" class="nav-item" data-tab="profile">Profile</a>
-            <a href="settings.html" class="nav-item" data-tab="settings">Settings</a>
-            <a href="tts.html" class="nav-item" data-tab="tts">Text-to-Speech</a>
+            <a href="friends.html" class="nav-item">Friends</a>
+            <a href="#" class="nav-item" data-tab="settings">Settings</a>
         </div>
         <div class="nav-dropdown" id="nav-dropdown">
             <a href="#" class="nav-item active" data-tab="home">Home</a>
+            <a href="status.html" class="nav-item">Status</a>
             <a href="#" class="nav-item" data-tab="events">Nearby Events</a>
             <a href="map.html" class="nav-item" data-tab="map">Map</a>
             <a href="/matchmaking" class="nav-item" data-tab="matchmaking">Matchmaking</a>
             <a href="#" class="nav-item" data-tab="calendar">Calendar</a>
             <a href="#" class="nav-item" data-tab="notifications">Notifications</a>
             <a href="#" class="nav-item" data-tab="profile">Profile</a>
-            <a href="settings.html" class="nav-item" data-tab="settings">Settings</a>
-            <a href="tts.html" class="nav-item" data-tab="tts">Text-to-Speech</a>
+            <a href="friends.html" class="nav-item">Friends</a>
+            <a href="#" class="nav-item" data-tab="settings">Settings</a>
         </div>
     </nav>
 
@@ -207,6 +209,83 @@
                 <h1 class="welcome-title">Calendar</h1>
                 <p class="welcome-message">Keep track of your appointments and events.</p>
             </section>
+        </div>
+
+        <!-- Friends Tab Content -->
+        <div class="tab-content" id="friends-tab">
+            <div class="friends-container">
+                <!-- Header Section -->
+                <div class="friends-header">
+                    <h1>🧑‍🤝‍🧑 Friends</h1>
+                    <div class="friends-stats">
+                        <span class="stat-item">
+                            <strong id="friend-count">0</strong> Friends
+                        </span>
+                        <span class="stat-item">
+                            <strong id="pending-count">0</strong> Pending
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Search and Add Friends Section -->
+                <div class="search-section">
+                    <div class="search-container">
+                        <input type="text" id="search-input" placeholder="Search for friends by username or email..." class="search-input">
+                        <button onclick="searchUsers()" class="search-btn">Search</button>
+                    </div>
+                    <div id="search-results" class="search-results"></div>
+                </div>
+
+                <!-- Tab Navigation for Friends -->
+                <div class="friends-tab-nav">
+                    <button class="friends-tab-btn active" onclick="showFriendsTab('friends')" data-tab="friends">
+                        My Friends
+                    </button>
+                    <button class="friends-tab-btn" onclick="showFriendsTab('pending')" data-tab="pending">
+                        Friend Requests
+                        <span class="badge" id="pending-badge" style="display: none;">0</span>
+                    </button>
+                    <button class="friends-tab-btn" onclick="showFriendsTab('sent')" data-tab="sent">
+                        Sent Requests
+                    </button>
+                </div>
+
+                <!-- Friends Tab Content -->
+                <div class="friends-tab-content">
+                    <!-- Friends List Tab -->
+                    <div id="friends-list-tab" class="friends-tab-pane active">
+                        <div class="friends-list" id="friends-list">
+                            <div class="loading" id="friends-loading">Loading friends...</div>
+                            <div class="empty-state" id="friends-empty" style="display: none;">
+                                <h3>No friends yet</h3>
+                                <p>Start by searching for people to add as friends!</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Pending Requests Tab -->
+                    <div id="pending-requests-tab" class="friends-tab-pane">
+                        <div class="requests-list" id="pending-requests">
+                            <div class="loading" id="pending-loading">Loading requests...</div>
+                            <div class="empty-state" id="pending-empty" style="display: none;">
+                                <h3>No pending requests</h3>
+                                <p>When someone sends you a friend request, it will appear here.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sent Requests Tab -->
+                    <div id="sent-requests-tab" class="friends-tab-pane">
+                        <div class="requests-list" id="sent-requests">
+                            <div class="loading" id="sent-loading">Loading sent requests...</div>
+                            <div class="empty-state" id="sent-empty" style="display: none;">
+                                <h3>No sent requests</h3>
+                                <p>Friend requests you send will appear here.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <div class="tab-content" id="notifications-tab">

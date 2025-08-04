@@ -300,20 +300,11 @@ async function loadProfile() {
     try {
         if (!currentUser) return;
         
-        // Load user profile data from API
-        const userProfile = await getUserProfile(currentUser.user_id);
+        // Load profile data which includes both user and profile information
+        const profileData = await getProfileByUserId(currentUser.user_id);
         
-        // Also try to load profile data (which includes profile picture)
-        let profileData = null;
-        try {
-            profileData = await getProfile(currentUser.user_id);
-        } catch (profileError) {
-            console.log('Profile data not found, will use user data only');
-        }
-        
-        if (userProfile) {
-            // Merge user profile with profile data
-            currentProfile = { ...userProfile, ...profileData };
+        if (profileData) {
+            currentProfile = profileData;
             updateProfileDisplay();
         } else {
             // Use basic user data if profile loading fails
@@ -546,31 +537,36 @@ async function saveProfileChanges(event) {
     }
     
     const formData = new FormData(event.target);
-    const profileData = {
-        first_name: formData.get('first_name') || 'N/A',
-        last_name: formData.get('last_name') || 'N/A',
-        phone_number: formData.get('phone_number') || 'N/A',
-        race: formData.get('race') || 'N/A',
+    
+    // Prepare user data (personal information) for the users table
+    const userData = {
+        first_name: formData.get('first_name') || '',
+        last_name: formData.get('last_name') || '',
+        phone_number: formData.get('phone_number') || '',
+        race: formData.get('race') || '',
         age: parseInt(formData.get('age')) || 0,
-        gender: formData.get('gender') || 'Prefer not to say',
-        date_of_birth: formData.get('date_of_birth') || '2000-01-01',
-        nationality: formData.get('nationality') || 'N/A'
+        gender: formData.get('gender') || '',
+        date_of_birth: formData.get('date_of_birth') || '',
+        nationality: formData.get('nationality') || ''
     };
     
-    console.log('Saving profile data:', profileData);
+    console.log('Saving user data:', userData);
     
     try {
-        const updatedUser = await updateUserProfile(currentUser.user_id, profileData);
+        // Update user personal information
+        const updatedUser = await updateUserProfile(currentUser.user_id, userData);
+        console.log('User profile updated:', updatedUser);
         
-        // Refresh the profile data from server
-        const refreshedProfile = await getUserProfile(currentUser.user_id);
+        // Refresh the profile data from server to get the latest information
+        const refreshedProfile = await getProfileByUserId(currentUser.user_id);
+        console.log('Refreshed profile:', refreshedProfile);
         
         // Update current profile data with the fresh data from server
         if (refreshedProfile) {
-            currentProfile = { ...currentProfile, ...refreshedProfile };
+            currentProfile = refreshedProfile;
         }
         
-        // Update the display
+        // Update the display with new data
         updateProfileDetails();
         
         // Close modal and show success message
@@ -578,7 +574,24 @@ async function saveProfileChanges(event) {
         showSuccess('Profile updated successfully!');
     } catch (error) {
         console.error('Error updating profile:', error);
-        showError('Failed to update profile. Please try again.');
+        showError('Failed to update profile: ' + error.message);
+    }
+}
+
+// Add a function to get profile data that combines user and profile information
+async function getProfileByUserId(userId) {
+    try {
+        // Get profile data which includes user information via JOIN
+        return await apiRequest(`/profiles/${userId}`);
+    } catch (error) {
+        console.error('Error fetching profile by user ID:', error);
+        // If profile doesn't exist, try to get user data only
+        try {
+            return await apiRequest(`/users/${userId}`);
+        } catch (userError) {
+            console.error('Error fetching user profile:', userError);
+            throw userError;
+        }
     }
 }
 

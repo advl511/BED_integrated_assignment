@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Friends - Community Hub</title>
+    <link rel="stylesheet" href="../styles/homestyles.css">
+    <link rel="stylesheet" href="../styles/friends.css">
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">Community Hub</div>
+            <div class="time-display">
+                <div id="current-time">10:30 AM</div>
+                <div class="date" id="current-date">Thursday, July 10, 2025</div>
+            </div>
+            <div class="user-section">
+                <span id="welcome-user">Welcome, User!</span>
+                <button class="logout-btn" onclick="logout()">Logout</button>
+            </div>
+        </div>
+    </header>
+
+    <nav class="nav">
+        <button class="mobile-nav-toggle" id="mobile-nav-toggle">
+            Navigation Menu
+        </button>
+        <div class="nav-content">
+            <a href="home.html" class="nav-item">Home</a>
+            <a href="#" class="nav-item">Nearby Events</a>
+            <a href="map.html" class="nav-item">Map</a>
+            <a href="Calendar.html" class="nav-item">Calendar</a>
+            <a href="#" class="nav-item">Notifications</a>
+            <a href="home.html" class="nav-item">Profile</a>
+            <a href="friends.html" class="nav-item active">Friends</a>
+            <a href="#" class="nav-item">Settings</a>
+        </div>
+        <div class="nav-dropdown" id="nav-dropdown">
+            <a href="home.html" class="nav-item">Home</a>
+            <a href="#" class="nav-item">Nearby Events</a>
+            <a href="map.html" class="nav-item">Map</a>
+            <a href="Calendar.html" class="nav-item">Calendar</a>
+            <a href="#" class="nav-item">Notifications</a>
+            <a href="home.html" class="nav-item">Profile</a>
+            <a href="friends.html" class="nav-item active">Friends</a>
+            <a href="#" class="nav-item">Settings</a>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        <div class="friends-container" id="friends-container">
+            <!-- Modern Friends Header -->
+            <div class="modern-header">
+                <div class="header-left">
+                    <div class="page-title">
+                        <i class="title-icon">👥</i>
+                        <h1>Friends</h1>
+                    </div>
+                    <div class="header-stats">
+                        <div class="stat-card">
+                            <span class="stat-number" id="friend-count">0</span>
+                            <span class="stat-label">Total Friends</span>
+                        </div>
+                        <div class="stat-card">
+                            <span class="stat-number" id="pending-count">0</span>
+                            <span class="stat-label">Pending</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="header-actions">
+                    <button class="modern-btn primary" onclick="showQuickAdd()">
+                        <i class="btn-icon">➕</i>
+                        Add Friends
+                    </button>
+                </div>
+            </div>
+
+            <!-- Quick Search Panel -->
+            <div class="quick-search-panel" id="quick-search-panel" style="display: none;">
+                <div class="search-header">
+                    <h3><i class="search-icon">🔍</i> Find New Friends</h3>
+                    <button class="close-search" onclick="hideQuickAdd()">✕</button>
+                </div>
+                <div class="search-input-group">
+                    <input type="text" id="search-input" placeholder="Search by username, email, or name..." class="modern-search-input">
+                    <button onclick="searchUsersPage()" class="search-action-btn">
+                        <i class="search-btn-icon">🔍</i>
+                        Search
+                    </button>
+                </div>
+                <div id="search-results" class="modern-search-results"></div>
+            </div>
+
+            <!-- Modern Tab Navigation -->
+            <div class="modern-tabs">
+                <div class="tab-nav-modern">
+                    <button class="modern-tab-btn active" onclick="showTab('friends')" data-tab="friends">
+                        <i class="tab-icon">👥</i>
+                        <span>My Friends</span>
+                        <span class="tab-badge" id="friends-badge">0</span>
+                    </button>
+                    <button class="modern-tab-btn" onclick="showTab('pending')" data-tab="pending">
+                        <i class="tab-icon">📨</i>
+                        <span>Requests</span>
+                        <span class="tab-badge notification" id="pending-badge" style="display: none;">0</span>
+                    </button>
+                    <button class="modern-tab-btn" onclick="showTab('sent')" data-tab="sent">
+                        <i class="tab-icon">📤</i>
+                        <span>Sent</span>
+                    </button>
+                </div>
+                
+                <!-- Tab Indicator -->
+                <div class="tab-indicator"></div>
+            </div>
+
+            <!-- Modern Tab Content -->
+            <div class="modern-tab-content">
+                <!-- Friends List Tab -->
+                <div id="friends-tab" class="modern-tab-pane active">
+                    <div class="content-header">
+                        <h2>Your Friends</h2>
+                        <div class="view-options">
+                            <button class="view-btn active" data-view="grid">
+                                <i class="view-icon">⊞</i>
+                            </button>
+                            <button class="view-btn" data-view="list">
+                                <i class="view-icon">☰</i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="modern-friends-list" id="friends-list">
+                        <div class="modern-loading" id="friends-loading">
+                            <div class="loading-spinner"></div>
+                            <span>Loading your friends...</span>
+                        </div>
+                        <div class="modern-empty-state" id="friends-empty" style="display: none;">
+                            <div class="empty-icon">👥</div>
+                            <h3>No friends yet</h3>
+                            <p>Start building your network by adding friends!</p>
+                            <button class="empty-action-btn" onclick="showQuickAdd()">
+                                <i class="btn-icon">➕</i>
+                                Find Friends
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pending Requests Tab -->
+                <div id="pending-tab" class="modern-tab-pane">
+                    <div class="content-header">
+                        <h2>Friend Requests</h2>
+                        <span class="header-subtitle">People who want to connect with you</span>
+                    </div>
+                    
+                    <div class="modern-requests-list" id="pending-requests">
+                        <div class="modern-loading" id="pending-loading">
+                            <div class="loading-spinner"></div>
+                            <span>Loading friend requests...</span>
+                        </div>
+                        <div class="modern-empty-state" id="pending-empty" style="display: none;">
+                            <div class="empty-icon">📨</div>
+                            <h3>No pending requests</h3>
+                            <p>When someone sends you a friend request, it will appear here.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sent Requests Tab -->
+                <div id="sent-tab" class="modern-tab-pane">
+                    <div class="content-header">
+                        <h2>Sent Requests</h2>
+                        <span class="header-subtitle">Friend requests you've sent</span>
+                    </div>
+                    
+                    <div class="modern-requests-list" id="sent-requests">
+                        <div class="modern-loading" id="sent-loading">
+                            <div class="loading-spinner"></div>
+                            <span>Loading sent requests...</span>
+                        </div>
+                        <div class="modern-empty-state" id="sent-empty" style="display: none;">
+                            <div class="empty-icon">📤</div>
+                            <h3>No sent requests</h3>
+                            <p>Friend requests you send will appear here.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal for user confirmation -->
+    <div id="confirmation-modal" class="modal">
+        <div class="modal-content">
+            <h3 id="modal-title">Confirm Action</h3>
+            <p id="modal-message">Are you sure you want to perform this action?</p>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+                <button class="btn btn-primary" id="confirm-btn" onclick="confirmAction()">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Friend Profile Modal -->
+    <div id="friendProfileModal" class="modal">
+        <div class="modal-content friend-profile-modal">
+            <div class="modal-header">
+                <h2>Friend Profile</h2>
+                <button class="close-btn" onclick="closeFriendProfileModal()">&times;</button>
+            </div>
+            
+            <div class="profile-header">
+                <div class="profile-pic-container">
+                    <div id="friendProfilePic" class="profile-pic">U</div>
+                    <div class="status-indicator">
+                        <div id="friendStatusDot" class="status-dot"></div>
+                        <span id="friendCurrentStatus">Available</span>
+                    </div>
+                </div>
+                <div class="profile-basic-info">
+                    <h3 id="friendUsername">Loading...</h3>
+                    <p class="profile-email" id="friendEmail">Loading...</p>
+                </div>
+            </div>
+
+            <div class="profile-details">
+                <div class="detail-section">
+                    <h4>Personal Information</h4>
+                    <div class="detail-grid">
+                        <div class="detail-item">
+                            <span class="detail-label">Full Name:</span>
+                            <span class="detail-value" id="friendFullName">Not set</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Email:</span>
+                            <span class="detail-value" id="friendEmail">Not set</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Phone:</span>
+                            <span class="detail-value" id="friendPhoneNumber">Not set</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Age:</span>
+                            <span class="detail-value" id="friendAge">Not set</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Gender:</span>
+                            <span class="detail-value" id="friendGender">Not set</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Birthday:</span>
+                            <span class="detail-value" id="friendBirthday">Not set</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Race:</span>
+                            <span class="detail-value" id="friendRace">Not set</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Nationality:</span>
+                            <span class="detail-value" id="friendNationality">Not set</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="profile-actions">
+                <button class="btn btn-primary" onclick="messageFriend()">
+                    <i class="icon">💬</i> Message
+                </button>
+                <button class="btn btn-danger" onclick="removeFriendFromModal()">
+                    <i class="icon">🗑️</i> Remove Friend
+                </button>
+                <button class="btn btn-secondary" onclick="closeFriendProfileModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success/Error Messages -->
+    <div id="message-container" class="message-container"></div>
+
+    <script>
+        console.log('Friends.html script loaded');
+        console.log('Document ready state:', document.readyState);
+        console.log('Current localStorage:');
+        console.log('- user_id:', localStorage.getItem('user_id'));
+        console.log('- username:', localStorage.getItem('username'));
+        console.log('- email:', localStorage.getItem('email'));
+    </script>
+    <script src="../backend/friends.js"></script>
+</body>
+</html>

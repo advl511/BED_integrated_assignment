@@ -384,7 +384,7 @@ async function updateUserProfile(req, res) {
     const userData = req.body;
     
     // Validate that the user can only update their own profile
-    if (req.user && req.user.user_id != userId) {
+    if (req.user && parseInt(req.user.user_id) !== parseInt(userId)) {
       return res.status(403).json({ error: 'You can only update your own profile' });
     }
     

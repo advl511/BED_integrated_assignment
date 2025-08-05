@@ -205,7 +205,7 @@ async function viewFriendProfile(friendId) {
 function openAddFriendModal() {
     const modal = document.getElementById('addFriendModal');
     if (modal) {
-        modal.style.display = 'block';
+        modal.style.display = 'flex';
         // Clear previous search results
         clearFriendSearch();
     }
@@ -555,7 +555,7 @@ let currentFriendId = null;
 function openFriendProfileModal() {
     const modal = document.getElementById('friendProfileModal');
     if (modal) {
-        modal.style.display = 'block';
+        modal.style.display = 'flex';
     }
 }
 
@@ -586,31 +586,19 @@ function populateFriendModal(friendProfile) {
         profilePic.style.backgroundImage = 'none';
     }
     
-    // Update profile details
+    // Update Personal Information
     document.getElementById('friendFullName').textContent = 
         (friendProfile.first_name && friendProfile.last_name) 
             ? `${friendProfile.first_name} ${friendProfile.last_name}` 
             : 'Not set';
-    
-    document.getElementById('friendEmail').textContent = friendProfile.email || 'Not set';
-    document.getElementById('friendPhoneNumber').textContent = friendProfile.phone_number || 'Not set';
     document.getElementById('friendAge').textContent = friendProfile.age || 'Not set';
-    document.getElementById('friendGender').textContent = friendProfile.gender || 'Not set';
-    document.getElementById('friendRace').textContent = friendProfile.race || 'Not set';
-    document.getElementById('friendNationality').textContent = friendProfile.nationality || 'Not set';
+    document.getElementById('friendPhoneNumber').textContent = friendProfile.phone_number || 'Not set';
+    document.getElementById('friendAddress').textContent = friendProfile.address || 'Not set';
     
-    // Format birthday if available - use date_of_birth first, then birthday
-    const birthdayField = friendProfile.date_of_birth || friendProfile.birthday;
-    if (birthdayField) {
-        const birthday = new Date(birthdayField);
-        if (!isNaN(birthday.getTime())) {
-            document.getElementById('friendBirthday').textContent = birthday.toLocaleDateString();
-        } else {
-            document.getElementById('friendBirthday').textContent = 'Not set';
-        }
-    } else {
-        document.getElementById('friendBirthday').textContent = 'Not set';
-    }
+    // Update Health Information
+    document.getElementById('friendEmergencyContact').textContent = friendProfile.emergency_contact || 'Not set';
+    document.getElementById('friendMedicalNotes').textContent = friendProfile.medical_notes || 'Not set';
+    document.getElementById('friendAllergies').textContent = friendProfile.allergies || 'Not set';
     
     // Update status indicator
     const statusDot = document.getElementById('friendStatusDot');
@@ -1251,7 +1239,7 @@ function showConfirmModalPage(title, message, onConfirm) {
     currentAction = onConfirm;
     
     if (modal) {
-        modal.style.display = 'block';
+        modal.style.display = 'flex';
     }
 }
 

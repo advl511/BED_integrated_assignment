@@ -3,12 +3,27 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const cookieParser = require('cookie-parser');
+const http = require('http');
+const socketIo = require('socket.io');
 require('dotenv').config(); // Load environment variables
 const app = express();
+const server = http.createServer(app);
+const io = socketIo(server, {
+    cors: {
+        origin: process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : '*',
+        methods: ['GET', 'POST'],
+        credentials: true
+    }
+});
+
+// Make io accessible to routes
+app.set('io', io);
+
 const userController = require('./Controller/userController');
 const profileController = require('./Controller/profileController');
 const statusController = require('./Controller/statusController');
 const friendsController = require('./Controller/friendsController');
+const chatController = require('./Controller/chatController');
 const { validateSignup, validateLogin } = require('./Middleware/userMiddleware');
 const { verifyToken } = userController;
 const sql = require('mssql');
@@ -81,8 +96,20 @@ app.use((req, res, next) => {
 app.use(express.json());
 app.use(cookieParser());
 
-// Serve static files from uploads directory
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+// Serve static files from the 'pages' directory
+app.use(express.static(path.join(__dirname, 'pages')));
+app.use('/styles', express.static(path.join(__dirname, 'styles')));
+app.use('/js', express.static(path.join(__dirname, 'js')));
+
+// Chat routes
+app.get('/chat', (req, res) => {
+    res.sendFile(path.join(__dirname, 'pages', 'chat.html'));
+});
+
+// API routes for chat
+app.post('/api/chat/send', verifyToken, chatController.sendMessage);
+app.get('/api/chat/messages', verifyToken, chatController.getMessages);
+app.get('/api/chat/messages/new', verifyToken, chatController.getNewMessages);
 
 // Serve static files from the backend directory (for JS files)
 app.use(express.static('./backend'));
@@ -263,8 +290,28 @@ async function startServer() {
     await sql.connect(config);
     console.log('Database connected successfully');
     
-    app.listen(port, () => {
-      console.log(`Server running on port ${port}`);
+    // WebSocket connection handling
+    io.on('connection', (socket) => {
+      console.log('New client connected');
+      
+      // Handle user joining a chat room
+      socket.on('join', (userId) => {
+        socket.join(userId);
+        console.log(`User ${userId} joined the chat`);
+      });
+      
+      // Handle typing indicator
+      socket.on('typing', (data) => {
+        socket.broadcast.emit('typing', data);
+      });
+      
+      socket.on('disconnect', () => {
+        console.log('Client disconnected');
+      });
+    });
+
+    server.listen(port, () => {
+      console.log(`Server is running on port ${port}`);
     });
   } catch (error) {
     console.error('Database connection failed:', error);

@@ -26,7 +26,8 @@ const friendsController = require('./Controller/friendsController');
 const mapController = require('./Controller/mapController');
 const settingsController = require('./Controller/settingsController');
 const AppointmentController = require('./Controller/AppointmentController');
-const matchmakingController = require('./Controller/matchmakingController');
+const matchmakingController = require('./Controller/MatchController.js');
+const matchController = require('./Controller/MatchController');
 const { validateSignup, validateLogin } = require('./Middleware/userMiddleware');
 const mapMiddleware = require('./Middleware/mapMiddleware');
 const AppointmentMiddleware = require('./Middleware/AppointmentMiddleware');
@@ -380,19 +381,25 @@ app.get('/api/feed/:userId', statusController.getFeed);
 // ===============================
 // MATCHMAKING ROUTES
 // ===============================
-app.post('/api/matchmaking/join', 
+
+app.get('/matchmaking/status', 
   authenticateToken,
-  matchmakingController.joinQueue
+  (req, res, next) => {
+    console.log('Headers:', req.headers);
+    console.log('Body:', req.body);
+    next();
+  },
+  matchController.getQueueStatus
 );
 
-app.post('/api/matchmaking/leave', 
+app.post('/matchmaking/toggle', 
   authenticateToken,
-  matchmakingController.leaveQueue
-);
-
-app.get('/api/matchmaking/status', 
-  authenticateToken,
-  matchmakingController.getStatus
+  (req, res, next) => {
+    console.log('Headers:', req.headers);
+    console.log('Body:', req.body);
+    next();
+  },
+  matchController.toggleQueue
 );
 
 // ===============================

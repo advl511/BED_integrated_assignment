@@ -251,6 +251,7 @@ async function loadAppointments(date) {
     try {
         const response = await fetch(`${API_BASE_URL}/appointments?date=${date}`);
         const appointments = await response.json();
+        console.log('Appointments loaded:', appointments);
         return appointments;
     } catch (error) {
         console.error('Error loading appointments:', error);
@@ -266,4 +267,53 @@ function getSelectedDate() {
     }
     // Fallback to today's date
     return new Date().toISOString().split('T')[0];
+}
+
+async function displayAppointmentsOnCalendar(date) {
+    // Show loading state
+    let appointmentsList = document.getElementById('appointmentsList');
+    if (!appointmentsList) {
+        appointmentsList = document.createElement('div');
+        appointmentsList.id = 'appointmentsList';
+        appointmentsList.style.marginTop = '20px';
+    }
+
+    appointmentsList.innerHTML = `<div>Loading appointments for ${date}...</div>`;
+
+    // Fetch appointments
+    const appointments = await loadAppointments(date);
+
+    // Display appointments
+    if (!appointments || appointments.length === 0) {
+        appointmentsList.innerHTML = `<div>No appointments for ${date}.</div>`;
+    } else {
+        // Build HTML for appointments
+        const html = `
+            <h3>Appointments for ${date}</h3>
+            <ul style="list-style: none; padding: 0;">
+                ${appointments.map(app => `
+                    <li style="margin-bottom: 10px; border-bottom: 1px solid #eee; padding-bottom: 8px;">
+                        <strong>Time:</strong> ${app.AppointmentTime || app.appointmentTime}<br>
+                        <strong>Polyclinic:</strong> ${app.PolyclinicName || app.polyclinicName || ''}<br>
+                        <strong>Doctor:</strong> ${app.DoctorName || app.doctorName || ''}<br>
+                        <strong>Reason:</strong> ${app.Reason || app.reason}
+                    </li>
+                `).join('')}
+            </ul>
+        `;
+        appointmentsList.innerHTML = html;
+    }
+
+    // Always append inside the calendar grid/container
+    const calendarGrid = document.getElementById('calendarGrid');
+    if (calendarGrid) {
+        // Remove any existing appointmentsList from DOM before appending
+        if (appointmentsList.parentNode && appointmentsList.parentNode !== calendarGrid) {
+            appointmentsList.parentNode.removeChild(appointmentsList);
+        }
+        calendarGrid.appendChild(appointmentsList);
+    } else {
+        // fallback
+        document.body.appendChild(appointmentsList);
+    }
 }

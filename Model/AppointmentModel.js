@@ -34,8 +34,6 @@ class AppointmentModel {
         } catch (error) {
             console.error('Error fetching appointments by date:', error);
             throw error;
-        } finally {
-            sql.close();
         }
     }
 
@@ -96,8 +94,6 @@ class AppointmentModel {
         } catch (error) {
             console.error('Error fetching user appointments:', error);
             throw error;
-        } finally {
-            sql.close();
         }
     }
 
@@ -109,7 +105,31 @@ class AppointmentModel {
             const pool = await sql.connect(dbConfig);
             await transaction.begin();
             
-            const { polyclinicId, appointmentDate, appointmentTime, reason, userId = 1 } = appointmentData;
+            let { polyclinicId, appointmentDate, appointmentTime, reason, userId = 1 } = appointmentData;
+
+            // Always convert to string and pad to HH:mm:ss
+            if (typeof appointmentTime === 'string') {
+                // If format is HH:mm, convert to HH:mm:ss
+                if (/^\d{2}:\d{2}$/.test(appointmentTime)) {
+                    appointmentTime = `${appointmentTime}:00`;
+                }
+                // If format is H:mm, pad to HH:mm:ss
+                else if (/^\d{1}:\d{2}$/.test(appointmentTime)) {
+                    appointmentTime = `0${appointmentTime}:00`;
+                }
+                // If format is already HH:mm:ss, do nothing
+                else if (!/^\d{2}:\d{2}:\d{2}$/.test(appointmentTime)) {
+                    throw new Error('Invalid appointment time format');
+                }
+            } else {
+                throw new Error('Appointment time must be a string');
+            }
+            
+            console.log('Final appointmentTime for SQL:', appointmentTime, typeof appointmentTime);
+            
+            // Now convert to a Date object at today's date with the correct time
+            const [h, m, s] = appointmentTime.split(':');
+            appointmentTime = new Date(1970, 0, 1, h, m, s || 0);
             
             // Get available doctors for the polyclinic
             const doctorsResult = await transaction.request()
@@ -217,8 +237,6 @@ class AppointmentModel {
             await transaction.rollback();
             console.error('Error creating appointment:', error);
             throw error;
-        } finally {
-            sql.close();
         }
     }
 
@@ -283,8 +301,6 @@ class AppointmentModel {
         } catch (error) {
             console.error('Error updating appointment:', error);
             throw error;
-        } finally {
-            sql.close();
         }
     }
 
@@ -306,8 +322,6 @@ class AppointmentModel {
         } catch (error) {
             console.error('Error deleting appointment:', error);
             throw error;
-        } finally {
-            sql.close();
         }
     }
 
@@ -347,8 +361,6 @@ class AppointmentModel {
         } catch (error) {
             console.error('Error fetching appointment by ID:', error);
             throw error;
-        } finally {
-            sql.close();
         }
     }
 
@@ -386,8 +398,6 @@ class AppointmentModel {
         } catch (error) {
             console.error('Error fetching doctors:', error);
             throw error;
-        } finally {
-            sql.close();
         }
     }
 
@@ -430,8 +440,6 @@ class AppointmentModel {
         } catch (error) {
             console.error('Error fetching available time slots:', error);
             throw error;
-        } finally {
-            sql.close();
         }
     }
 
@@ -466,8 +474,6 @@ class AppointmentModel {
         } catch (error) {
             console.error('Error fetching polyclinics:', error);
             throw error;
-        } finally {
-            sql.close();
         }
     }
 }

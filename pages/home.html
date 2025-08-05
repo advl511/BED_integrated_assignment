@@ -30,11 +30,12 @@
             <a href="#" class="nav-item" data-tab="events">Nearby Events</a>
             <a href="map.html" class="nav-item" data-tab="map">Map</a>
             <a href="/matchmaking" class="nav-item" data-tab="matchmaking">Matchmaking</a>
-            <a href="#" class="nav-item" data-tab="calendar">Calendar</a>
+            <a href="calendar.html" class="nav-item">Calendar</a>
             <a href="#" class="nav-item" data-tab="notifications">Notifications</a>
             <a href="#" class="nav-item" data-tab="profile">Profile</a>
             <a href="friends.html" class="nav-item">Friends</a>
-            <a href="#" class="nav-item" data-tab="settings">Settings</a>
+            <a href="settings.html" class="nav-item" data-tab="settings">Settings</a>
+            <a href="tts.html" class="nav-item">Text-To-Speech</a>
         </div>
         <div class="nav-dropdown" id="nav-dropdown">
             <a href="#" class="nav-item active" data-tab="home">Home</a>
@@ -42,11 +43,12 @@
             <a href="#" class="nav-item" data-tab="events">Nearby Events</a>
             <a href="map.html" class="nav-item" data-tab="map">Map</a>
             <a href="/matchmaking" class="nav-item" data-tab="matchmaking">Matchmaking</a>
-            <a href="#" class="nav-item" data-tab="calendar">Calendar</a>
+            <a href="calendar.html" class="nav-item">Calendar</a>
             <a href="#" class="nav-item" data-tab="notifications">Notifications</a>
             <a href="#" class="nav-item" data-tab="profile">Profile</a>
             <a href="friends.html" class="nav-item">Friends</a>
-            <a href="#" class="nav-item" data-tab="settings">Settings</a>
+            <a href="settings.html" class="nav-item" data-tab="settings">Settings</a>
+            <a href="tts.html" class="nav-item">Text-To-Speech</a>
         </div>
     </nav>
 
@@ -135,36 +137,6 @@
                         <button class="edit-btn" onclick="editField('address')">Edit</button>
                     </div>
                 </div>
-
-                <div class="profile-section">
-                    <h3>⚙️ Preferences</h3>
-                    <div class="profile-field">
-                        <span class="profile-label">Font Size:</span>
-                        <select class="profile-input" id="font-size" onchange="updateSetting('fontSize', this.value)">
-                            <option value="small">Small (14px)</option>
-                            <option value="medium" selected>Medium (16px)</option>
-                            <option value="large">Large (18px)</option>
-                            <option value="extra-large">Extra Large (22px)</option>
-                        </select>
-                    </div>
-                    <div class="profile-field">
-                        <span class="profile-label">Notifications:</span>
-                        <select class="profile-input" id="notifications" onchange="updateSetting('notifications', this.value)">
-                            <option value="all" selected>All Notifications</option>
-                            <option value="important">Important Only</option>
-                            <option value="none">None</option>
-                        </select>
-                    </div>
-                    <div class="profile-field">
-                        <span class="profile-label">Language:</span>
-                        <select class="profile-input" id="language" onchange="updateSetting('language', this.value)">
-                            <option value="en" selected>English</option>
-                            <option value="ms">Bahasa Malaysia</option>
-                            <option value="zh">中文</option>
-                            <option value="ta">தமிழ்</option>
-                        </select>
-                    </div>
-                </div>
             </div>
 
             <div class="profile-section">
@@ -201,13 +173,6 @@
             <section class="welcome-section">
                 <h1 class="welcome-title">Community Map</h1>
                 <p class="welcome-message">Navigate your neighborhood with our interactive map.</p>
-            </section>
-        </div>
-
-        <div class="tab-content" id="calendar-tab">
-            <section class="welcome-section">
-                <h1 class="welcome-title">Calendar</h1>
-                <p class="welcome-message">Keep track of your appointments and events.</p>
             </section>
         </div>
 

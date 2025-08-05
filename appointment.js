@@ -166,10 +166,10 @@ async function handleFormSubmit(e) {
     
     // Prepare appointment data
     const appointmentData = {
-        polyclinicId: parseInt(polyclinicId),
-        appointmentDate: selectedDate,
-        appointmentTime: appointmentTime,
-        reason: reason.trim()
+    polyclinicId: parseInt(polyclinicId), 
+    appointmentDate: selectedDate,
+    appointmentTime: appointmentTime,
+    reason: reason.trim()
     };
     
     // Submit appointment
@@ -186,12 +186,10 @@ async function saveAppointmentToDatabase(appointmentData) {
         submitBtn.disabled = true;
         
         const response = await fetch(`${API_BASE_URL}/appointments/book`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(appointmentData)
-        });
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(appointmentData)
+});
         
         const result = await response.json();
         

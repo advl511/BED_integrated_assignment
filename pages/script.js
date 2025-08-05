@@ -25,9 +25,6 @@ function initializePage() {
     if (userId && username) {
         console.log('User is logged in:', username);
         updateLoginSection(username);
-        
-        // Load saved settings
-        loadSavedSettings();
     } else {
         console.log('User is not logged in');
     }
@@ -66,7 +63,7 @@ function setupNavigation() {
             const tabName = this.getAttribute('data-tab');
             
             // Special handling for external pages - navigate directly
-            if (tabName === 'map' || tabName === 'matchmaking' || href === 'friends.html' || href === 'Calendar.html' || href.includes('.html')) {
+            if (tabName === 'map' || tabName === 'matchmaking' || href === 'friends.html' || href === 'Calendar.html' || href === 'tts.html' || href === 'settings.html' || href.includes('.html')) {
                 return; // Let the default link behavior happen
             }
 
@@ -265,9 +262,6 @@ async function loadUserData(userId) {
         // Update profile display with combined data
         updateProfileDisplay(userData, profileData);
         
-        // Load saved settings from profile
-        loadProfileSettings(profileData);
-        
     } catch (error) {
         console.error('Error loading user data:', error);
         showStatusMessage('Failed to load profile data', 'error');
@@ -275,25 +269,22 @@ async function loadUserData(userId) {
 }
 
 function updateProfileDisplay(userData, profileData = {}) {
-    // Update profile header
-    document.getElementById('profile-name').textContent = 
-        `${userData.first_name || ''} ${userData.last_name || ''}`.trim() || userData.username;
+    // Update profile header - use profile data first, then fall back to user data
+    const displayName = profileData.myname || userData.first_name || userData.username;
+    document.getElementById('profile-name').textContent = displayName;
     
     // Update profile avatar with first letter of name
     const avatar = document.getElementById('profile-avatar');
-    if (userData.first_name) {
-        avatar.textContent = userData.first_name.charAt(0).toUpperCase();
-    } else if (userData.username) {
-        avatar.textContent = userData.username.charAt(0).toUpperCase();
+    if (displayName) {
+        avatar.textContent = displayName.charAt(0).toUpperCase();
     }
     
-    // Update profile fields with both user and profile data
-    document.getElementById('display-name').textContent = 
-        `${userData.first_name || ''} ${userData.last_name || ''}`.trim() || 'Not set';
-    document.getElementById('display-age').textContent = userData.age || 'Not set';
-    document.getElementById('display-phone').textContent = userData.phone_number || 'Not set';
+    // Update profile fields - now using profile data for name, age, phone
+    document.getElementById('display-name').textContent = profileData.myname || 'Not set';
+    document.getElementById('display-age').textContent = profileData.agee || 'Not set';
+    document.getElementById('display-phone').textContent = profileData.phones || 'Not set';
     
-    // Update fields from profiles table
+    // Update other fields from profiles table
     document.getElementById('display-address').textContent = profileData.address || 'Not set';
     document.getElementById('display-emergency').textContent = profileData.emergency_contact || 'Not set';
     document.getElementById('display-medical').textContent = profileData.medical_notes || 'Not set';  
@@ -375,6 +366,15 @@ async function updateUserField(fieldName, value) {
         return;
     }
     
+    // Validate input value
+    if (value === null || value === undefined) {
+        showStatusMessage('Invalid value provided', 'error');
+        return;
+    }
+    
+    // Convert value to string and trim it
+    value = String(value).trim();
+    
     try {
         let updateData = {};
         let endpoint = '';
@@ -382,21 +382,29 @@ async function updateUserField(fieldName, value) {
         // Determine which endpoint and data structure to use
         switch(fieldName) {
             case 'name':
-                // Update users table
-                const nameParts = value.trim().split(' ');
-                updateData.first_name = nameParts[0] || '';
-                updateData.last_name = nameParts.slice(1).join(' ') || '';
-                endpoint = `http://localhost:3000/api/users/${userId}`;
+                // Update profiles table (changed from users to profiles)
+                if (!value) {
+                    showStatusMessage('Name cannot be empty', 'error');
+                    return;
+                }
+                // Store as first_name in the request, which maps to myname in the database
+                updateData.first_name = value;
+                endpoint = `http://localhost:3000/api/profiles/${userId}`;
                 break;
             case 'age':
-                // Update users table
-                updateData.age = parseInt(value);
-                endpoint = `http://localhost:3000/api/users/${userId}`;
+                // Update profiles table (changed from users to profiles)
+                const ageNum = parseInt(value);
+                if (value && (isNaN(ageNum) || ageNum < 0 || ageNum > 150)) {
+                    showStatusMessage('Please enter a valid age (0-150)', 'error');
+                    return;
+                }
+                updateData.age = value ? ageNum : null;
+                endpoint = `http://localhost:3000/api/profiles/${userId}`;
                 break;
             case 'phone':
-                // Update users table
-                updateData.phone_number = value;
-                endpoint = `http://localhost:3000/api/users/${userId}`;
+                // Update profiles table (changed from users to profiles)
+                updateData.phone_number = value || null;
+                endpoint = `http://localhost:3000/api/profiles/${userId}`;
                 break;
             case 'address':
                 // Update profiles table
@@ -423,6 +431,8 @@ async function updateUserField(fieldName, value) {
                 return;
         }
         
+        console.log('Sending update request:', { endpoint, updateData });
+        
         const response = await fetch(endpoint, {
             method: 'PUT',
             headers: {
@@ -432,9 +442,20 @@ async function updateUserField(fieldName, value) {
             body: JSON.stringify(updateData)
         });
         
+        console.log('Response status:', response.status);
+        
         if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.message || 'Failed to update data');
+            const errorText = await response.text();
+            console.error('Error response:', errorText);
+            
+            let errorData;
+            try {
+                errorData = JSON.parse(errorText);
+            } catch (e) {
+                errorData = { message: errorText || `HTTP ${response.status}` };
+            }
+            
+            throw new Error(errorData.error || errorData.message || `HTTP ${response.status}`);
         }
         
         const updatedData = await response.json();
@@ -445,97 +466,10 @@ async function updateUserField(fieldName, value) {
         showStatusMessage('Profile updated successfully!', 'success');
         
     } catch (error) {
-        console.error('Error updating user field:', error);
+        console.error('💥 Error updating user field:', error);
+        console.error('💥 Field:', fieldName, 'Value:', value);
         showStatusMessage(`Failed to update ${fieldName}: ${error.message}`, 'error');
     }
-}
-
-// Function to update settings (like font size, notifications, language)
-async function updateSetting(settingName, value) {
-    console.log(`Updating setting ${settingName} to ${value}`);
-    
-    const userId = localStorage.getItem('user_id');
-    const token = localStorage.getItem('auth_token');
-    
-    if (!userId || !token) {
-        showStatusMessage('Authentication required', 'error');
-        return;
-    }
-    
-    try {
-        // Apply the setting immediately
-        switch(settingName) {
-            case 'fontSize':
-                updateFontSize(value);
-                break;
-            case 'notifications':
-                // Just for immediate feedback
-                break;
-            case 'language':
-                // Just for immediate feedback
-                break;
-        }
-        
-        // Save to database (profiles table)
-        let updateData = {};
-        switch(settingName) {
-            case 'fontSize':
-                updateData.font_size = value;
-                break;
-            case 'notifications':
-                updateData.notifications = value;
-                break;
-            case 'language':
-                updateData.preferred_language = value;
-                break;
-            default:
-                showStatusMessage('Unknown setting', 'error');
-                return;
-        }
-        
-        const response = await fetch(`http://localhost:3000/api/profiles/${userId}`, {
-            method: 'PUT',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(updateData)
-        });
-        
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.message || 'Failed to update setting');
-        }
-        
-        // Also save to localStorage for quick access
-        localStorage.setItem(`setting_${settingName}`, value);
-        showStatusMessage(`${settingName} updated successfully!`, 'success');
-        
-    } catch (error) {
-        console.error('Error updating setting:', error);
-        showStatusMessage(`Failed to update ${settingName}: ${error.message}`, 'error');
-    }
-}
-
-function updateFontSize(size) {
-    const multiplier = {
-        'small': 0.8,
-        'medium': 1.0,
-        'large': 1.2,
-        'extra-large': 1.4
-    }[size] || 1.0;
-    
-    document.documentElement.style.setProperty('--font-size-multiplier', multiplier);
-}
-
-function updateNotificationPreference(preference) {
-    // This would typically update user preferences in the database
-    console.log('Notification preference updated to:', preference);
-}
-
-function updateLanguagePreference(language) {
-    // This would typically update the UI language
-    console.log('Language preference updated to:', language);
 }
 
 // Function to show status messages
@@ -553,49 +487,6 @@ function showStatusMessage(message, type = 'info') {
     }, 3000);
 }
 
-// Load saved settings on page load
-function loadSavedSettings() {
-    const fontSize = localStorage.getItem('setting_fontSize') || 'medium';
-    const notifications = localStorage.getItem('setting_notifications') || 'all';
-    const language = localStorage.getItem('setting_language') || 'en';
-    
-    // Update UI elements
-    const fontSizeSelect = document.getElementById('font-size');
-    const notificationsSelect = document.getElementById('notifications');
-    const languageSelect = document.getElementById('language');
-    
-    if (fontSizeSelect) {
-        fontSizeSelect.value = fontSize;
-        updateFontSize(fontSize);
-    }
-    if (notificationsSelect) notificationsSelect.value = notifications;
-    if (languageSelect) languageSelect.value = language;
-}
-
-// Load profile settings from database
-function loadProfileSettings(profileData) {
-    if (!profileData) return;
-    
-    // Update UI elements with database values
-    const fontSizeSelect = document.getElementById('font-size');
-    const notificationsSelect = document.getElementById('notifications');
-    const languageSelect = document.getElementById('language');
-    
-    if (fontSizeSelect && profileData.font_size) {
-        fontSizeSelect.value = profileData.font_size;
-        updateFontSize(profileData.font_size);
-        localStorage.setItem('setting_fontSize', profileData.font_size);
-    }
-    if (notificationsSelect && profileData.notifications) {
-        notificationsSelect.value = profileData.notifications;
-        localStorage.setItem('setting_notifications', profileData.notifications);
-    }
-    if (languageSelect && profileData.preferred_language) {
-        languageSelect.value = profileData.preferred_language;
-        localStorage.setItem('setting_language', profileData.preferred_language);
-    }
-}
-
 // Create default profile for new users
 async function createDefaultProfile(userId) {
     const token = localStorage.getItem('auth_token');
@@ -611,10 +502,7 @@ async function createDefaultProfile(userId) {
             address: '',
             emergency_contact: '',
             medical_notes: '',
-            allergies: '',
-            font_size: 'medium',
-            notifications: 'all',
-            preferred_language: 'en'
+            allergies: ''
         };
         
         const response = await fetch(`http://localhost:3000/api/profiles/${userId}`, {

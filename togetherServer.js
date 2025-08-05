@@ -275,7 +275,10 @@ app.get('/api/matchmaking/history/:userId', (req, res) => getMatchHistory(req, r
 // USER AUTHENTICATION ROUTES
 // ===============================
 
-
+app.post("/auth/register", validateSignup, userController.registerUser);
+app.post("/auth/login", validateLogin, userController.loginUser);
+app.post("/auth/logout", userController.verifyToken, userController.logoutUser);
+app.post("/auth/logout-all", userController.verifyToken, userController.logoutAllSessions);
 app.post("/auth/refresh", userController.verifyToken, userController.refreshToken);
 app.get("/auth/check-email/:email", userController.checkEmailExists);
 app.get("/auth/check-username/:username", userController.checkUsernameExists);

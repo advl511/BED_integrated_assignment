@@ -3,16 +3,16 @@ const express = require("express");
 const sql = require("mssql");
 const Joi = require("joi");
 const path = require("path");
-const dbConfig = require("./dbconfig.js");
+const dbConfig = require("./dbConfig.js");
 
 // Import the appointment components with correct paths
 const AppointmentController = require("./Controller/AppointmentController");
 const AppointmentMiddleware = require("./Middleware/AppointmentMiddleware");
 
 const app = express();
+app.use(express.json());
 const port = process.env.PORT || 3000;
 
-app.use(express.json());
 app.use(express.static(path.join(__dirname, "../Public")));
 
 // --- SETTINGS CRUD ---
@@ -149,6 +149,7 @@ app.delete('/api/appointments/:id', async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 });
+
 
 // Add error handling middleware for appointment routes
 app.use('/api/appointments', AppointmentMiddleware.handleErrors);

@@ -1,19 +1,34 @@
-require("dotenv").config(); // ✅ Required at the top
+// db.js
+const sql = require('mssql');
+const config = require('./dbConfig');
 
-const sql = require("mssql");
+let pool;
 
-const config = {
-  user: process.env.DB_USER,
-  password: process.env.DB_PASS,
-  server: process.env.DB_SERVER,
-  database: process.env.DB_NAME,
-  options: {
-    encrypt: true,
-    trustServerCertificate: true // ✅ Needed for local dev
+const connectDB = async () => {
+  try {
+    if (!pool) {
+      pool = await sql.connect(config);
+      console.log("✅ Connected to SQL Server");
+    }
+    return pool;
+  } catch (err) {
+    console.error("❌ DB connection error:", err.message);
+    throw err;
   }
 };
 
-module.exports = {
-  sql,
-  config
-};
+// Handle process termination
+process.on('SIGINT', async () => {
+  try {
+    if (pool) {
+      await pool.close();
+      console.log('Database connection closed.');
+    }
+    process.exit(0);
+  } catch (err) {
+    console.error('Error closing database connection:', err);
+    process.exit(1);
+  }
+});
+
+module.exports = { sql, connectDB, getPool: () => pool };

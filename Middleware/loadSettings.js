@@ -2,9 +2,8 @@ const { sql, config } = require("../db");
 
 async function loadSettings(req, res, next) {
   try {
-    const userId = req.user?.id || 1; // Change this if you're using JWT auth
+    const userId = req.user?.id || 1; 
     const pool = await sql.connect(config);
-
     const result = await pool
       .request()
       .input("userId", sql.Int, userId)
@@ -14,8 +13,8 @@ async function loadSettings(req, res, next) {
     next();
   } catch (err) {
     console.error("Failed to load settings:", err.message);
-    req.settings = {}; // fallback to empty
-    next(); // still proceed
+    req.settings = {};
+    next(); // proceed even on failure
   }
 }
 

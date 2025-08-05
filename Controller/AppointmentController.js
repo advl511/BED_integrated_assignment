@@ -85,25 +85,9 @@ class AppointmentController {
             
         } catch (error) {
             console.error('Error in createAppointment:', error);
-            
-            if (error.message.includes('time slot is no longer available')) {
-                return res.status(409).json({
-                    success: false,
-                    message: error.message
-                });
-            }
-            
-            if (error.message.includes('No available doctors')) {
-                return res.status(404).json({
-                    success: false,
-                    message: error.message
-                });
-            }
-            
             res.status(500).json({
                 success: false,
-                message: 'Failed to book appointment. Please try again.',
-                error: error.message
+                message: 'Failed to book appointment. Please try again.'
             });
         }
     }

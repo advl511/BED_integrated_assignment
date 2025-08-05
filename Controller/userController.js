@@ -67,7 +67,16 @@ function verifyToken(req, res, next) {
 // Helper function to determine if request is from Live Server
 function isLiveServerOrigin(req) {
   const origin = req.headers.origin;
-  return origin && (origin.includes('127.0.0.1:5500') || origin.includes('localhost:5500'));
+  return origin && (
+    origin.includes('127.0.0.1:5500') || 
+    origin.includes('localhost:5500') ||
+    origin.includes('127.0.0.1:5501') || 
+    origin.includes('localhost:5501') ||
+    origin.includes('127.0.0.1:5502') || 
+    origin.includes('localhost:5502') ||
+    origin.includes('127.0.0.1:5503') || 
+    origin.includes('localhost:5503')
+  );
 }
 
 async function registerUser(req, res) {
@@ -375,7 +384,7 @@ async function updateUserProfile(req, res) {
     const userData = req.body;
     
     // Validate that the user can only update their own profile
-    if (req.user && req.user.user_id != userId) {
+    if (req.user && parseInt(req.user.user_id) !== parseInt(userId)) {
       return res.status(403).json({ error: 'You can only update your own profile' });
     }
     
@@ -385,34 +394,50 @@ async function updateUserProfile(req, res) {
       return res.status(404).json({ error: 'User not found' });
     }
     
-    // Filter out sensitive fields that shouldn't be updated via this endpoint
-    const allowedFields = [
-      'first_name', 'last_name', 'phone_number', 'race', 
-      'age', 'gender', 'date_of_birth', 'nationality'
-    ];
+    // Separate fields for users table vs profiles table
+    const userFields = ['race', 'gender', 'date_of_birth', 'nationality'];
+    const profileFields = ['first_name', 'age', 'phone_number'];
     
-    const filteredData = {};
-    allowedFields.forEach(field => {
-      if (userData[field] !== undefined) {
-        filteredData[field] = userData[field];
+    const userUpdateData = {};
+    const profileUpdateData = {};
+    
+    // Route fields to appropriate tables
+    Object.keys(userData).forEach(field => {
+      if (userFields.includes(field)) {
+        userUpdateData[field] = userData[field];
+      } else if (profileFields.includes(field)) {
+        profileUpdateData[field] = userData[field];
       }
     });
     
-    // Validate that at least one field is being updated
-    if (Object.keys(filteredData).length === 0) {
-      return res.status(400).json({ error: 'No valid fields to update' });
+    console.log('User table updates:', userUpdateData);
+    console.log('Profile table updates:', profileUpdateData);
+    
+    let updatedUser = null;
+    let updatedProfile = null;
+    
+    // Update users table if needed (without OUTPUT clause to avoid trigger issues)
+    if (Object.keys(userUpdateData).length > 0) {
+      updatedUser = await userModel.updateUserWithoutOutput(userId, userUpdateData);
     }
     
-    console.log('Updating user profile with data:', filteredData);
+    // Update profiles table if needed
+    if (Object.keys(profileUpdateData).length > 0) {
+      const profileModel = require('../Model/profileModel');
+      updatedProfile = await profileModel.updateProfile(userId, profileUpdateData);
+    }
     
-    // Update user
-    const updatedUser = await userModel.updateUser(userId, filteredData);
+    // Get the updated user data
+    const finalUser = await userModel.getUserById(userId);
+    const { password_hash, salt, ...userProfile } = finalUser;
     
-    // Remove sensitive information
-    const { password_hash, salt, ...userProfile } = updatedUser;
     res.status(200).json(userProfile);
   } catch (err) {
-    console.error('Update user profile error:', err);
+    console.error('💥 Update user profile error:', err);
+    console.error('💥 Error message:', err.message);
+    console.error('💥 Error stack:', err.stack);
+    console.error('💥 User ID:', req.params.userId);
+    console.error('💥 Request body:', req.body);
     res.status(500).json({ error: err.message });
   }
 }

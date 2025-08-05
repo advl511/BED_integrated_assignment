@@ -27,7 +27,6 @@ const mapController = require('./Controller/mapController');
 const settingsController = require('./Controller/settingsController');
 const AppointmentController = require('./Controller/AppointmentController');
 const matchmakingController = require('./Controller/matchmakingController');
-
 const { validateSignup, validateLogin } = require('./Middleware/userMiddleware');
 const mapMiddleware = require('./Middleware/mapMiddleware');
 const AppointmentMiddleware = require('./Middleware/AppointmentMiddleware');
@@ -136,7 +135,7 @@ app.use('/styles', express.static(path.join(__dirname, 'styles')));
 app.use('/backend', express.static(path.join(__dirname, 'backend')));
 app.use('/languages', express.static(path.join(__dirname, 'languages')));
 app.use('/public', express.static(path.join(__dirname, 'Public')));
-
+app.use('/js', express.static(path.join(__dirname, 'js')));
 // Also serve at root for direct access
 app.use(express.static(path.join(__dirname)));
 app.use(express.static('./pages'));
@@ -607,6 +606,11 @@ app.use((error, req, res, next) => {
 // Add error handling middleware for specific routes
 app.use('/api/appointments', AppointmentMiddleware.handleErrors);
 app.use('/api/polyclinics', AppointmentMiddleware.handleErrors);
+
+// Catch-all route for SPA - serve index.html for any route that doesn't match previous routes
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'Public', 'index.html'));
+});
 
 // Catch-all route for debugging 404s
 app.use('*', (req, res) => {

@@ -28,7 +28,8 @@ class AppointmentMiddleware {
 
     // Middleware to validate appointment data
     static validateAppointmentData(req, res, next) {
-        const { appointmentDate, appointmentTime, reason } = req.body;
+        console.log('validateAppointmentData req.body:', req.body);
+        const {appointmentDate, appointmentTime, reason } = req.body;
         const errors = [];
 
         // Validate appointment date

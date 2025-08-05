@@ -1,5 +1,5 @@
 const sql = require('mssql');
-const dbConfig = require('../dbconfig');
+const dbConfig = require('../dbConfig');
 
 class AppointmentModel {
     

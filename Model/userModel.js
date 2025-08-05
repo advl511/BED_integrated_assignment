@@ -166,12 +166,14 @@ async function getUserById(userId) {
 }
 
 async function updateUser(userId, userData) {
+  let query = '';
+  let values = { userId };
+  
   try {
     await sql.connect(config);
     
     // Build dynamic SET clause for only provided fields
     const setFields = [];
-    const values = { userId };
     
     if (userData.username !== undefined) {
       setFields.push('username = @username');
@@ -183,23 +185,23 @@ async function updateUser(userId, userData) {
     }
     if (userData.first_name !== undefined) {
       setFields.push('first_name = @firstName');
-      values.firstName = userData.first_name;
+      values.firstName = userData.first_name === '' ? null : userData.first_name;
     }
     if (userData.last_name !== undefined) {
       setFields.push('last_name = @lastName');
-      values.lastName = userData.last_name;
+      values.lastName = userData.last_name === '' ? null : userData.last_name;
     }
     if (userData.phone_number !== undefined) {
       setFields.push('phone_number = @phoneNumber');
-      values.phoneNumber = userData.phone_number;
+      values.phoneNumber = userData.phone_number === '' ? null : userData.phone_number;
     }
     if (userData.race !== undefined) {
       setFields.push('race = @race');
-      values.race = userData.race;
+      values.race = userData.race === '' ? null : userData.race;
     }
     if (userData.age !== undefined) {
       setFields.push('age = @age');
-      values.age = userData.age;
+      values.age = userData.age === '' ? null : (userData.age ? parseInt(userData.age) : null);
     }
     if (userData.gender !== undefined) {
       setFields.push('gender = @gender');
@@ -218,7 +220,7 @@ async function updateUser(userId, userData) {
       throw new Error('No fields to update');
     }
     
-    const query = `
+    query = `
       UPDATE users 
       SET ${setFields.join(', ')}
       OUTPUT INSERTED.*
@@ -226,13 +228,91 @@ async function updateUser(userId, userData) {
     `;
     
     const request = new sql.Request();
+    request.input('userId', sql.Int, userId);
     Object.keys(values).forEach(key => {
-      request.input(key, values[key]);
+      if (key !== 'userId') {
+        request.input(key, values[key]);
+      }
     });
     
     const result = await request.query(query);
     return result.recordset[0];
   } catch (err) {
+    console.error('💥 updateUser error in userModel:', err);
+    console.error('💥 Query:', query);
+    console.error('💥 Values:', values);
+    console.error('💥 UserId:', userId);
+    throw err;
+  }
+}
+
+async function updateUserWithoutOutput(userId, userData) {
+  let query = '';
+  let values = { userId };
+  
+  try {
+    await sql.connect(config);
+    
+    // Build dynamic SET clause for only provided fields
+    const setFields = [];
+    
+    if (userData.username !== undefined) {
+      setFields.push('username = @username');
+      values.username = userData.username;
+    }
+    if (userData.email !== undefined) {
+      setFields.push('email = @email');
+      values.email = userData.email;
+    }
+    if (userData.race !== undefined) {
+      setFields.push('race = @race');
+      values.race = userData.race === '' ? null : userData.race;
+    }
+    if (userData.gender !== undefined) {
+      setFields.push('gender = @gender');
+      values.gender = userData.gender;
+    }
+    if (userData.date_of_birth !== undefined) {
+      setFields.push('date_of_birth = @dateOfBirth');
+      values.dateOfBirth = userData.date_of_birth;
+    }
+    if (userData.nationality !== undefined) {
+      setFields.push('nationality = @nationality');
+      values.nationality = userData.nationality;
+    }
+    
+    if (setFields.length === 0) {
+      throw new Error('No fields to update');
+    }
+    
+    // Update without OUTPUT clause to avoid trigger conflicts
+    query = `
+      UPDATE users 
+      SET ${setFields.join(', ')}
+      WHERE user_id = @userId
+    `;
+    
+    const request = new sql.Request();
+    request.input('userId', sql.Int, userId);
+    Object.keys(values).forEach(key => {
+      if (key !== 'userId') {
+        request.input(key, values[key]);
+      }
+    });
+    
+    const result = await request.query(query);
+    
+    if (result.rowsAffected[0] === 0) {
+      throw new Error('User not found or no changes made');
+    }
+    
+    // Return the updated user by fetching it separately
+    return await getUserById(userId);
+  } catch (err) {
+    console.error('💥 updateUserWithoutOutput error in userModel:', err);
+    console.error('💥 Query:', query);
+    console.error('💥 Values:', values);
+    console.error('💥 UserId:', userId);
     throw err;
   }
 }
@@ -249,4 +329,5 @@ module.exports = {
   searchUsers,
   getUserById,
   updateUser,
+  updateUserWithoutOutput,
 };

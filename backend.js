@@ -3,7 +3,7 @@ const express = require("express");
 const sql = require("mssql");
 const Joi = require("joi");
 const path = require("path");
-const dbConfig = require("./dbconfig.js");
+const dbConfig = require("./dbConfig.js");
 
 // Import the appointment components with correct paths
 const AppointmentController = require("./Controller/AppointmentController");

@@ -570,11 +570,12 @@ function closeFriendProfileModal() {
 function populateFriendModal(friendProfile) {
     currentFriendId = friendProfile.user_id;
     
-    // Update basic info
-    document.getElementById('friendUsername').textContent = friendProfile.username || 'Unknown User';
+    // Update basic info - use profile name if available, fallback to user data
+    const displayName = friendProfile.myname || friendProfile.first_name || friendProfile.username;
+    document.getElementById('friendUsername').textContent = displayName || 'Unknown User';
     document.getElementById('friendCurrentStatus').textContent = 'Available';
     
-    // Update profile picture (first letter of username)
+    // Update profile picture (first letter of name)
     const profilePic = document.getElementById('friendProfilePic');
     if (friendProfile.profile_picture_url) {
         profilePic.style.backgroundImage = `url(${friendProfile.profile_picture_url})`;
@@ -582,17 +583,14 @@ function populateFriendModal(friendProfile) {
         profilePic.style.backgroundPosition = 'center';
         profilePic.textContent = '';
     } else {
-        profilePic.textContent = (friendProfile.username || 'U').charAt(0).toUpperCase();
+        profilePic.textContent = (displayName || 'U').charAt(0).toUpperCase();
         profilePic.style.backgroundImage = 'none';
     }
     
-    // Update Personal Information
-    document.getElementById('friendFullName').textContent = 
-        (friendProfile.first_name && friendProfile.last_name) 
-            ? `${friendProfile.first_name} ${friendProfile.last_name}` 
-            : 'Not set';
-    document.getElementById('friendAge').textContent = friendProfile.age || 'Not set';
-    document.getElementById('friendPhoneNumber').textContent = friendProfile.phone_number || 'Not set';
+    // Update Personal Information - using profile database fields
+    document.getElementById('friendFullName').textContent = friendProfile.myname || 'Not set';
+    document.getElementById('friendAge').textContent = friendProfile.agee || 'Not set';
+    document.getElementById('friendPhoneNumber').textContent = friendProfile.phones || 'Not set';
     document.getElementById('friendAddress').textContent = friendProfile.address || 'Not set';
     
     // Update Health Information

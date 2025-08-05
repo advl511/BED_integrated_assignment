@@ -6,14 +6,12 @@ async function createProfile(userId, profileData) {
     await sql.connect(config);
     const result = await sql.query`
       INSERT INTO profiles (user_id, bio, location, website, birthday, privacy_settings, profile_picture_url, 
-                           address, emergency_contact, medical_notes, allergies, font_size, notifications, preferred_language)
+                           address, emergency_contact, medical_notes, allergies)
       VALUES (${userId}, ${profileData.bio || ''}, ${profileData.location || ''}, 
               ${profileData.website || ''}, ${profileData.birthday}, 
               ${JSON.stringify(profileData.privacy_settings || {})}, ${profileData.profile_picture_url || null},
               ${profileData.address || ''}, ${profileData.emergency_contact || ''}, 
-              ${profileData.medical_notes || ''}, ${profileData.allergies || ''}, 
-              ${profileData.font_size || 'medium'}, ${profileData.notifications || 'all'}, 
-              ${profileData.preferred_language || 'en'})
+              ${profileData.medical_notes || ''}, ${profileData.allergies || ''})
     `;
     return result;
   } catch (err) {
@@ -46,10 +44,7 @@ async function getProfileByUserId(userId) {
         address: '',
         emergency_contact: '',
         medical_notes: '',
-        allergies: '',
-        font_size: 'medium',
-        notifications: 'all',
-        preferred_language: 'en'
+        allergies: ''
       });
       
       // Fetch the profile again with the newly created profile
@@ -116,17 +111,17 @@ async function updateProfile(userId, profileData) {
       setClause.push('allergies = @allergies');
       queryParams.push({ name: 'allergies', type: sql.NVarChar, value: profileData.allergies });
     }
-    if (profileData.font_size !== undefined) {
-      setClause.push('font_size = @font_size');
-      queryParams.push({ name: 'font_size', type: sql.NVarChar, value: profileData.font_size });
+    if (profileData.first_name !== undefined) {
+      setClause.push('myname = @myname');
+      queryParams.push({ name: 'myname', type: sql.NVarChar, value: profileData.first_name });
     }
-    if (profileData.notifications !== undefined) {
-      setClause.push('notifications = @notifications');
-      queryParams.push({ name: 'notifications', type: sql.NVarChar, value: profileData.notifications });
+    if (profileData.age !== undefined) {
+      setClause.push('agee = @agee');
+      queryParams.push({ name: 'agee', type: sql.Int, value: profileData.age ? parseInt(profileData.age) : null });
     }
-    if (profileData.preferred_language !== undefined) {
-      setClause.push('preferred_language = @preferred_language');
-      queryParams.push({ name: 'preferred_language', type: sql.NVarChar, value: profileData.preferred_language });
+    if (profileData.phone_number !== undefined) {
+      setClause.push('phones = @phones');
+      queryParams.push({ name: 'phones', type: sql.NVarChar, value: profileData.phone_number });
     }
     
     if (setClause.length === 0) {

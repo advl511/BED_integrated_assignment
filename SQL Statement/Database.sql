@@ -444,23 +444,7 @@ BEGIN
         UNIQUE(user_id, friend_user_id)
     );
 END
--- Create profiles table if it doesn't exist (matching your existing structure)
-IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='profiles' AND xtype='U')
-BEGIN
-    CREATE TABLE profiles (
-        profile_id INT IDENTITY(1,1) PRIMARY KEY,
-        user_id INT NOT NULL,
-        bio NVARCHAR(MAX),
-        location NVARCHAR(100),
-        website NVARCHAR(255),
-        birthday DATE,
-        privacy_settings NVARCHAR(MAX), -- JSON string
-        profile_picture_url NVARCHAR(255),
-        created_at DATETIME2 DEFAULT GETDATE(),
-        updated_at DATETIME2 DEFAULT GETDATE(),
-        FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
-    );
-END
+
 
 -- Create indexes for better performance
 IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_statuses_user_id')
@@ -609,3 +593,60 @@ CREATE TABLE Settings (
   theme NVARCHAR(20),
   timeFormat NVARCHAR(10)
 );
+
+
+-- Complete CREATE TABLE statement for profiles table
+-- With renamed columns: name, agee, phones
+
+CREATE TABLE profiles (
+    profile_id INT IDENTITY(1,1) PRIMARY KEY,
+    user_id INT NOT NULL,
+    
+    -- Personal Information (with renamed columns)
+    myname NVARCHAR(50),                            -- First name (was first_name, now myname)
+    agee INT CHECK (agee >= 0 AND agee <= 150),     -- Age (was age)
+    phones NVARCHAR(20),                            -- Phone number (was phone_number)
+    
+    -- Profile Information
+    bio NVARCHAR(MAX),
+    location NVARCHAR(100),
+    website NVARCHAR(255),
+    birthday DATE,
+    privacy_settings NVARCHAR(MAX),                 -- JSON string
+    profile_picture_url NVARCHAR(255),
+    
+    -- Contact & Address Information
+    address NVARCHAR(255),
+    emergency_contact NVARCHAR(255),
+    
+    -- Health Information
+    medical_notes NVARCHAR(MAX),
+    allergies NVARCHAR(MAX),
+    
+    -- System Fields
+    created_at DATETIME2 DEFAULT GETDATE(),
+    updated_at DATETIME2 DEFAULT GETDATE(),
+    
+    -- Foreign Key Constraint
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
+);
+
+-- Create indexes for better performance
+CREATE INDEX IX_profiles_user_id ON profiles(user_id);
+CREATE INDEX IX_profiles_created_at ON profiles(created_at DESC);
+GO
+
+-- Create trigger for updated_at column
+CREATE TRIGGER trg_profiles_updated_at
+ON profiles
+AFTER UPDATE
+AS
+BEGIN
+    SET NOCOUNT ON;
+    UPDATE profiles 
+    SET updated_at = GETDATE() 
+    WHERE profile_id IN (SELECT profile_id FROM inserted);
+END;
+GO
+
+PRINT 'Profiles table created successfully with renamed columns!';

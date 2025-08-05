@@ -1,30 +1,26 @@
-const { getSettings, saveSettings } = require("../Model/settingsModel");
+const { saveSettings } = require('../Model/settingsModel'); // Verify this path
 
-async function getUserSettings(req, res) {
-  const userIdRaw = parseInt(req.params.userId || req.user?.id || 1);
-  const userId = parseInt(userIdRaw, 10);
-  if (isNaN(userId)) {
-    return res.status(400).json({ error: "Invalid userId" });
-  }
+async function handleSaveSettings(req, res) {
   try {
-    const settings = await getSettings(userId);
-    res.json(settings || {});
+    const userId = parseInt(req.params.userId);
+    const { language, fontSize, theme, timeFormat } = req.body;
+
+    if (!userId || !language || !fontSize || !theme || !timeFormat) {
+      return res.status(400).json({ error: "Missing required fields" });
+    }
+
+    await saveSettings(userId, { language, fontSize, theme, timeFormat });
+    res.json({ success: true, message: "Settings saved" });
+    
   } catch (err) {
-    console.error("Error fetching settings:", err);
-    res.status(500).json({ error: "Failed to fetch settings" });
+    console.error("Error in handleSaveSettings:", err);
+    res.status(500).json({ 
+      error: "Failed to save settings",
+      details: err.message 
+    });
   }
 }
 
-async function upsertUserSettings(req, res) {
-  const userId = parseInt(req.params.userId || req.user?.id || 1);
-  const settings = req.body;
-  try {
-    await saveSettings(userId, settings);
-    res.json({ message: "Settings saved or updated" });
-  } catch (err) {
-    console.error("Error saving settings:", err);
-    res.status(500).json({ error: "Failed to save or update settings" });
-  }
-}
-
-module.exports = { getUserSettings, upsertUserSettings, };
+module.exports = { 
+  handleSaveSettings 
+};

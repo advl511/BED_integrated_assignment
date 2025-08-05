@@ -250,15 +250,26 @@ app.get('/matchmaking', (req, res) => {
   res.sendFile(path.join(__dirname, 'pages', 'matchmaking.html'));
 });
 
-// Matchmaking API routes
-app.post('/api/matchmaking/join', matchmakingController.joinQueue);
-app.post('/api/matchmaking/leave', matchmakingController.leaveQueue);
-app.get('/api/matchmaking/status/:userId', matchmakingController.getQueueStatus);
-app.get('/api/matchmaking/current-match/:userId', matchmakingController.getCurrentMatch);
-app.get('/api/matchmaking/queue-count', matchmakingController.getQueueCount);
-app.post('/api/matchmaking/start-voting', matchmakingController.startVoting);
-app.post('/api/matchmaking/vote', matchmakingController.voteWinner);
-app.get('/api/matchmaking/history/:userId', matchmakingController.getMatchHistory);
+// Matchmaking API routes with proper binding
+const { 
+  joinQueue, 
+  leaveQueue, 
+  getQueueStatus, 
+  getCurrentMatch, 
+  getQueueCount, 
+  startVoting, 
+  voteWinner, 
+  getMatchHistory 
+} = matchmakingController;
+
+app.post('/api/matchmaking/join', (req, res) => joinQueue(req, res));
+app.post('/api/matchmaking/leave', (req, res) => leaveQueue(req, res));
+app.get('/api/matchmaking/status/:userId', (req, res) => getQueueStatus(req, res));
+app.get('/api/matchmaking/current-match/:userId', (req, res) => getCurrentMatch(req, res));
+app.get('/api/matchmaking/queue-count', (req, res) => getQueueCount(req, res));
+app.post('/api/matchmaking/start-voting', (req, res) => startVoting(req, res));
+app.post('/api/matchmaking/vote', (req, res) => voteWinner(req, res));
+app.get('/api/matchmaking/history/:userId', (req, res) => getMatchHistory(req, res));
 
 // ===============================
 // USER AUTHENTICATION ROUTES

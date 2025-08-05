@@ -106,7 +106,13 @@ class MatchmakingSystem {
 
             if (matchData.success && matchData.hasMatch) {
                 this.currentMatch = matchData.match;
-                this.showMatchFound();
+                if (this.currentMatch.status === 'voting' && this.currentMatch.canVote) {
+                    this.showVoting();
+                } else if (this.currentMatch.status === 'voting' && this.currentMatch.hasVoted) {
+                    this.showVotingStatus();
+                } else {
+                    this.showMatchFound();
+                }
                 this.startMatchPolling();
                 return;
             }
@@ -127,10 +133,8 @@ class MatchmakingSystem {
 
     // Join the matchmaking queue
     async joinQueue() {
-        const playerName = this.elements.playerName.value.trim();
-
-        if (!playerName) {
-            alert('Please enter your name');
+        if (!this.userId) {
+            alert('Please log in to join the queue');
             return;
         }
 
@@ -145,21 +149,24 @@ class MatchmakingSystem {
                 },
                 body: JSON.stringify({
                     userId: this.userId,
-                    playerName: playerName,
-                    skillLevel: 'general'
+                    playerName: `Player_${this.userId.slice(0, 5)}`,
+                    skillLevel: 'intermediate'
                 })
             });
 
             const data = await response.json();
 
             if (data.success) {
-                this.showQueueStatus({
-                    inQueue: true,
-                    queuePosition: data.queuePosition,
-                    totalInQueue: data.queuePosition,
-                    joinedAt: new Date().toISOString()
-                });
-                this.startQueuePolling();
+                if (data.hasMatch) {
+                    // We got matched immediately
+                    this.currentMatch = data.match;
+                    this.showMatchFound();
+                    this.startMatchPolling();
+                } else {
+                    // Added to queue, show queue status
+                    this.showQueueStatus(data);
+                    this.startQueuePolling();
+                }
             } else {
                 alert(data.message || 'Failed to join queue');
                 this.elements.joinQueueBtn.disabled = false;
@@ -249,6 +256,10 @@ class MatchmakingSystem {
         if (!this.currentMatch || !winnerId) return;
 
         try {
+            // Disable voting buttons to prevent multiple votes
+            const buttons = document.querySelectorAll('.vote-btn');
+            buttons.forEach(btn => btn.disabled = true);
+
             const response = await fetch('/api/matchmaking/vote', {
                 method: 'POST',
                 headers: {
@@ -264,16 +275,29 @@ class MatchmakingSystem {
             const data = await response.json();
 
             if (data.success) {
-                this.showVotingStatus();
+                // Update UI based on voting status
+                if (data.bothVoted) {
+                    // Both players have voted, show final result
+                    this.showMatchResult(data);
+                } else {
+                    // Only current player has voted, show waiting message
+                    this.showVotingStatus('Waiting for opponent to vote...');
+                }
+                
                 // Continue polling to check if match is completed
                 this.startMatchPolling();
             } else {
                 alert(data.message || 'Failed to submit vote');
+                // Re-enable buttons on error
+                buttons.forEach(btn => btn.disabled = false);
             }
 
         } catch (error) {
             console.error('Error voting:', error);
             alert('Failed to submit vote. Please try again.');
+            // Re-enable buttons on error
+            const buttons = document.querySelectorAll('.vote-btn');
+            buttons.forEach(btn => btn.disabled = false);
         }
     }
 
@@ -340,11 +364,17 @@ class MatchmakingSystem {
 
                 if (data.success && data.hasMatch) {
                     this.currentMatch = data.match;
-                    if (data.match.status === 'voting' && data.match.canVote && !data.match.hasVoted) {
-                        this.showVoting();
+                    
+                    // Update UI based on match status
+                    if (data.match.status === 'voting') {
+                        if (data.match.canVote && !data.match.hasVoted) {
+                            this.showVoting();
+                        } else if (data.match.hasVoted) {
+                            this.showVotingStatus('Waiting for opponent to vote...');
+                        }
                     }
                 } else {
-                    // Match completed, refresh page or show completion message
+                    // Match completed, show final result
                     this.stopMatchPolling();
                     this.showMatchCompleted();
                 }
@@ -460,11 +490,45 @@ class MatchmakingSystem {
         this.elements.votingStatus.style.display = 'none';
     }
 
-    showVotingStatus() {
+    showVotingStatus(message = 'Waiting for opponent to vote...') {
         this.elements.votingSection.style.display = 'block';
         this.elements.votingStatus.style.display = 'block';
-        // Hide voting buttons
-        document.querySelector('.voting-options').style.display = 'none';
+        this.elements.votingStatus.textContent = message;
+        
+        // Hide voting buttons if they exist
+        const votingOptions = document.querySelector('.voting-options');
+        if (votingOptions) votingOptions.style.display = 'none';
+    }
+
+    // Show match result after both players have voted
+    showMatchResult(data) {
+        const votingSection = document.getElementById('votingSection');
+        if (!votingSection) return;
+
+        const isWinner = data.winnerId === this.userId;
+        const resultMessage = data.isDraw 
+            ? 'The match ended in a draw! 🏆' 
+            : isWinner 
+                ? 'Congratulations! You won the match! 🎉' 
+                : 'Match completed. Better luck next time! 👏';
+
+        votingSection.innerHTML = `
+            <div class="match-result text-center p-4">
+                <h3 class="mb-3">${resultMessage}</h3>
+                <p class="mb-2">Match ID: ${this.currentMatch.gameId}</p>
+                <p class="mb-4">Played at: ${new Date().toLocaleString()}</p>
+                <button id="backToQueue" class="btn btn-primary">Back to Queue</button>
+            </div>
+        `;
+
+        // Add event listener for back to queue button
+        const backButton = document.getElementById('backToQueue');
+        if (backButton) {
+            backButton.addEventListener('click', () => {
+                this.resetUI();
+                this.joinQueue();
+            });
+        }
     }
 
     showMatchCompleted() {

@@ -22,7 +22,6 @@ const profileController = require('./Controller/profileController');
 const statusController = require('./Controller/statusController');
 const friendsController = require('./Controller/friendsController');
 const mapController = require('./Controller/mapController');
-const matchmakingController = require('./Controller/matchmakingController');
 const settingsController = require('./Controller/settingsController');
 const AppointmentController = require('./Controller/AppointmentController');
 
@@ -264,14 +263,7 @@ app.get('/tts', (req, res) => {
   res.sendFile(path.join(__dirname, 'pages', 'tts.html'));
 });
 
-// Matchmaking page
-app.get('/matchmaking', (req, res) => {
-  res.sendFile(path.join(__dirname, 'pages', 'matchmaking.html'));
-});
 
-app.get('/matchmaking.html', (req, res) => {
-  res.sendFile(path.join(__dirname, 'pages', 'matchmaking.html'));
-});
 
 // ===============================
 // API CONFIGURATION ROUTES
@@ -306,8 +298,7 @@ app.get('/test', (req, res) => {
       'Map Integration',
       'Appointment Booking',
       'Settings Management',
-      'Text-to-Speech',
-      'Matchmaking'
+      'Text-to-Speech'
     ]
   });
 });
@@ -411,17 +402,7 @@ app.post('/routes', mapMiddleware.validateUserId, mapMiddleware.validateRouteDat
 app.put('/routes/:user_id/:route_id', mapMiddleware.validateUserId, mapMiddleware.validateRouteId, mapMiddleware.validateRouteNameUpdate, mapController.updateRoute);
 app.delete('/routes/:user_id/:route_id', mapMiddleware.validateUserId, mapMiddleware.validateRouteId, mapController.deleteRoute);
 
-// ===============================
-// MATCHMAKING ROUTES
-// ===============================
 
-app.post('/api/matchmaking/join', matchmakingController.joinQueue);
-app.post('/api/matchmaking/leave', matchmakingController.leaveQueue);
-app.get('/api/matchmaking/status/:userId', matchmakingController.getQueueStatus);
-app.get('/api/matchmaking/current-match/:userId', matchmakingController.getCurrentMatch);
-app.post('/api/matchmaking/start-voting', matchmakingController.startVoting);
-app.post('/api/matchmaking/vote', matchmakingController.voteWinner);
-app.get('/api/matchmaking/history/:userId', matchmakingController.getMatchHistory);
 
 // ===============================
 // SETTINGS ROUTES
@@ -641,10 +622,6 @@ app.use('*', (req, res) => {
       settings: [
         'GET /api/settings/:userId',
         'POST /api/settings/:userId'
-      ],
-      matchmaking: [
-        'POST /api/matchmaking/join',
-        'GET /api/matchmaking/status/:userId'
       ],
       tts: [
         'POST /api/tts/convert',

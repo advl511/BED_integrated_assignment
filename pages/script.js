@@ -25,9 +25,6 @@ function initializePage() {
     if (userId && username) {
         console.log('User is logged in:', username);
         updateLoginSection(username);
-        
-        // Load saved settings
-        loadSavedSettings();
     } else {
         console.log('User is not logged in');
     }
@@ -265,9 +262,6 @@ async function loadUserData(userId) {
         // Update profile display with combined data
         updateProfileDisplay(userData, profileData);
         
-        // Load saved settings from profile
-        loadProfileSettings(profileData);
-        
     } catch (error) {
         console.error('Error loading user data:', error);
         showStatusMessage('Failed to load profile data', 'error');
@@ -450,94 +444,6 @@ async function updateUserField(fieldName, value) {
     }
 }
 
-// Function to update settings (like font size, notifications, language)
-async function updateSetting(settingName, value) {
-    console.log(`Updating setting ${settingName} to ${value}`);
-    
-    const userId = localStorage.getItem('user_id');
-    const token = localStorage.getItem('auth_token');
-    
-    if (!userId || !token) {
-        showStatusMessage('Authentication required', 'error');
-        return;
-    }
-    
-    try {
-        // Apply the setting immediately
-        switch(settingName) {
-            case 'fontSize':
-                updateFontSize(value);
-                break;
-            case 'notifications':
-                // Just for immediate feedback
-                break;
-            case 'language':
-                // Just for immediate feedback
-                break;
-        }
-        
-        // Save to database (profiles table)
-        let updateData = {};
-        switch(settingName) {
-            case 'fontSize':
-                updateData.font_size = value;
-                break;
-            case 'notifications':
-                updateData.notifications = value;
-                break;
-            case 'language':
-                updateData.preferred_language = value;
-                break;
-            default:
-                showStatusMessage('Unknown setting', 'error');
-                return;
-        }
-        
-        const response = await fetch(`http://localhost:3000/api/profiles/${userId}`, {
-            method: 'PUT',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(updateData)
-        });
-        
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.message || 'Failed to update setting');
-        }
-        
-        // Also save to localStorage for quick access
-        localStorage.setItem(`setting_${settingName}`, value);
-        showStatusMessage(`${settingName} updated successfully!`, 'success');
-        
-    } catch (error) {
-        console.error('Error updating setting:', error);
-        showStatusMessage(`Failed to update ${settingName}: ${error.message}`, 'error');
-    }
-}
-
-function updateFontSize(size) {
-    const multiplier = {
-        'small': 0.8,
-        'medium': 1.0,
-        'large': 1.2,
-        'extra-large': 1.4
-    }[size] || 1.0;
-    
-    document.documentElement.style.setProperty('--font-size-multiplier', multiplier);
-}
-
-function updateNotificationPreference(preference) {
-    // This would typically update user preferences in the database
-    console.log('Notification preference updated to:', preference);
-}
-
-function updateLanguagePreference(language) {
-    // This would typically update the UI language
-    console.log('Language preference updated to:', language);
-}
-
 // Function to show status messages
 function showStatusMessage(message, type = 'info') {
     const statusDiv = document.getElementById('status-message');
@@ -551,49 +457,6 @@ function showStatusMessage(message, type = 'info') {
     setTimeout(() => {
         statusDiv.style.display = 'none';
     }, 3000);
-}
-
-// Load saved settings on page load
-function loadSavedSettings() {
-    const fontSize = localStorage.getItem('setting_fontSize') || 'medium';
-    const notifications = localStorage.getItem('setting_notifications') || 'all';
-    const language = localStorage.getItem('setting_language') || 'en';
-    
-    // Update UI elements
-    const fontSizeSelect = document.getElementById('font-size');
-    const notificationsSelect = document.getElementById('notifications');
-    const languageSelect = document.getElementById('language');
-    
-    if (fontSizeSelect) {
-        fontSizeSelect.value = fontSize;
-        updateFontSize(fontSize);
-    }
-    if (notificationsSelect) notificationsSelect.value = notifications;
-    if (languageSelect) languageSelect.value = language;
-}
-
-// Load profile settings from database
-function loadProfileSettings(profileData) {
-    if (!profileData) return;
-    
-    // Update UI elements with database values
-    const fontSizeSelect = document.getElementById('font-size');
-    const notificationsSelect = document.getElementById('notifications');
-    const languageSelect = document.getElementById('language');
-    
-    if (fontSizeSelect && profileData.font_size) {
-        fontSizeSelect.value = profileData.font_size;
-        updateFontSize(profileData.font_size);
-        localStorage.setItem('setting_fontSize', profileData.font_size);
-    }
-    if (notificationsSelect && profileData.notifications) {
-        notificationsSelect.value = profileData.notifications;
-        localStorage.setItem('setting_notifications', profileData.notifications);
-    }
-    if (languageSelect && profileData.preferred_language) {
-        languageSelect.value = profileData.preferred_language;
-        localStorage.setItem('setting_language', profileData.preferred_language);
-    }
 }
 
 // Create default profile for new users
@@ -611,10 +474,7 @@ async function createDefaultProfile(userId) {
             address: '',
             emergency_contact: '',
             medical_notes: '',
-            allergies: '',
-            font_size: 'medium',
-            notifications: 'all',
-            preferred_language: 'en'
+            allergies: ''
         };
         
         const response = await fetch(`http://localhost:3000/api/profiles/${userId}`, {

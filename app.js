@@ -1,3 +1,4 @@
+const express = require('express');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
@@ -7,7 +8,6 @@ const cors = require('cors');
 const Joi = require('joi');
 const swaggerUi = require('swagger-ui-express');
 const dotenv = require('dotenv');
-const { config } = require("./db");
 dotenv.config();
 
 const app = express(); 
@@ -676,7 +676,7 @@ async function startServer() {
   try {
     // Initialize database connection
     console.log('🔌 Connecting to database...');
-    await connectDB();
+    await sql.connect(dbConfig);
     console.log('✅ Database connected successfully');
     
     app.listen(PORT, () => {

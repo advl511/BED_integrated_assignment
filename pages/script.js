@@ -66,7 +66,7 @@ function setupNavigation() {
             const tabName = this.getAttribute('data-tab');
             
             // Special handling for external pages - navigate directly
-            if (tabName === 'map' || tabName === 'matchmaking' || href === 'friends.html' || href === 'Calendar.html' || href.includes('.html')) {
+            if (tabName === 'map' || tabName === 'matchmaking' || href === 'friends.html' || href === 'Calendar.html' || href === 'tts.html' || href === 'settings.html' || href.includes('.html')) {
                 return; // Let the default link behavior happen
             }
 

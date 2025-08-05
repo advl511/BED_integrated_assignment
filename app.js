@@ -445,7 +445,7 @@ const settingsSchema = Joi.object({
 app.get('/api/settings/:userId', async (req, res) => {
   try {
     await sql.connect(dbConfig);
-    const result = await sql.query`SELECT * FROM UserSettings WHERE userId = ${req.params.userId}`;
+    const result = await sql.query`SELECT * FROM Settings WHERE userId = ${req.params.userId}`;
     res.json(result.recordset[0] || {});
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -459,7 +459,7 @@ app.post('/api/settings/:userId', async (req, res) => {
   const { language, fontSize, theme, timeFormat } = req.body;
     try {
       await sql.query`
-        MERGE UserSettings AS target
+        MERGE Settings AS target
         USING (SELECT ${req.params.userId} AS userId) AS source
         ON (target.userId = source.userId)
     WHEN MATCHED THEN

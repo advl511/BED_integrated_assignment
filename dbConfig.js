@@ -1,11 +1,13 @@
+// dbConfig.js
+require('dotenv').config();
+
 module.exports = {
   user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
+  password: process.env.DB_PASS,
   server: process.env.DB_SERVER,
-  database: process.env.DB_DATABASE,
-  trustServerCertificate: true,
+  database: process.env.DB_NAME,
   options: {
-    port: parseInt(process.env.DB_PORT), // Default SQL Server port
-    connectionTimeout: 60000, // Connection timeout in milliseconds
-  },
+    encrypt: true,
+    trustServerCertificate: true
+  }
 };

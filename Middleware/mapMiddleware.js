@@ -316,6 +316,132 @@ const validateRouteNameUpdate = (req, res, next) => {
     req.body.name = name.trim();
     next();
 };
+// Validation middleware for nearby events data
+const validateEventData = (req, res, next) => {
+    const { location_name, latitude, longitude, event_info } = req.body;
+    
+    // Check if all required fields are present
+    if (!location_name || latitude === undefined || longitude === undefined) {
+        return res.status(400).json({
+            error: "Missing required fields",
+            message: "Location name, latitude, and longitude are required",
+            required: ["location_name", "latitude", "longitude"],
+            received: {
+                location_name: location_name ? "PROVIDED" : "MISSING",
+                latitude: latitude !== undefined ? "PROVIDED" : "MISSING", 
+                longitude: longitude !== undefined ? "PROVIDED" : "MISSING"
+            }
+        });
+    }
+
+    // Validate location_name
+    if (typeof location_name !== 'string' || location_name.trim().length === 0) {
+        return res.status(400).json({
+            error: "Invalid location name",
+            message: "Location name must be a non-empty string"
+        });
+    }
+
+    if (location_name.trim().length > 100) {
+        return res.status(400).json({
+            error: "Invalid location name",
+            message: "Location name must be 100 characters or less"
+        });
+    }
+
+    // Validate latitude
+    const lat = parseFloat(latitude);
+    if (isNaN(lat) || lat < -90 || lat > 90) {
+        return res.status(400).json({
+            error: "Invalid latitude",
+            message: "Latitude must be a number between -90 and 90",
+            received: latitude
+        });
+    }
+
+    // Validate longitude
+    const lng = parseFloat(longitude);
+    if (isNaN(lng) || lng < -180 || lng > 180) {
+        return res.status(400).json({
+            error: "Invalid longitude", 
+            message: "Longitude must be a number between -180 and 180",
+            received: longitude
+        });
+    }
+
+    // Validate event_info if provided (optional field)
+    if (event_info !== undefined && event_info !== null) {
+        if (typeof event_info !== 'string') {
+            return res.status(400).json({
+                error: "Invalid event info",
+                message: "Event info must be a string"
+            });
+        }
+        if (event_info.length > 10000) {
+            return res.status(400).json({
+                error: "Invalid event info",
+                message: "Event info must be 10,000 characters or less"
+            });
+        }
+    }
+
+    // Sanitize and normalize data
+    req.body.location_name = location_name.trim();
+    req.body.latitude = lat;
+    req.body.longitude = lng;
+    req.body.event_info = event_info ? event_info.trim() : null;
+
+    next();
+};
+
+// Validation middleware for event location ID
+const validateEventLocationId = (req, res, next) => {
+    const { location_id } = req.params;
+    
+    if (!location_id) {
+        return res.status(400).json({
+            error: "Missing location ID",
+            message: "Location ID is required in the URL path"
+        });
+    }
+
+    const locationId = parseInt(location_id, 10);
+    if (isNaN(locationId) || locationId <= 0) {
+        return res.status(400).json({
+            error: "Invalid location ID",
+            message: "Location ID must be a positive integer",
+            received: location_id
+        });
+    }
+
+    req.params.location_id = locationId;
+    next();
+};
+
+// Validation middleware for event info update
+const validateEventInfoUpdate = (req, res, next) => {
+    const { event_info } = req.body;
+    
+    if (event_info !== undefined && event_info !== null) {
+        if (typeof event_info !== 'string') {
+            return res.status(400).json({
+                error: "Invalid event info",
+                message: "Event info must be a string"
+            });
+        }
+        
+        if (event_info.length > 10000) {
+            return res.status(400).json({
+                error: "Invalid event info",
+                message: "Event info must be 10,000 characters or less"
+            });
+        }
+        
+        req.body.event_info = event_info.trim();
+    }
+    
+    next();
+};
 
 module.exports = {
     validateLocationData,
@@ -326,5 +452,8 @@ module.exports = {
     validateSingaporeCoordinates,
     validateRouteData,
     validateRouteId,
-    validateRouteNameUpdate
+    validateRouteNameUpdate,
+    validateEventData,
+    validateEventLocationId,
+    validateEventInfoUpdate
 };

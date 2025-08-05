@@ -23,6 +23,7 @@
           onclick="toggleSavedLocations()"
           onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleSavedLocations();}">
         <img 
+        
           id="saveCurrentBtn" 
           src="images/locate.svg" 
           alt="Save current location" 
@@ -93,6 +94,32 @@
           type="button">
           <img src="images/locate.svg" alt="">
         </button>
+      </div>
+
+      <!-- Events Panel -->
+      <div id="eventsPanel" class="locations-panel">
+        <div class="panel-header">
+          <h3>Nearby Events</h3>
+          <div class="panel-actions">
+            <button id="refreshEventsBtn" class="refresh-btn" title="Refresh events" aria-label="Refresh events list">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 2v6h-6"></path>
+                <path d="M3 12a9 9 0 0 1 15-6.7L21 8"></path>
+                <path d="M3 22v-6h6"></path>
+                <path d="M21 12a9 9 0 0 1-15 6.7L3 16"></path>
+              </svg>
+            </button>
+            <button onclick="closeEventsPanel()" class="close-btn" aria-label="Close panel">×</button>
+          </div>
+        </div>
+        <div class="panel-content">
+          <div id="eventsList">
+            <div class="loading">
+              <div class="loading-spinner"></div>
+              <p>Loading events...</p>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- Saved Locations Panel -->

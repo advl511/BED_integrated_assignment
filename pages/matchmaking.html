@@ -4,107 +4,35 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Matchmaking - Community Hub</title>
-    <link rel="stylesheet" href="../styles/matchmaking.css">
+    <link rel="stylesheet" href="/styles/matchmaking.css">
 </head>
 <body>
     <div class="matchmaking-container">
-        <header class="matchmaking-header">
-            <h1>Pickleball Matchmaking</h1>
-            <p>Find opponents and play at local sports facilities</p>
-        </header>
-
-        <!-- Queue Section -->
-        <div class="queue-section" id="queueSection">
-            <div class="queue-controls">
-                <div class="player-info">
-                    <input type="text" id="playerName" placeholder="Enter your name" required>
-                </div>
-                <div class="queue-indicator">
-                    <span class="queue-count" id="queueCount">0</span>
-                    <span class="queue-label">players in queue</span>
-                </div>
-                <button id="joinQueueBtn" class="btn btn-primary">Join Queue</button>
-                <button id="leaveQueueBtn" class="btn btn-secondary" style="display: none;">Leave Queue</button>
-            </div>
-
-            <div class="queue-status" id="queueStatus" style="display: none;">
-                <h3>Queue Status</h3>
-                <div class="status-info">
-                    <p>Position in queue: <span id="queuePosition">-</span></p>
-                    <p>Total players waiting: <span id="totalInQueue">-</span></p>
-                    <p>Joined at: <span id="joinedAt">-</span></p>
-                </div>
-                <div class="loading-spinner">
-                    <div class="spinner"></div>
-                    <p>Looking for opponents...</p>
-                </div>
-            </div>
+        <h1>Matchmaking</h1>
+        
+        <div id="notInQueue" class="status-section">
+            <p>Click the button below to join the matchmaking queue.</p>
+            <button id="joinQueueBtn" class="btn btn-primary">Join Queue</button>
         </div>
-
-        <!-- Match Found Section -->
-        <div class="match-found" id="matchFoundSection" style="display: none;">
+        
+        <div id="inQueue" class="status-section" style="display: none;">
+            <h2>In Queue</h2>
+            <p>Position: <span id="queuePosition">-</span></p>
+            <p>Players in queue: <span id="totalInQueue">-</span></p>
+            <button id="leaveQueueBtn" class="btn btn-secondary">Leave Queue</button>
+        </div>
+        
+        <div id="matchFound" class="status-section" style="display: none;">
             <h2>Match Found!</h2>
-            <div class="match-details">
-                <div class="opponent-info">
-                    <h3>Your Opponent</h3>
-                    <p id="opponentName">-</p>
-                </div>
-                
-                <div class="facility-info">
-                    <h3>Sports Facility</h3>
-                    <div class="facility-details">
-                        <p class="facility-name" id="facilityName">-</p>
-                        <p class="facility-address" id="facilityAddress">-</p>
-                        <button id="viewMapBtn" class="btn btn-secondary">View on Map</button>
-                    </div>
-                </div>
-
-                <div class="match-actions">
-                    <p class="match-instruction">Head to the facility and play your match!</p>
-                    <button id="startVotingBtn" class="btn btn-primary">Finished Playing - Start Voting</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Voting Section -->
-        <div class="voting-section" id="votingSection" style="display: none;">
-            <h2>Vote for Match Winner</h2>
-            <div class="voting-options">
-                <p>Who won the match?</p>
-                <button id="voteForSelfBtn" class="btn btn-success vote-btn">I Won</button>
-                <button id="voteForOpponentBtn" class="btn btn-danger vote-btn">Opponent Won</button>
-            </div>
-            <div class="voting-status" id="votingStatus" style="display: none;">
-                <p>Vote submitted! Waiting for opponent's vote...</p>
-                <div class="loading-spinner">
-                    <div class="spinner"></div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Match History Section -->
-        <div class="match-history" id="matchHistorySection">
-            <h3>Recent Matches</h3>
-            <div class="matches-list" id="matchesList">
-                <p class="no-matches">No matches played yet</p>
-            </div>
-            <button id="loadHistoryBtn" class="btn btn-secondary">Load Match History</button>
-        </div>
-
-        <!-- Map Modal -->
-        <div class="modal" id="mapModal" style="display: none;">
-            <div class="modal-content">
-                <span class="close" id="closeMapModal">&times;</span>
-                <h3>Facility Location</h3>
-                <div id="facilityMap" class="facility-map"></div>
-                <div class="map-info">
-                    <p><strong>Address:</strong> <span id="modalFacilityAddress">-</span></p>
-                    <button id="getDirectionsBtn" class="btn btn-primary">Get Directions</button>
-                </div>
-            </div>
+            <p>Opponent: <strong id="opponentName">-</strong></p>
+            <p>Match ID: <span id="matchId">-</span></p>
+            <button onclick="window.location.href='/game?match=' + document.getElementById('matchId').textContent" 
+                    class="btn btn-primary">
+                Start Game
+            </button>
         </div>
     </div>
 
-    <script src="matchmaking.js"></script>
+    <script src="/js/matchmaking.js"></script>
 </body>
 </html>

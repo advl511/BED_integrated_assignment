@@ -1,10 +1,12 @@
 let map;
 let markers = [];
+let eventMarkers = [];
 let savedLocations = [];
 let savedLocationMarkers = [];
 let directionsService;
 let directionsRenderer;
 let currentRoute = null;
+let eventsPanelVisible = false; // Track if events panel is visible
 
 // Detect if running from file system or server
 const isFileSystem = window.location.protocol === 'file:';
@@ -73,6 +75,38 @@ async function checkAuthentication() {
     console.log('MAP.JS: isAuthenticated set to:', isAuthenticated);
     updateUserInterface();
     return false;
+  }
+}
+
+async function loadAndDisplayEvents() {
+  try {
+      console.log('Fetching nearby events...');
+      const response = await fetch(`${apiBaseUrl}/nearby-events`, {
+          credentials: 'include',
+          headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+          }
+      });
+
+      if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log('Nearby events:', data.data);
+
+      // Clear existing event markers
+      clearEventMarkers();
+
+      // Add new event markers
+      data.data.forEach(event => {
+          addEventMarker(event);
+      });
+
+  } catch (error) {
+      console.error('Error loading nearby events:', error);
+      showAlert('Error loading nearby events. Please try again.', 'error');
   }
 }
 
@@ -408,6 +442,83 @@ async function saveLocation(locationData) {
   }
 }
 
+function addEventMarker(event) {
+  const eventPosition = { lat: parseFloat(event.latitude), lng: parseFloat(event.longitude) };
+  
+  // Parse event info if it exists
+  let eventInfo = {};
+  try {
+      eventInfo = event.event_info ? JSON.parse(event.event_info) : {};
+  } catch (e) {
+      console.error('Error parsing event info:', e);
+      eventInfo = { description: event.event_info || 'No additional information' };
+  }
+
+  const marker = new google.maps.Marker({
+      position: eventPosition,
+      map: map,
+      title: event.location_name,
+      icon: {
+          url: 'http://maps.google.com/mapfiles/ms/icons/red-dot.png',
+          scaledSize: new google.maps.Size(32, 32)
+      }
+  });
+
+  // Create info window content
+  const contentString = `
+      <div class="event-info-window">
+          <h3>${event.location_name}</h3>
+          ${eventInfo.description ? `<p>${eventInfo.description}</p>` : ''}
+          ${eventInfo.event_date ? `<p><strong>Date:</strong> ${new Date(eventInfo.event_date).toLocaleDateString()}</p>` : ''}
+          ${eventInfo.event_time ? `<p><strong>Time:</strong> ${eventInfo.event_time}</p>` : ''}
+          ${eventInfo.organizer ? `<p><strong>Organizer:</strong> ${eventInfo.organizer}</p>` : ''}
+      </div>
+  `;
+
+  const infoWindow = new google.maps.InfoWindow({
+      content: contentString
+  });
+
+  // Add click listener to show info window
+  marker.addListener('click', () => {
+      // Close any open info windows
+      closeAllInfoWindows();
+      infoWindow.open(map, marker);
+  });
+
+  // Store marker reference
+  eventMarkers.push({
+      marker: marker,
+      infoWindow: infoWindow
+  });
+}
+
+function clearEventMarkers() {
+  eventMarkers.forEach(marker => {
+      marker.marker.setMap(null);
+      marker.infoWindow.close();
+  });
+  eventMarkers = [];
+}
+
+function closeAllInfoWindows() {
+  eventMarkers.forEach(eventMarker => {
+      eventMarker.infoWindow.close();
+  });
+}
+
+// Add this to your initMap function, after the map is initialized
+async function initMap() {
+  // ... existing initMap code ...
+  
+  // Load and display events when map is ready
+  if (isAuthenticated) {
+      await loadAndDisplayEvents();
+  }
+  
+  // ... rest of your initMap code ...
+}
+
 // Route functionality - now implemented!
 async function saveRoute(routeData) {
   try {
@@ -588,6 +699,13 @@ async function initMap() {
     zoomControlOptions: {
       position: google.maps.ControlPosition.RIGHT_CENTER
     },
+  });
+
+  // Load events when map is idle and user is authenticated
+  google.maps.event.addListenerOnce(map, 'idle', () => {
+    if (isAuthenticated) {
+      loadAndDisplayEvents();
+    }
   });
 
   // Initialize directions service and renderer
@@ -1011,6 +1129,17 @@ document.addEventListener('DOMContentLoaded', () => {
   
   if (nameInput) {
     nameInput.addEventListener('input', updateCharacterCounters);
+    updateCharacterCounters();
+  }
+  
+  // Add event listener for refresh events button
+  const refreshEventsBtn = document.getElementById('refreshEventsBtn');
+  if (refreshEventsBtn) {
+    refreshEventsBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      loadAndDisplayEvents();
+      showNotification('Refreshing events...', 'info');
+    });
   }
   
   // Close modal when clicking outside
@@ -1884,6 +2013,7 @@ function toggleSavedLocations() {
     openSavedLocations();
   }
 }
+
 
 async function openSavedLocations() {
   // Check if user is authenticated (not a guest)

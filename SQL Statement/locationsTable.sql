@@ -179,3 +179,57 @@ VALUES
 INSERT INTO user_routes (user_id, route_name, start_lat, start_lng, end_lat, end_lng)
 VALUES
 (9, 'Yishun to Masjid Sultan', 1.429100, 103.835100, 1.304100, 103.859900);
+
+CREATE TABLE nearby_events(
+    user_id INT NOT NULL,
+    location_id INT NOT NULL,
+    location_name NVARCHAR(100) NOT NULL,
+    latitude DECIMAL(9,6) NOT NULL,
+    longitude DECIMAL(9,6) NOT NULL,
+    event_info NVARCHAR(MAX) NULL,
+    created_at DATETIME2 DEFAULT GETDATE(),
+    updated_at DATETIME2 DEFAULT GETDATE(),
+    PRIMARY KEY (user_id, location_id),
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
+);
+GO
+
+CREATE TABLE nearby_sports_facilities(
+    user_id INT NOT NULL,
+    location_id INT NOT NULL,
+    location_name NVARCHAR(100) NOT NULL,
+    latitude DECIMAL(9,6) NOT NULL,
+    longitude DECIMAL(9,6) NOT NULL,
+    created_at DATETIME2 DEFAULT GETDATE(),
+    updated_at DATETIME2 DEFAULT GETDATE(),
+    PRIMARY KEY (user_id, location_id),
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
+);
+GO
+
+INSERT INTO nearby_events (user_id, location_id, location_name, latitude, longitude, event_info) VALUES
+-- User 1 events
+(1, 1, 'Marina Bay New Year Countdown', 1.283333, 103.858611, 'Grand New Year celebration with fireworks and live performances. Free entry, starts at 8 PM. Food stalls available.'),
+(1, 2, 'Community Health Fair', 1.279444, 103.834722, 'Free health screenings, vaccination drives, and wellness talks by medical professionals. Family-friendly event from 9 AM to 5 PM.'),
+(1, 3, 'Aviation Expo 2025', 1.350189, 103.994433, 'Discover the latest in aviation technology. Interactive exhibits, flight simulators, and career talks. Entry fee: $15 adults, $8 children.'),
+(1, 4, 'University Open House', 1.296568, 103.776239, 'Explore academic programs, campus tours, and meet faculty members. Free admission with registration required online.'),
+(1, 5, 'Beach Music Festival', 1.249756, 103.830119, 'Three-day music festival featuring local and international artists. Beach activities and food vendors. Tickets from $80.'),
+
+-- User 2 events
+(2, 1, 'Orchard Fashion Week', 1.304444, 103.831944, 'Latest fashion trends showcase with designer collections. Fashion shows daily at 2 PM and 7 PM. Free for public viewing.'),
+(2, 2, 'Wildlife Photography Workshop', 1.404175, 103.793036, 'Learn wildlife photography techniques with professional photographers. Equipment provided. Workshop fee: $120 includes lunch.'),
+(2, 3, 'River Festival', 1.288611, 103.846667, 'Cultural performances, dragon boat races, and riverside dining. Traditional crafts market and live music. Free admission.'),
+(2, 4, 'Tech Innovation Summit', 1.333056, 103.739167, 'Startup pitches, tech talks, and networking sessions. Industry leaders and investors present. Registration: $50 students, $150 professionals.'),
+(2, 5, 'Cycling Marathon', 1.301389, 103.928056, 'Annual cycling event along East Coast. Multiple categories: 10km, 25km, 50km routes. Registration fee includes event t-shirt and medal.'),
+
+-- User 3 events
+(3, 1, 'Financial District Food Festival', 1.283611, 103.851389, 'Local and international cuisine festival. Over 50 food stalls, cooking demonstrations, and wine tasting. Weekend event, free entry.'),
+(3, 2, 'Garden Concert Series', 1.314722, 103.815833, 'Classical music performances in beautiful garden setting. Monthly concerts featuring Singapore Symphony Orchestra. Tickets: $25-$75.'),
+(3, 3, 'Cross-Border Cultural Fair', 1.448056, 103.765278, 'Celebrate Malaysian-Singapore friendship with cultural performances, traditional games, and authentic food. Free admission for families.'),
+(3, 4, 'Shopping Carnival', 1.352083, 103.944722, 'Mega sale event with up to 70% discounts. Fashion shows, lucky draws, and entertainment programs. Special promotions for early birds.'),
+(3, 5, 'Sunrise Yoga Session', 1.390833, 103.988056, 'Weekly beachside yoga classes at sunrise. All levels welcome. Bring your own mat. Donation-based, suggested $10 per session.'),
+
+-- Additional events for variety
+(1, 6, 'Chinatown Heritage Walk', 1.281944, 103.844167, 'Guided tour exploring Chinatown history and culture. Traditional performances, food stalls, and souvenir shops. Free admission, open daily from 9 AM to 6 PM.'),
+(2, 6, 'Botanic Gardens Night Tour', 1.319667, 103.815278, 'Guided night tour of Botanic Gardens. Stargazing, lantern releases, and live music. Free admission, open daily from 6 PM to 10 PM.'),
+(3, 6, 'Jurong Bird Park Safari', 1.340833, 103.703944, 'Interactive safari experience at Jurong Bird Park. Feeding sessions, animal shows, and educational talks. Admission: $25 adults, $15 children.')

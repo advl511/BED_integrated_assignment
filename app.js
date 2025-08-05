@@ -3,6 +3,8 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const sql = require('mssql');
+const jwt = require('jsonwebtoken');
+const { authenticateToken } = require('./Middleware/authMiddleware');
 const cookieParser = require('cookie-parser');
 const cors = require('cors');
 const Joi = require('joi');
@@ -24,6 +26,7 @@ const friendsController = require('./Controller/friendsController');
 const mapController = require('./Controller/mapController');
 const settingsController = require('./Controller/settingsController');
 const AppointmentController = require('./Controller/AppointmentController');
+const matchmakingController = require('./Controller/matchmakingController');
 
 const { validateSignup, validateLogin } = require('./Middleware/userMiddleware');
 const mapMiddleware = require('./Middleware/mapMiddleware');
@@ -40,6 +43,12 @@ try {
 } catch (error) {
   console.log('Swagger document not found. Run "node swagger.js" to generate it.');
 }
+
+// ===============================
+// STATIC FILES
+// ===============================
+// Serve static files from the pages directory
+app.use(express.static(path.join(__dirname, 'pages')));
 
 // ===============================
 // MIDDLEWARE SETUP
@@ -370,6 +379,24 @@ app.delete('/api/statuses/:statusId', statusController.deleteStatus);
 app.get('/api/feed/:userId', statusController.getFeed);
 
 // ===============================
+// MATCHMAKING ROUTES
+// ===============================
+app.post('/api/matchmaking/join', 
+  authenticateToken,
+  matchmakingController.joinQueue
+);
+
+app.post('/api/matchmaking/leave', 
+  authenticateToken,
+  matchmakingController.leaveQueue
+);
+
+app.get('/api/matchmaking/status', 
+  authenticateToken,
+  matchmakingController.getStatus
+);
+
+// ===============================
 // FRIENDS ROUTES
 // ===============================
 
@@ -402,6 +429,11 @@ app.post('/routes', mapMiddleware.validateUserId, mapMiddleware.validateRouteDat
 app.put('/routes/:user_id/:route_id', mapMiddleware.validateUserId, mapMiddleware.validateRouteId, mapMiddleware.validateRouteNameUpdate, mapController.updateRoute);
 app.delete('/routes/:user_id/:route_id', mapMiddleware.validateUserId, mapMiddleware.validateRouteId, mapController.deleteRoute);
 
+app.get('/nearby-events', mapController.getAllNearbyEvents);
+app.post('/nearby-events', mapMiddleware.validateUserId, mapMiddleware.validateEventData, mapMiddleware.validateSingaporeCoordinates, mapController.saveNearbyEvent);
+app.put('/nearby-events/:location_id/user/:user_id', mapMiddleware.validateEventLocationId, mapMiddleware.validateUserId, mapMiddleware.validateEventData, mapMiddleware.validateSingaporeCoordinates, mapController.updateNearbyEvent);
+app.patch('/nearby-events/:location_id/user/:user_id/info', mapMiddleware.validateEventLocationId, mapMiddleware.validateUserId, mapMiddleware.validateEventInfoUpdate, mapController.updateEventInfo);
+app.delete('/nearby-events/:location_id/user/:user_id', mapMiddleware.validateEventLocationId, mapMiddleware.validateUserId, mapController.deleteNearbyEvent);
 
 
 // ===============================
@@ -612,6 +644,10 @@ app.use('*', (req, res) => {
         'POST /locations',
         'GET /routes',
         'POST /routes',
+        'GET /nearby-events',
+        'POST /nearby-events',
+        'PUT /nearby-events/:location_id/user/:user_id',
+        'DELETE /nearby-events/:location_id/user/:user_id',
         'GET /map/config'
       ],
       appointments: [

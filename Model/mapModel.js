@@ -254,6 +254,151 @@ async function deleteLocation(location_id, user_id) {
         }
     }
 }
+async function getAllNearbyEvents(){
+    let connection
+    try {
+        connection = await sql.connect(dbConfig)
+        const result = await connection.request().query(
+            'SELECT user_id, location_id, location_name, latitude, longitude, event_info, created_at, updated_at FROM nearby_events ORDER BY created_at DESC');
+        return result.recordset;
+    } catch (error) {
+        console.error('Error fetching nearby events:', error);
+        throw error;
+    } finally {
+        if (connection) {
+            try{
+                await connection.close();
+            } catch (err){
+                console.error('Error closing connection:', err);
+            }
+        }
+    }
+}
+
+async function saveNearbyEvent(event, user_id = 1) {
+    let connection
+    try {
+        connection = await sql.connect(dbConfig)
+        
+        // First, get the next location_id for this user
+        const maxIdQuery = 'SELECT ISNULL(MAX(location_id), 0) as max_id FROM nearby_events WHERE user_id = @user_id';
+        const maxIdRequest = connection.request();
+        maxIdRequest.input('user_id', user_id);
+        const maxIdResult = await maxIdRequest.query(maxIdQuery);
+        const nextLocationId = maxIdResult.recordset[0].max_id + 1;
+        
+        // Insert the new event
+        const query = 
+            'INSERT INTO nearby_events (user_id, location_id, location_name, latitude, longitude, event_info) VALUES (@user_id, @location_id, @location_name, @latitude, @longitude, @event_info)';
+        const request = connection.request();
+        request.input('user_id', user_id);
+        request.input('location_id', nextLocationId);
+        request.input('location_name', event.location_name);
+        request.input('latitude', event.latitude);
+        request.input('longitude', event.longitude);
+        request.input('event_info', event.event_info || null);
+        const result = await request.query(query);
+
+        return {
+            success: result.rowsAffected[0] > 0,
+            location_id: nextLocationId
+        };
+    } catch (error) {
+        console.error('Error saving nearby event:', error);
+        throw error;
+    } finally {
+        if (connection) {
+            try{
+                await connection.close();
+            } catch (err){
+                console.error('Error closing connection:', err);
+            }
+        }
+    }
+}
+
+async function updateNearbyEvent(location_id, user_id, event) {
+    let connection
+    try {
+        connection = await sql.connect(dbConfig)
+        const query = 
+            'UPDATE nearby_events SET location_name = @location_name, latitude = @latitude, longitude = @longitude, event_info = @event_info, updated_at = GETDATE() WHERE location_id = @location_id AND user_id = @user_id';
+        const request = connection.request();
+        request.input('location_id', location_id);
+        request.input('user_id', user_id);
+        request.input('location_name', event.location_name);
+        request.input('latitude', event.latitude);
+        request.input('longitude', event.longitude);
+        request.input('event_info', event.event_info || null);
+        const result = await request.query(query);
+
+        return result.rowsAffected[0] > 0;
+    } catch (error) {
+        console.error('Error updating nearby event:', error);
+        throw error;
+    } finally {
+        if (connection) {
+            try{
+                await connection.close();
+            } catch (err){
+                console.error('Error closing connection:', err);
+            }
+        }
+    }
+}
+
+async function updateEventInfo(location_id, user_id, event_info) {
+    let connection
+    try {
+        connection = await sql.connect(dbConfig)
+        const query = 
+            'UPDATE nearby_events SET event_info = @event_info, updated_at = GETDATE() WHERE location_id = @location_id AND user_id = @user_id';
+        const request = connection.request();
+        request.input('location_id', location_id);
+        request.input('user_id', user_id);
+        request.input('event_info', event_info || null);
+        const result = await request.query(query);
+
+        return result.rowsAffected[0] > 0;
+    } catch (error) {
+        console.error('Error updating event info:', error);
+        throw error;
+    } finally {
+        if (connection) {
+            try{
+                await connection.close();
+            } catch (err){
+                console.error('Error closing connection:', err);
+            }
+        }
+    }
+}
+
+async function deleteNearbyEvent(location_id, user_id) {
+    let connection
+    try {
+        connection = await sql.connect(dbConfig)
+        const query = 
+            'DELETE FROM nearby_events WHERE location_id = @location_id AND user_id = @user_id';
+        const request = connection.request();
+        request.input('location_id', location_id);
+        request.input('user_id', user_id);
+        const result = await request.query(query);
+
+        return result.rowsAffected[0] > 0;
+    } catch (error) {
+        console.error('Error deleting nearby event:', error);
+        throw error;
+    } finally {
+        if (connection) {
+            try{
+                await connection.close();
+            } catch (err){
+                console.error('Error closing connection:', err);
+            }
+        }
+    }
+}
 
 module.exports = {
     getAllLocations,
@@ -265,5 +410,10 @@ module.exports = {
     getRoutesByUser,
     saveRoute,
     updateRoute,
-    deleteRoute
+    deleteRoute,
+    getAllNearbyEvents,
+    saveNearbyEvent,
+    updateNearbyEvent,
+    updateEventInfo,
+    deleteNearbyEvent
 }

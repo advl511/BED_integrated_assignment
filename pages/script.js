@@ -269,25 +269,22 @@ async function loadUserData(userId) {
 }
 
 function updateProfileDisplay(userData, profileData = {}) {
-    // Update profile header
-    document.getElementById('profile-name').textContent = 
-        `${userData.first_name || ''} ${userData.last_name || ''}`.trim() || userData.username;
+    // Update profile header - use profile data first, then fall back to user data
+    const displayName = profileData.myname || userData.first_name || userData.username;
+    document.getElementById('profile-name').textContent = displayName;
     
     // Update profile avatar with first letter of name
     const avatar = document.getElementById('profile-avatar');
-    if (userData.first_name) {
-        avatar.textContent = userData.first_name.charAt(0).toUpperCase();
-    } else if (userData.username) {
-        avatar.textContent = userData.username.charAt(0).toUpperCase();
+    if (displayName) {
+        avatar.textContent = displayName.charAt(0).toUpperCase();
     }
     
-    // Update profile fields with both user and profile data
-    document.getElementById('display-name').textContent = 
-        `${userData.first_name || ''} ${userData.last_name || ''}`.trim() || 'Not set';
-    document.getElementById('display-age').textContent = userData.age || 'Not set';
-    document.getElementById('display-phone').textContent = userData.phone_number || 'Not set';
+    // Update profile fields - now using profile data for name, age, phone
+    document.getElementById('display-name').textContent = profileData.myname || 'Not set';
+    document.getElementById('display-age').textContent = profileData.agee || 'Not set';
+    document.getElementById('display-phone').textContent = profileData.phones || 'Not set';
     
-    // Update fields from profiles table
+    // Update other fields from profiles table
     document.getElementById('display-address').textContent = profileData.address || 'Not set';
     document.getElementById('display-emergency').textContent = profileData.emergency_contact || 'Not set';
     document.getElementById('display-medical').textContent = profileData.medical_notes || 'Not set';  
@@ -369,6 +366,15 @@ async function updateUserField(fieldName, value) {
         return;
     }
     
+    // Validate input value
+    if (value === null || value === undefined) {
+        showStatusMessage('Invalid value provided', 'error');
+        return;
+    }
+    
+    // Convert value to string and trim it
+    value = String(value).trim();
+    
     try {
         let updateData = {};
         let endpoint = '';
@@ -376,21 +382,29 @@ async function updateUserField(fieldName, value) {
         // Determine which endpoint and data structure to use
         switch(fieldName) {
             case 'name':
-                // Update users table
-                const nameParts = value.trim().split(' ');
-                updateData.first_name = nameParts[0] || '';
-                updateData.last_name = nameParts.slice(1).join(' ') || '';
-                endpoint = `http://localhost:3000/api/users/${userId}`;
+                // Update profiles table (changed from users to profiles)
+                if (!value) {
+                    showStatusMessage('Name cannot be empty', 'error');
+                    return;
+                }
+                // Store as first_name in the request, which maps to myname in the database
+                updateData.first_name = value;
+                endpoint = `http://localhost:3000/api/profiles/${userId}`;
                 break;
             case 'age':
-                // Update users table
-                updateData.age = parseInt(value);
-                endpoint = `http://localhost:3000/api/users/${userId}`;
+                // Update profiles table (changed from users to profiles)
+                const ageNum = parseInt(value);
+                if (value && (isNaN(ageNum) || ageNum < 0 || ageNum > 150)) {
+                    showStatusMessage('Please enter a valid age (0-150)', 'error');
+                    return;
+                }
+                updateData.age = value ? ageNum : null;
+                endpoint = `http://localhost:3000/api/profiles/${userId}`;
                 break;
             case 'phone':
-                // Update users table
-                updateData.phone_number = value;
-                endpoint = `http://localhost:3000/api/users/${userId}`;
+                // Update profiles table (changed from users to profiles)
+                updateData.phone_number = value || null;
+                endpoint = `http://localhost:3000/api/profiles/${userId}`;
                 break;
             case 'address':
                 // Update profiles table
@@ -417,6 +431,8 @@ async function updateUserField(fieldName, value) {
                 return;
         }
         
+        console.log('Sending update request:', { endpoint, updateData });
+        
         const response = await fetch(endpoint, {
             method: 'PUT',
             headers: {
@@ -426,9 +442,20 @@ async function updateUserField(fieldName, value) {
             body: JSON.stringify(updateData)
         });
         
+        console.log('Response status:', response.status);
+        
         if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.message || 'Failed to update data');
+            const errorText = await response.text();
+            console.error('Error response:', errorText);
+            
+            let errorData;
+            try {
+                errorData = JSON.parse(errorText);
+            } catch (e) {
+                errorData = { message: errorText || `HTTP ${response.status}` };
+            }
+            
+            throw new Error(errorData.error || errorData.message || `HTTP ${response.status}`);
         }
         
         const updatedData = await response.json();
@@ -439,7 +466,8 @@ async function updateUserField(fieldName, value) {
         showStatusMessage('Profile updated successfully!', 'success');
         
     } catch (error) {
-        console.error('Error updating user field:', error);
+        console.error('💥 Error updating user field:', error);
+        console.error('💥 Field:', fieldName, 'Value:', value);
         showStatusMessage(`Failed to update ${fieldName}: ${error.message}`, 'error');
     }
 }

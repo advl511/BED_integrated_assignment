@@ -3,13 +3,12 @@ const express = require('express');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
-const sql = require('mssql');
+const { sql, connectDB } = require('./db');
 const cookieParser = require('cookie-parser');
 const cors = require('cors');
 const Joi = require('joi');
 const swaggerUi = require('swagger-ui-express');
 const dotenv = require('dotenv');
-const { config } = require("./db");
 dotenv.config();
 
 const app = express(); 
@@ -678,7 +677,7 @@ async function startServer() {
   try {
     // Initialize database connection
     console.log('🔌 Connecting to database...');
-    await sql.connect(dbConfig);
+    await connectDB();
     console.log('✅ Database connected successfully');
     
     app.listen(PORT, () => {
@@ -719,6 +718,7 @@ process.on('SIGINT', async () => {
   } catch (error) {
     console.error('❌ Error closing database connections:', error);
   }
+  console.log('👋 Server stopped gracefully');
   process.exit(0);
 });
 
@@ -730,6 +730,7 @@ process.on('SIGTERM', async () => {
   } catch (error) {
     console.error('❌ Error closing database connections:', error);
   }
+  console.log('👋 Server stopped gracefully');
   process.exit(0);
 });
 
@@ -743,26 +744,4 @@ process.on('uncaughtException', (error) => {
 process.on('unhandledRejection', (reason, promise) => {
   console.error('❌ Unhandled Rejection at:', promise, 'reason:', reason);
   process.exit(1);
-});
-app.use(express.urlencoded({ extended: true }));
-
-// Serve static folders
-app.use(express.static(path.join(__dirname, "pages")));   // tts.html
-app.use("/styles", express.static(path.join(__dirname, "styles")));
-app.use("/publictts", express.static(path.join(__dirname, "publictts"))); // if you have other static files
-
-// API Routes
-app.use("/api/tts", ttsRoutes);
-
-// Default Route (home page)
-app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "pages", "tts.html"));
-});
-
-
-// Graceful shutdown
-process.on("SIGINT", async () => {
-  console.log("👋 Gracefully shutting down");
-  await sql.close();
-  process.exit(0);
 });

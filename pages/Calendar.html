@@ -10,7 +10,7 @@
     <div class="container">
         <div class="header">
             <div>
-                <h1>My Calendar</h1>
+                <h1 id="calendarTitle" style="cursor:pointer; color:#007bff; text-decoration:underline;">My Calendar</h1>
                 <p>Stay organized with cultural events, prayer times, and appointments</p>
             </div>
             <div class="settings-panel">
@@ -132,5 +132,15 @@
     <script src="/Model/CalendarModel.js"></script>
     <script src="/Middleware/CalendarMiddleware.js"></script>
     <script src="/Controller/CalendarController.js"></script>
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const calendarTitle = document.getElementById('calendarTitle');
+        if (calendarTitle) {
+            calendarTitle.addEventListener('click', function() {
+                window.location.href = '/'; // Change '/' to your actual home page path if needed
+            });
+        }
+    });
+    </script>
 </body>
 </html>

@@ -1,14 +1,13 @@
-// Middleware
-const express = require('express');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
-const { sql, connectDB } = require('./db');
+const sql = require('mssql');
 const cookieParser = require('cookie-parser');
 const cors = require('cors');
 const Joi = require('joi');
 const swaggerUi = require('swagger-ui-express');
 const dotenv = require('dotenv');
+const { config } = require("./db");
 dotenv.config();
 
 const app = express(); 
